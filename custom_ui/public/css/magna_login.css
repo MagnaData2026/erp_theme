@@ -1,0 +1,428 @@
+/* ===========================================
+        MAGNA ERP LOGIN
+=========================================== */
+
+:root{
+    --primary:#2563eb;
+    --primary-dark:#1d4ed8;
+    --secondary:#60a5fa;
+    --bg:#f5f8fc;
+    --card:#ffffff;
+    --text:#111827;
+    --muted:#6b7280;
+    --border:#e5e7eb;
+}
+
+.for-login{
+    width:100%;
+    min-height:100vh;
+
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+
+    background:#F3F3F3;
+
+    position:relative;
+    overflow:hidden;
+}
+/* Center */
+
+.page-content{
+    min-height:100vh !important;
+    display:flex !important;
+    justify-content:center !important;
+    align-items:center !important;
+}
+
+.page-content>div{
+    width:100%;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+
+.for-login{
+    width:100%;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+}
+
+/* Logo */
+
+.app-logo{
+    width:230px !important;
+    height:auto !important;
+    margin-bottom:18px;
+}
+
+/* Heading */
+
+.page-card-head{
+    text-align:center;
+    margin-bottom:28px;
+}
+
+.page-card-head h4,
+.page-card-head h2{
+    font-size:32px !important;
+    font-weight:700;
+    color:var(--text);
+    margin-bottom:8px;
+}
+
+.page-card-head p{
+    color:var(--muted);
+}
+
+/* Card */
+
+.for-login .page-card{
+
+    width:470px !important;
+
+    max-width:92%;
+
+    padding:50px !important;
+
+    border-radius:22px !important;
+
+    background:rgba(255,255,255,.92)!important;
+
+    backdrop-filter:blur(18px);
+
+    border:none!important;
+
+    position:relative;
+
+    overflow:hidden;
+
+    box-shadow:
+        0 20px 60px rgba(0,0,0,.12);
+}
+
+/* Top Line */
+
+.for-login .page-card::before{
+
+    content:"";
+
+    position:absolute;
+
+    left:0;
+    top:0;
+
+    width:100%;
+
+    height:5px;
+
+    background:linear-gradient(
+        90deg,
+        #2563eb,
+        #60a5fa
+    );
+}
+
+/* Hide Labels */
+
+.control-label,
+.form-group label,
+.frappe-control .control-label{
+    display:none!important;
+}
+
+/* Inputs */
+
+.form-control{
+
+    height:54px!important;
+
+    border-radius:14px!important;
+
+    border:1px solid var(--border)!important;
+
+    box-shadow:none!important;
+
+    padding-left:18px!important;
+
+    font-size:15px!important;
+
+    transition:.25s;
+}
+
+.form-control:focus{
+
+    border-color:#2563eb!important;
+
+    box-shadow:
+        0 0 0 4px rgba(37,99,235,.12)!important;
+}
+
+/* Password */
+
+.password-field{
+    margin-top:14px;
+}
+
+.password-field .btn{
+    border:none!important;
+    background:transparent!important;
+}
+
+/* Forgot */
+
+.forgot-password{
+    color:#2563eb!important;
+    text-decoration:none!important;
+}
+
+.forgot-password:hover{
+    text-decoration:underline!important;
+}
+
+/* Login Button */
+
+.btn-primary,
+.btn-login{
+
+    width:100%;
+
+    height:54px;
+
+    border:none!important;
+
+    border-radius:14px;
+
+    background:linear-gradient(
+        135deg,
+        #2563eb,
+        #3b82f6
+    )!important;
+
+    color:#fff!important;
+
+    font-size:16px;
+
+    font-weight:600;
+
+    transition:.25s;
+}
+
+.btn-primary:hover,
+.btn-login:hover{
+
+    transform:translateY(-2px);
+
+    box-shadow:
+        0 12px 28px rgba(37,99,235,.30);
+}
+
+/* Email Link */
+
+.btn-default{
+
+    width:100%;
+
+    margin-top:14px;
+
+    height:48px;
+
+    border-radius:14px!important;
+
+    background:#f8fafc!important;
+
+    border:1px solid var(--border)!important;
+
+    color:#374151!important;
+}
+
+.btn-default:hover{
+    background:#eef4ff!important;
+}
+
+/* Hide Footer */
+
+.powered-by,
+.website-footer,
+.page-footer,
+.login-footer,
+.language-picker{
+    display:none!important;
+}
+
+/* Animation */
+
+.for-login .page-card{
+    animation:fade .4s ease;
+}
+
+@keyframes fade{
+
+from{
+opacity:0;
+transform:translateY(18px);
+}
+
+to{
+opacity:1;
+transform:none;
+}
+
+}
+
+/* Mobile */
+
+@media(max-width:768px){
+
+.for-login .page-card{
+
+width:92%!important;
+
+padding:30px!important;
+
+}
+
+.app-logo{
+
+width:180px!important;
+
+}
+
+.page-card-head h4{
+
+font-size:26px!important;
+
+}
+
+}
+/* Give space for left icons */
+
+.for-login .email-field,
+.for-login .password-field{
+    position:relative;
+}
+
+.for-login .field-icon{
+    position:absolute;
+    left:16px;
+    top:50%;
+    transform:translateY(-50%);
+    z-index:5;
+    color:#9ca3af;
+}
+
+.for-login .form-control{
+    padding-left:46px !important;
+}
+
+/* ===========================
+   FULL WIDTH LOGIN LAYOUT
+=========================== */
+
+html,
+body{
+    width:100%;
+    height:100%;
+    margin:0;
+    padding:0;
+}
+
+body.for-login{
+    overflow:hidden;
+}
+
+/* Remove Frappe container width */
+body.for-login main.container{
+    width:100% !important;
+    max-width:100% !important;
+    padding:0 !important;
+    margin:0 !important;
+}
+
+/* Remove page wrapper spacing */
+body.for-login .page-content,
+body.for-login .page-content-wrapper,
+body.for-login .page_content{
+    width:100% !important;
+    max-width:100% !important;
+    padding:0 !important;
+    margin:0 !important;
+    background:transparent !important;
+}
+
+/* Login wrapper */
+body.for-login .for-login{
+    width:100vw !important;
+    min-height:100vh !important;
+
+    display:flex !important;
+    justify-content:center;
+    align-items:center;
+
+    position:relative;
+}
+.for-login::before,
+.for-login::after{
+    pointer-events: none;
+    z-index: 0;
+}
+.for-login .page-card{
+    position: relative;
+    z-index: 10;
+}
+/* ===== Override Frappe Login Layout ===== */
+
+body.frappe-session-status-logged-out #page-login,
+body.frappe-session-status-logged-out .page-content-wrapper,
+body.frappe-session-status-logged-out main.container{
+    width:100% !important;
+    max-width:100% !important;
+    margin:0 !important;
+    padding:0 !important;
+    background:transparent !important;
+}
+
+body.frappe-session-status-logged-out .page-content-wrapper{
+    min-height:100vh !important;
+}
+
+body.frappe-session-status-logged-out .page-header-wrapper,
+body.frappe-session-status-logged-out .page-footer{
+    display:none !important;
+}
+/* Move logo and heading upward */
+
+.for-login .page-card-head{
+    margin-top: -70px !important;
+    margin-bottom: 35px !important;
+}
+
+.for-login .app-logo{
+    margin-top: -20px !important;
+    margin-bottom: 15px !important;
+}
+/* ===== Full Screen Background ===== */
+
+html,
+body,
+#page-login,
+.page-content-wrapper,
+main.container,
+.page-content,
+.page_content{
+    width:100% !important;
+    max-width:100% !important;
+    min-height:100vh !important;
+
+    margin:0 !important;
+    padding:0 !important;
+
+    background:transparent !important;
+}
+
+body.frappe-session-status-logged-out .page-header-wrapper,
+body.frappe-session-status-logged-out .page-footer{
+    display:none !important;
+}
