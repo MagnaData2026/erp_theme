@@ -83,7 +83,7 @@
                 parentRow.style.setProperty('gap', '15px', 'important');
 
                 const wrapper = document.createElement('div');
-                wrapper.id = 'frappe-injected-temp-card';
+                wrapper.id = 'https://magnaerp.tjdem.online/deskfrappe-injected-temp-card';
                 wrapper.className = 'dashboard-widget-box';
                 wrapper.innerHTML = getTempWidgetHTML(42.5);
                 

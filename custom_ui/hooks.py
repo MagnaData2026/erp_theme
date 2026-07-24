@@ -15,7 +15,7 @@ app_include_js = [
 	"sidebar_custom.bundle.js",
 	"chatbot_widget.bundle.jsx",
 	"iot_dashboard.bundle.js",
-	"manufacturing_dashboard_injector.bundle.js",
+	# "manufacturing_dashboard_injector.bundle.js",
 	# "desktop_theme_modifier.bundle.js"
 	"desk_icon.bundle.js",
 	"branding.js", 
