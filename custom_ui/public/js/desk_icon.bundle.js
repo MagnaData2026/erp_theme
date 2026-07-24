@@ -23,6 +23,7 @@
         "Frappe HR": "user-check",
         "MagnaHR": "user",
         "CRM": "briefcase-business",
+        "MagnaERP": "cpu",
 
         // Framework Sub-Items
         "Automation": "cpu",
@@ -76,6 +77,7 @@
         "Frappe HR": "linear-gradient(135deg, #f87171 0%, #dc2626 100%)",
         "MagnaHR": "linear-gradient(135deg, #34d399 0%, #059669 100%)",
         "CRM": "linear-gradient(135deg, #f472b6 0%, #db2777 100%)",
+        "MagnaERP": "linear-gradient(135deg, #818cf8 0%, #4f46e5 100%)"
     };
 
     // High-Contrast Deep Glow Shadow Values
@@ -96,6 +98,7 @@
         "Frappe HR": "rgba(220, 38, 38, 0.55)",
         "MagnaHR": "rgba(5, 150, 105, 0.55)",
         "CRM": "rgba(219, 39, 119, 0.55)",
+        "MagnaERP": "rgba(79, 70, 229, 0.55)"
     };
 
     function injectLucideIcon(element, iconName, label) {
