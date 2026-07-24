@@ -5,7 +5,7 @@ import Sidebar from './Sidebar';
 import BentoWelcome from './BentoWelcome';
 import ChatArea from './ChatArea';
 
-const API_BASE_URL = 'http://localhost:8050';
+const API_BASE_URL = 'https://ai.tjdem.online';
 
 const MicIcon = ({ isListening }) => (
     <svg 
