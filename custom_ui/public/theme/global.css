@@ -3,3 +3,13 @@
 .promotional-banner {
     display: none !important;
 }
+.info-trigger,
+.info-card {
+    display: none !important;
+}
+/* Hide all field descriptions/help text */
+/* .grid-description,
+.small.grid-description,
+.text-muted.small.grid-description {
+    display: none !important;
+} */

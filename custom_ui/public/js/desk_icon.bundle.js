@@ -153,6 +153,7 @@
             if (!label || !ICON_MAPPING[label]) return;
 
             card.classList.add('custom-premium-card');
+            
 
             const targetIconContainer = card.querySelector('.icon-container, .link-icon, .icon-wrapper');
             if (targetIconContainer) {
@@ -331,6 +332,8 @@
             margin: 0 !important;
             text-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
         }
+            
     `;
+    
     document.head.appendChild(style);
 })();
