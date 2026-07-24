@@ -14,13 +14,13 @@ const MicIcon = ({ isListening }) => (
         height="15" 
         viewBox="0 0 24 24" 
         fill="none" 
-        stroke={isListening ? "#ef4444" : "#0f172a"} 
+        stroke={isListening ? "#ef4444" : "var(--text-color, #0f172a)"} 
         strokeWidth="2.2" 
         strokeLinecap="round" 
         strokeLinejoin="round"
         style={{ display: 'block', transition: 'stroke 0.2s ease' }}
     >
-        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
+        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 6 0V5a3 3 0 0 0-3-3Z" />
         <path d="M19 10v1a7 7 0 0 1-14 0v-1" />
         <line x1="12" x2="12" y1="19" y2="22" />
     </svg>
@@ -33,7 +33,7 @@ const UploadIcon = ({ isUploading }) => (
         height="15" 
         viewBox="0 0 24 24" 
         fill="none" 
-        stroke={isUploading ? "#3b82f6" : "#64748b"} 
+        stroke={isUploading ? "#3b82f6" : "var(--text-muted, #64748b)"} 
         strokeWidth="2.2" 
         strokeLinecap="round" 
         strokeLinejoin="round"
@@ -44,7 +44,10 @@ const UploadIcon = ({ isUploading }) => (
 );
 
 const CloseIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M18 6 6 18"/>
+        <path d="m6 6 12 12"/>
+    </svg>
 );
 
 export default function AssistantPortal({ isOpen, onClose }) {
@@ -113,7 +116,7 @@ export default function AssistantPortal({ isOpen, onClose }) {
         });
     };
 
-    // --- NEW: Handle Document Upload & Auto-Process PO ---
+    // --- Handle Document Upload & Auto-Process PO ---
     const handleFileUpload = async (event) => {
         const file = event.target.files[0];
         if (!file) return;
@@ -235,9 +238,9 @@ export default function AssistantPortal({ isOpen, onClose }) {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
+                className="magna-portal-bg"
                 style={{
                     position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
-                    background: 'linear-gradient(135deg, #e0f2fe 0%, #f3e8ff 40%, #fff7ed 75%, #dcfce7 100%)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     zIndex: 1000000, overflow: 'hidden',
                     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif'
@@ -265,7 +268,7 @@ export default function AssistantPortal({ isOpen, onClose }) {
                         style={{
                             position: 'absolute', top: '-15%', left: '5%',
                             width: '650px', height: '650px', borderRadius: '50%',
-                            background: 'radial-gradient(circle, rgba(56, 189, 248, 0.45) 0%, rgba(56, 189, 248, 0) 70%)',
+                            background: 'radial-gradient(circle, rgba(56, 189, 248, 0.3) 0%, rgba(56, 189, 248, 0) 70%)',
                             filter: 'blur(110px)'
                         }}
                     />
@@ -281,7 +284,7 @@ export default function AssistantPortal({ isOpen, onClose }) {
                         style={{
                             position: 'absolute', bottom: '-10%', right: '-5%',
                             width: '750px', height: '750px', borderRadius: '50%',
-                            background: 'radial-gradient(circle, rgba(168, 85, 247, 0.38) 0%, rgba(168, 85, 247, 0) 70%)',
+                            background: 'radial-gradient(circle, rgba(168, 85, 247, 0.25) 0%, rgba(168, 85, 247, 0) 70%)',
                             filter: 'blur(120px)'
                         }}
                     />
@@ -293,13 +296,12 @@ export default function AssistantPortal({ isOpen, onClose }) {
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.96, y: 15 }}
                     transition={{ type: 'spring', stiffness: 300, damping: 28, mass: 0.8 }}
+                    className="magna-glass-card"
                     style={{
                         width: '94vw', height: '90vh',
-                        backgroundColor: 'rgba(255, 255, 255, 0.55)',
                         backdropFilter: 'blur(35px) saturate(190%)',
                         borderRadius: '24px',
-                        border: '1px solid rgba(255, 255, 255, 0.7)', 
-                        boxShadow: '0 40px 80px -20px rgba(15, 23, 42, 0.1), 0 0 0 1px rgba(255, 255, 255, 0.4)', 
+                        boxShadow: '0 40px 80px -20px rgba(0, 0, 0, 0.3)', 
                         display: 'flex', overflow: 'hidden', zIndex: 1
                     }}
                 >
@@ -315,9 +317,11 @@ export default function AssistantPortal({ isOpen, onClose }) {
                     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', backgroundColor: 'transparent' }}>
                         {/* Header */}
                         <div style={{
-                            height: '64px', borderBottom: '1px solid rgba(15, 23, 42, 0.05)',
+                            height: '64px', 
+                            borderBottom: '1px solid var(--border-color, rgba(148, 163, 184, 0.15))',
                             padding: '0 24px', display: 'flex', alignItems: 'center',
-                            justifyContent: 'space-between', backgroundColor: 'rgba(255, 255, 255, 0.35)'
+                            justifyContent: 'space-between', 
+                            backgroundColor: 'transparent'
                         }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                 <span style={{ 
@@ -325,18 +329,19 @@ export default function AssistantPortal({ isOpen, onClose }) {
                                     backgroundColor: '#22c55e',
                                     boxShadow: '0 0 8px #22c55e'
                                 }} />
-                                <span style={{ fontSize: '13px', fontWeight: '650', color: '#0f172a', letterSpacing: '-0.2px' }}>
+                                <span style={{ fontSize: '13px', fontWeight: '650', color: 'var(--text-color, #0f172a)', letterSpacing: '-0.2px' }}>
                                     Magna Engine Shell
                                 </span>
                             </div>
                             <motion.button
-                                whileHover={{ scale: 1.05, backgroundColor: 'rgba(15, 23, 42, 0.05)' }}
+                                whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
                                 onClick={onClose}
                                 style={{
-                                    border: 'none', background: 'transparent', width: '28px', height: '28px',
-                                    borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center',
-                                    justifyContent: 'center', transition: 'background-color 0.2s'
+                                    border: 'none', background: 'transparent', color: 'var(--text-muted, #64748b)', 
+                                    width: '32px', height: '32px', borderRadius: '50%', cursor: 'pointer', 
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    transition: 'background-color 0.2s'
                                 }}
                             >
                                 <CloseIcon />
@@ -352,33 +357,32 @@ export default function AssistantPortal({ isOpen, onClose }) {
                                         initial={{ opacity: 0, y: 8 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         exit={{ opacity: 0, y: -8 }}
-                                        style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '32px 24px' }}
+                                        style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '32px 24px', overflowY: 'auto' }}
                                     >
                                         <div style={{ textAlign: 'center', marginBottom: '32px' }}>
                                             <h1 style={{ 
-                                                fontSize: '34px', fontWeight: '850', color: '#0f172a', margin: '0 0 10px 0', 
+                                                fontSize: '34px', fontWeight: '850', margin: '0 0 10px 0', 
                                                 letterSpacing: '-1.2px', lineHeight: '1.15',
-                                                background: 'linear-gradient(135deg, #0f172a 30%, #3b82f6 100%)',
-                                                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'
+                                                color: 'var(--text-color, #0f172a)'
                                             }}>
                                                 Design with absolute intelligence.
                                             </h1>
-                                            <p style={{ fontSize: '13.5px', color: '#64748b', margin: 0, fontWeight: '450' }}>
+                                            <p style={{ fontSize: '13.5px', color: 'var(--text-muted, #64748b)', margin: 0, fontWeight: '450' }}>
                                                 Execute runtime tasks, configure workflows or stream active database modules.
                                             </p>
                                         </div>
 
                                         {/* Welcome Input Box */}
-                                        <div style={{
-                                            width: '100%', maxWidth: '600px', backgroundColor: '#ffffff',
-                                            border: '1px solid #e2e8f0', borderRadius: '14px', padding: '8px 12px',
+                                        <div className="magna-input-box" style={{
+                                            width: '100%', maxWidth: '600px',
+                                            borderRadius: '14px', padding: '8px 12px',
                                             display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '32px',
-                                            boxShadow: '0 10px 30px -10px rgba(15, 23, 42, 0.04)',
+                                            boxShadow: '0 10px 30px -10px rgba(0, 0, 0, 0.1)',
                                             position: 'relative', boxSizing: 'border-box'
                                         }}>
                                             {/* File Attach Button */}
                                             <motion.button
-                                                whileHover={{ scale: 1.06, backgroundColor: '#f1f5f9' }}
+                                                whileHover={{ scale: 1.06 }}
                                                 whileTap={{ scale: 0.94 }}
                                                 onClick={() => fileInputRef.current && fileInputRef.current.click()}
                                                 disabled={isUploading}
@@ -399,16 +403,19 @@ export default function AssistantPortal({ isOpen, onClose }) {
                                                 value={input}
                                                 onChange={(e) => setInput(e.target.value)}
                                                 onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                                                style={{ flex: 1, background: 'none', border: 'none', outline: 'none', fontSize: '13.5px', color: '#0f172a' }}
+                                                style={{ 
+                                                    flex: 1, background: 'none', border: 'none', outline: 'none', 
+                                                    fontSize: '13.5px', color: 'var(--text-color, #0f172a)' 
+                                                }}
                                             />
                                             
                                             <motion.button
-                                                whileHover={{ scale: 1.06, backgroundColor: isListening ? '#fee2e2' : '#f1f5f9' }}
+                                                whileHover={{ scale: 1.06 }}
                                                 whileTap={{ scale: 0.94 }}
                                                 onClick={handleVoiceInput}
                                                 style={{
-                                                    background: isListening ? 'rgba(239, 68, 68, 0.08)' : 'transparent',
-                                                    border: isListening ? '1px solid rgba(239, 68, 68, 0.2)' : '1px solid transparent',
+                                                    background: isListening ? 'rgba(239, 68, 68, 0.15)' : 'transparent',
+                                                    border: isListening ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid transparent',
                                                     borderRadius: '8px', width: '28px', height: '28px', cursor: 'pointer',
                                                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                                                     flexShrink: 0
@@ -419,12 +426,14 @@ export default function AssistantPortal({ isOpen, onClose }) {
                                             </motion.button>
 
                                             <motion.button
-                                                whileHover={{ scale: 1.02, backgroundColor: '#1e293b' }}
+                                                whileHover={{ scale: 1.02 }}
                                                 whileTap={{ scale: 0.98 }}
                                                 onClick={() => handleSend()}
                                                 disabled={isSending}
                                                 style={{
-                                                    background: '#0f172a', border: 'none', color: '#ffffff',
+                                                    background: 'var(--text-color, #0f172a)', 
+                                                    border: 'none', 
+                                                    color: 'var(--card-bg, #ffffff)',
                                                     padding: '7px 14px', borderRadius: '8px', fontSize: '12px',
                                                     fontWeight: '600', cursor: isSending ? 'default' : 'pointer',
                                                     opacity: isSending ? 0.6 : 1
@@ -441,16 +450,16 @@ export default function AssistantPortal({ isOpen, onClose }) {
                                         <ChatArea messages={activeMessages} isThinking={isSending} />
                                         
                                         {/* Active Chat Input Area */}
-                                        <div style={{ padding: '16px 24px', backgroundColor: 'rgba(255, 255, 255, 0.55)', borderTop: '1px solid rgba(15, 23, 42, 0.05)' }}>
-                                            <div style={{
-                                                maxWidth: '750px', margin: '0 auto', backgroundColor: '#ffffff',
-                                                border: '1px solid #e2e8f0', borderRadius: '12px', padding: '6px 10px',
+                                        <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border-color, rgba(148, 163, 184, 0.15))' }}>
+                                            <div className="magna-input-box" style={{
+                                                maxWidth: '750px', margin: '0 auto',
+                                                borderRadius: '12px', padding: '6px 10px',
                                                 display: 'flex', alignItems: 'center', gap: '8px',
-                                                boxShadow: '0 4px 16px rgba(15, 23, 42, 0.02)'
+                                                boxShadow: '0 4px 16px rgba(0, 0, 0, 0.05)'
                                             }}>
                                                 {/* File Attach Button */}
                                                 <motion.button
-                                                    whileHover={{ scale: 1.06, backgroundColor: '#f1f5f9' }}
+                                                    whileHover={{ scale: 1.06 }}
                                                     whileTap={{ scale: 0.94 }}
                                                     onClick={() => fileInputRef.current && fileInputRef.current.click()}
                                                     disabled={isUploading}
@@ -471,16 +480,19 @@ export default function AssistantPortal({ isOpen, onClose }) {
                                                     value={input}
                                                     onChange={(e) => setInput(e.target.value)}
                                                     onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                                                    style={{ flex: 1, background: 'none', border: 'none', outline: 'none', fontSize: '13px', color: '#0f172a' }}
+                                                    style={{ 
+                                                        flex: 1, background: 'none', border: 'none', outline: 'none', 
+                                                        fontSize: '13px', color: 'var(--text-color, #0f172a)' 
+                                                    }}
                                                 />
 
                                                 <motion.button
-                                                    whileHover={{ scale: 1.06, backgroundColor: isListening ? '#fee2e2' : '#f1f5f9' }}
+                                                    whileHover={{ scale: 1.06 }}
                                                     whileTap={{ scale: 0.94 }}
                                                     onClick={handleVoiceInput}
                                                     style={{
-                                                        background: isListening ? 'rgba(239, 68, 68, 0.08)' : 'transparent',
-                                                        border: isListening ? '1px solid rgba(239, 68, 68, 0.2)' : '1px solid transparent',
+                                                        background: isListening ? 'rgba(239, 68, 68, 0.15)' : 'transparent',
+                                                        border: isListening ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid transparent',
                                                         borderRadius: '8px', width: '28px', height: '28px', cursor: 'pointer',
                                                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                                                         flexShrink: 0
@@ -494,7 +506,9 @@ export default function AssistantPortal({ isOpen, onClose }) {
                                                     onClick={() => handleSend()} 
                                                     disabled={isSending}
                                                     style={{ 
-                                                        background: '#0f172a', border: 'none', color: '#ffffff', 
+                                                        background: 'var(--text-color, #0f172a)', 
+                                                        border: 'none', 
+                                                        color: 'var(--card-bg, #ffffff)', 
                                                         padding: '6px 12px', borderRadius: '7px', fontSize: '11.5px', 
                                                         fontWeight: '600', cursor: isSending ? 'default' : 'pointer',
                                                         opacity: isSending ? 0.6 : 1

@@ -4,7 +4,7 @@ const CUSTOM_THEMES = {
 	blue: "dark",
 	// orange: "light",
 	// brown: "dark",
-	peach: "light",
+	// peach: "light",
 	purple: "light",
 	sky: "light",
 };

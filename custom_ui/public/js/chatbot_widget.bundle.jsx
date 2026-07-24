@@ -48,7 +48,7 @@ function injectChatbotButton() {
         const chatButtonHTML = `
             <button 
                 id="magna-navbar-chat-trigger" 
-                class="btn-reset nav-link text-muted" 
+                class="btn-reset nav-link" 
                 title="Open Magna AI Engine"
                 style="
                     display: flex; 
@@ -93,7 +93,6 @@ $(document).on('app_ready', function() {
     injectChatbotButton();
 
     // 2. Continuous MutationObserver to watch DOM over-writes
-    // Isko disconnect nahi karenge taaki routing changes me jab navbar re-render ho, ye instantly trace karle.
     const observer = new MutationObserver((mutations) => {
         injectChatbotButton();
     });
@@ -110,35 +109,53 @@ $(document).on('app_ready', function() {
         }, 100); // 100ms standard render gap buffer
     });
 
-    // 4. Custom Hover/Active CSS Styles
+    // 4. Custom Dark & Light Dynamic Theme Styles (Frappe v16 Compatible)
     const cssText = `
         <style>
+            #magna-navbar-chat-trigger {
+                color: var(--text-muted, #64748b) !important;
+            }
             #magna-navbar-chat-trigger:hover {
-                color: #0f172a !important;
-                background-color: rgba(15, 23, 42, 0.06) !important;
+                color: var(--text-color, #0f172a) !important;
+                background-color: var(--subtle-fg, rgba(15, 23, 42, 0.06)) !important;
                 transform: scale(1.05);
             }
             #magna-navbar-chat-trigger:active {
                 transform: scale(0.95);
             }
+
+            /* Dark Theme Explicit Adjustments for Navbar Button */
+            [data-theme="dark"] #magna-navbar-chat-trigger:hover {
+                background-color: var(--subtle-fg, rgba(255, 255, 255, 0.1)) !important;
+                color: var(--text-color, #f8fafc) !important;
+            }
+
+            /* Input Glow and Theme Styling */
             .magna-glow-input {
                 transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+                border-color: var(--border-color, #e2e8f0) !important;
+                background-color: var(--card-bg, #ffffff) !important;
+                color: var(--text-color, #0f172a) !important;
             }
             .magna-glow-input:focus-within {
-                border-color: #0f172a !important;
-                box-shadow: 0 0 0 4px rgba(15, 23, 42, 0.08) !important;
+                border-color: var(--text-color, #0f172a) !important;
+                box-shadow: 0 0 0 3px var(--subtle-accent, rgba(59, 130, 246, 0.2)) !important;
             }
+
+            /* Native Custom Scrollbars */
             #magna-ai-copilot-container *::-webkit-scrollbar {
-                width: 5px; height: 5px;
+                width: 5px; 
+                height: 5px;
             }
             #magna-ai-copilot-container *::-webkit-scrollbar-track {
                 background: transparent;
             }
             #magna-ai-copilot-container *::-webkit-scrollbar-thumb {
-                background: #e2e8f0; border-radius: 99px;
+                background: var(--border-color, #e2e8f0); 
+                border-radius: 99px;
             }
             #magna-ai-copilot-container *::-webkit-scrollbar-thumb:hover {
-                background: #cbd5e1;
+                background: var(--text-muted, #cbd5e1);
             }
         </style>
     `;
@@ -156,7 +173,7 @@ $(document).on('app_ready', function() {
         <MagnaAICopilotApp registerOpenHandler={(fn) => { openPortalFn = fn; }} />
     );
 
-    // 6. Global event delegate (bina bypass ke, body element par permanently bound)
+    // 6. Global event delegate
     $(document).on('click', '#magna-navbar-chat-trigger', function(e) {
         e.preventDefault();
         e.stopPropagation();
