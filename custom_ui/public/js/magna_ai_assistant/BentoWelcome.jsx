@@ -42,11 +42,10 @@ export default function BentoWelcome({ onCardClick }) {
             icon: (color) => <ZapIcon strokeColor={color} />,
             theme: {
                 accent: "#0ea5e9", // Sky Blue
-                bgGradient: "linear-gradient(135deg, rgba(240, 249, 255, 0.5) 0%, rgba(255, 255, 255, 0.4) 100%)",
-                border: "rgba(14, 165, 233, 0.15)",
+                border: "rgba(14, 165, 233, 0.25)",
                 hoverBorder: "#0ea5e9",
                 glow: "rgba(14, 165, 233, 0.25)",
-                iconBg: "rgba(14, 165, 233, 0.12)"
+                iconBg: "rgba(14, 165, 233, 0.15)"
             }
         },
         { 
@@ -55,11 +54,10 @@ export default function BentoWelcome({ onCardClick }) {
             icon: (color) => <BotIcon strokeColor={color} />,
             theme: {
                 accent: "#a855f7", // Violet
-                bgGradient: "linear-gradient(135deg, rgba(250, 245, 255, 0.5) 0%, rgba(255, 255, 255, 0.4) 100%)",
-                border: "rgba(168, 85, 247, 0.15)",
+                border: "rgba(168, 85, 247, 0.25)",
                 hoverBorder: "#a855f7",
                 glow: "rgba(168, 85, 247, 0.25)",
-                iconBg: "rgba(168, 85, 247, 0.12)"
+                iconBg: "rgba(168, 85, 247, 0.15)"
             }
         },
         { 
@@ -68,11 +66,10 @@ export default function BentoWelcome({ onCardClick }) {
             icon: (color) => <GlobeIcon strokeColor={color} />,
             theme: {
                 accent: "#10b981", // Emerald
-                bgGradient: "linear-gradient(135deg, rgba(240, 2df, 244, 0.5) 0%, rgba(255, 255, 255, 0.4) 100%)",
-                border: "rgba(16, 185, 129, 0.15)",
+                border: "rgba(16, 185, 129, 0.25)",
                 hoverBorder: "#10b981",
                 glow: "rgba(16, 185, 129, 0.25)",
-                iconBg: "rgba(16, 185, 129, 0.12)"
+                iconBg: "rgba(16, 185, 129, 0.15)"
             }
         },
         { 
@@ -81,11 +78,10 @@ export default function BentoWelcome({ onCardClick }) {
             icon: (color) => <WrenchIcon strokeColor={color} />,
             theme: {
                 accent: "#f97316", // Orange
-                bgGradient: "linear-gradient(135deg, rgba(255, 247, 237, 0.5) 0%, rgba(255, 255, 255, 0.4) 100%)",
-                border: "rgba(249, 115, 22, 0.15)",
+                border: "rgba(249, 115, 22, 0.25)",
                 hoverBorder: "#f97316",
                 glow: "rgba(249, 115, 22, 0.25)",
-                iconBg: "rgba(249, 115, 22, 0.12)"
+                iconBg: "rgba(249, 115, 22, 0.15)"
             }
         }
     ];
@@ -117,12 +113,12 @@ export default function BentoWelcome({ onCardClick }) {
                         y: -5,
                         scale: 1.02,
                         borderColor: card.theme.hoverBorder,
-                        boxShadow: `0 16px 32px -6px ${card.theme.glow}, inset 0 1px 1px rgba(255,255,255,0.8)`
+                        boxShadow: `0 16px 32px -6px ${card.theme.glow}`
                     }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => onCardClick(card.title)}
+                    className="magna-glass-card"
                     style={{
-                        background: card.theme.bgGradient,
                         border: `1px solid ${card.theme.border}`,
                         borderRadius: '16px', 
                         padding: '16px 18px', 
@@ -136,7 +132,7 @@ export default function BentoWelcome({ onCardClick }) {
                         position: 'relative',
                         overflow: 'hidden',
                         backdropFilter: 'blur(20px) saturate(140%)',
-                        boxShadow: '0 4px 20px -6px rgba(15, 23, 42, 0.03), inset 0 1px 0px rgba(255,255,255,0.4)',
+                        boxShadow: '0 4px 20px -6px rgba(0, 0, 0, 0.05)',
                         transition: 'border-color 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1)'
                     }}
                 >
@@ -169,7 +165,7 @@ export default function BentoWelcome({ onCardClick }) {
                         <h3 style={{ 
                             fontSize: '13.5px', 
                             fontWeight: '650', 
-                            color: '#0f172a', // Clean original high contrast slate
+                            color: 'var(--text-color, #0f172a)',
                             margin: 0, 
                             letterSpacing: '-0.2px',
                             lineHeight: '1.4',
@@ -178,13 +174,13 @@ export default function BentoWelcome({ onCardClick }) {
                             {card.title}
                         </h3>
                         
-                        {/* Premium Colorful Mini Hub Box */}
+                        {/* Dynamic Icon Container */}
                         <motion.div 
                             whileHover={{ scale: 1.08 }}
                             style={{ 
                                 backgroundColor: card.theme.iconBg, 
-                                border: `1px solid rgba(255, 255, 255, 0.6)`,
-                                boxShadow: `0 2px 6px -1px rgba(15, 23, 42, 0.03)`,
+                                border: `1px solid ${card.theme.border}`,
+                                boxShadow: `0 2px 6px -1px rgba(0, 0, 0, 0.05)`,
                                 width: '28px', 
                                 height: '28px', 
                                 borderRadius: '8px',
@@ -201,7 +197,7 @@ export default function BentoWelcome({ onCardClick }) {
 
                     <p style={{ 
                         fontSize: '11px', 
-                        color: '#475569', // Clean legible paragraph slate-grey
+                        color: 'var(--text-muted, #475569)',
                         lineHeight: '1.5', 
                         margin: 0, 
                         fontWeight: '450',

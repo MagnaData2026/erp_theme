@@ -37,32 +37,30 @@ function ThinkingIndicator() {
                         width: '6px', height: '6px', borderRadius: '50%', 
                         backgroundColor: '#3b82f6', boxShadow: '0 0 8px #3b82f6' 
                     }} />
-                    <span style={{ fontSize: '11.5px', fontWeight: '650', color: '#475569', letterSpacing: '-0.1px' }}>
+                    <span style={{ fontSize: '11.5px', fontWeight: '650', color: 'var(--text-muted, #64748b)', letterSpacing: '-0.1px' }}>
                         Magna System Agent
                     </span>
                     <span style={{ 
                         fontSize: '9.5px', padding: '1px 6px', borderRadius: '50px', 
-                        backgroundColor: 'rgba(59, 130, 246, 0.08)', 
-                        border: '1px solid rgba(59, 130, 246, 0.12)', 
-                        color: '#2563eb', fontWeight: '600' 
+                        backgroundColor: 'rgba(59, 130, 246, 0.12)', 
+                        border: '1px solid rgba(59, 130, 246, 0.2)', 
+                        color: '#3b82f6', fontWeight: '600' 
                     }}>
                         Thinking...
                     </span>
                 </div>
 
                 {/* Thinking Glass Card */}
-                <div style={{
+                <div className="magna-glass-card" style={{
                     padding: '12px 18px',
                     borderRadius: '18px 18px 18px 4px',
-                    backgroundColor: 'rgba(255, 255, 255, 0.55)',
                     backdropFilter: 'blur(20px)',
-                    border: '1px solid rgba(255, 255, 255, 0.6)',
-                    boxShadow: '0 8px 24px -6px rgba(15, 23, 42, 0.05)',
+                    boxShadow: '0 8px 24px -6px rgba(0, 0, 0, 0.05)',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '10px'
                 }}>
-                    <span style={{ fontSize: '13px', fontWeight: '500', color: 'var(--text-color, #334155)' }}>
+                    <span style={{ fontSize: '13px', fontWeight: '500', color: 'var(--text-color, #0f172a)' }}>
                         Magna AI is thinking
                     </span>
                     
@@ -77,7 +75,7 @@ function ThinkingIndicator() {
                                     width: '5px',
                                     height: '5px',
                                     borderRadius: '50%',
-                                    backgroundColor: '#2563eb',
+                                    backgroundColor: '#3b82f6',
                                     display: 'inline-block'
                                 }}
                             />
@@ -133,32 +131,31 @@ export default function ChatArea({ messages, isThinking }) {
                                                 backgroundColor: '#3b82f6', boxShadow: '0 0 8px #3b82f6' 
                                             }} />
                                         )}
-                                        <span style={{ fontSize: '11.5px', fontWeight: '650', color: '#475569', letterSpacing: '-0.1px' }}>
+                                        <span style={{ fontSize: '11.5px', fontWeight: '650', color: 'var(--text-muted, #64748b)', letterSpacing: '-0.1px' }}>
                                             {isUser ? 'Workspace Executive' : 'Magna System Agent'}
                                         </span>
                                         <span style={{ 
                                             fontSize: '9.5px', padding: '1px 6px', borderRadius: '50px', 
-                                            backgroundColor: isUser ? 'rgba(15, 23, 42, 0.05)' : 'rgba(59, 130, 246, 0.08)', 
-                                            border: isUser ? '1px solid rgba(15, 23, 42, 0.04)' : '1px solid rgba(59, 130, 246, 0.12)', 
-                                            color: isUser ? '#475569' : '#2563eb', fontWeight: '600' 
+                                            backgroundColor: isUser ? 'var(--border-color, rgba(148, 163, 184, 0.15))' : 'rgba(59, 130, 246, 0.12)', 
+                                            border: isUser ? '1px solid var(--border-color, rgba(148, 163, 184, 0.2))' : '1px solid rgba(59, 130, 246, 0.2)', 
+                                            color: isUser ? 'var(--text-muted, #64748b)' : '#3b82f6', fontWeight: '600' 
                                         }}>
                                             {isUser ? 'Prompt' : 'Engine Response'}
                                         </span>
                                     </div>
 
                                     {/* Message Glass Bubble Card */}
-                                    <div style={{
-                                        padding: '14px 18px',
-                                        borderRadius: isUser ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
-                                        backgroundColor: isUser ? '#ffffff' : 'rgba(255, 255, 255, 0.55)',
-                                        backdropFilter: isUser ? 'none' : 'blur(20px)',
-                                        border: isUser ? '1px solid #e2e8f0' : '1px solid rgba(255, 255, 255, 0.6)',
-                                        boxShadow: isUser 
-                                            ? '0 4px 12px -2px rgba(15, 23, 42, 0.03), inset 0 1px 0px #ffffff' 
-                                            : '0 8px 24px -6px rgba(15, 23, 42, 0.05), inset 0 1px 0px rgba(255, 255, 255, 0.8)',
-                                        textAlign: 'left',
-                                        position: 'relative'
-                                    }}>
+                                    <div 
+                                        className={isUser ? "magna-input-box" : "magna-glass-card"}
+                                        style={{
+                                            padding: '14px 18px',
+                                            borderRadius: isUser ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
+                                            backdropFilter: 'blur(20px)',
+                                            boxShadow: '0 4px 16px -2px rgba(0, 0, 0, 0.05)',
+                                            textAlign: 'left',
+                                            position: 'relative'
+                                        }}
+                                    >
                                         <div style={{ 
                                             fontSize: '13.5px', 
                                             lineHeight: '1.6', 
