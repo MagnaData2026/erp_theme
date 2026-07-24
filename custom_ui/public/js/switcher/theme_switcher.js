@@ -3,6 +3,20 @@ const OriginalThemeSwitcher = frappe.ui.ThemeSwitcher;
 frappe.ui.ThemeSwitcher = class extends OriginalThemeSwitcher {
 	async fetch_themes() {
 		await super.fetch_themes();
+		await super.fetch_themes();
+
+		// Rename default themes
+		this.themes.forEach((theme) => {
+			if (theme.name === "light") {
+				theme.label = __("Light Theme");
+				theme.info = __("Light Theme");
+			}
+
+			if (theme.name === "dark") {
+				theme.label = __("Dark Theme");
+				theme.info = __("Dark Theme");
+			}
+		});
 
 		this.themes.splice(
 			2,
@@ -22,12 +36,12 @@ frappe.ui.ThemeSwitcher = class extends OriginalThemeSwitcher {
 			// 	label: __("Coffee Brown"),
 			// 	info: __("Brown Theme"),
 			// },
-			{
-				name: "peach",
-				label: __("Peach Orange"),
-				info: __("Peach Theme"),
-				preview_class: "preview-peach",
-			},
+			// {
+			// 	name: "peach",
+			// 	label: __("Peach Orange"),
+			// 	info: __("Peach Theme"),
+			// 	preview_class: "preview-peach",
+			// },
 			{
 				name: "sky",
 				label: __("Sky Blue"),
@@ -46,9 +60,9 @@ frappe.ui.ThemeSwitcher = class extends OriginalThemeSwitcher {
 	get_preview_html(theme) {
 		const custom_themes = {
 			blue: "dark",
-			orange: "light",
-			brown: "dark",
-			peach: "light",
+			// orange: "light",
+			// brown: "dark",
+			// peach: "light",
 			purple: "light",
 			sky: "light",
 
