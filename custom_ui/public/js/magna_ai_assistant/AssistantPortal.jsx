@@ -26,14 +26,14 @@ const MicIcon = ({ isListening }) => (
     </svg>
 );
 
-const UploadIcon = ({ isUploading }) => (
+const UploadIcon = ({ isUploading, count }) => (
     <svg 
         xmlns="http://www.w3.org/2000/svg" 
         width="15" 
         height="15" 
         viewBox="0 0 24 24" 
         fill="none" 
-        stroke={isUploading ? "#3b82f6" : "var(--text-muted, #64748b)"} 
+        stroke={count > 0 ? "#0284c7" : isUploading ? "#3b82f6" : "var(--text-muted, #64748b)"} 
         strokeWidth="2.2" 
         strokeLinecap="round" 
         strokeLinejoin="round"
@@ -68,6 +68,9 @@ export default function AssistantPortal({ isOpen, onClose }) {
     const [isListening, setIsListening] = useState(false);
     const [isSending, setIsSending] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
+    
+    // MULTI-FILE STATE
+    const [selectedFiles, setSelectedFiles] = useState([]);
 
     const fileInputRef = useRef(null);
 
@@ -116,121 +119,186 @@ export default function AssistantPortal({ isOpen, onClose }) {
         });
     };
 
-    // --- Handle Document Upload & Auto-Process PO ---
-    const handleFileUpload = async (event) => {
-        const file = event.target.files[0];
-        if (!file) return;
+    const handleFileSelect = (event) => {
+        const newFiles = Array.from(event.target.files || []);
+        if (newFiles.length === 0) return;
 
-        let activeId = currentChatId;
-        if (!activeId) {
-            activeId = Date.now().toString();
-            const newChatSession = { id: activeId, title: `PO Upload: ${file.name}`, messages: [] };
-            setChatHistory((prev) => [newChatSession, ...prev]);
-            setCurrentChatId(activeId);
-        }
+        setSelectedFiles(prev => [...prev, ...newFiles]);
+        if (fileInputRef.current) fileInputRef.current.value = "";
+    };
 
-        appendMessage(activeId, { sender: 'user', text: `📄 Uploading PO Document: ${file.name}` });
-        setIsUploading(true);
-        setIsSending(true);
-
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('session_id', activeId);
-
-        try {
-            // 1. Send file to Vision OCR endpoint
-            const res = await fetch(`${API_BASE_URL}/api/upload-po`, {
-                method: 'POST',
-                body: formData,
-            });
-
-            if (!res.ok) throw new Error("OCR Processing failed.");
-
-            const ocrResult = await res.json();
-            const data = ocrResult.ocr_data;
-
-            appendMessage(activeId, {
-                sender: 'bot',
-                text: `✅ **PO Extracted Successfully!**\n\n* **Vendor**: ${data.vendor_name || 'N/A'}\n* **PO Ref**: ${data.po_number || 'N/A'}\n* **Delivery Date**: ${data.delivery_date || 'N/A'}\n* **Items Extracted**: ${data.items ? data.items.length : 0}\n\n*Processing Purchase Order creation in ERPNext...*`
-            });
-
-            // 2. Automatically trigger AI Agent to draft the PO in ERPNext
-            const chatPrompt = `Use tool process_ocr_po_and_create_order to create the PO. Vendor: ${data.vendor_name}, PO Number: ${data.po_number || ''}, Delivery Date: ${data.delivery_date || ''}. Items: ${JSON.stringify(data.items || [])}`;
-
-            const chatRes = await fetch(`${API_BASE_URL}/api/chat`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: chatPrompt, session_id: activeId }),
-            });
-
-            const chatData = await chatRes.json();
-            appendMessage(activeId, { sender: 'bot', text: chatData.reply });
-
-            if (chatData.audio) {
-                const audio = new Audio(`data:audio/wav;base64,${chatData.audio}`);
-                audio.play().catch(() => {});
-            }
-
-        } catch (err) {
-            console.error('OCR Upload Error:', err);
-            appendMessage(activeId, {
-                sender: 'bot',
-                text: "❌ Could not process uploaded document. Please verify the server connection and try again.",
-            });
-        } finally {
-            setIsUploading(false);
-            setIsSending(false);
-            if (fileInputRef.current) fileInputRef.current.value = "";
-        }
+    const handleRemoveFile = (indexToRemove) => {
+        setSelectedFiles(prev => prev.filter((_, idx) => idx !== indexToRemove));
     };
 
     const handleSend = async (textToSend) => {
-        const text = textToSend || input;
-        if (!text.trim() || isSending) return;
+        const userPrompt = textToSend || input;
+        const attachedFiles = [...selectedFiles];
+
+        if ((!userPrompt.trim() && attachedFiles.length === 0) || isSending) return;
 
         let activeId = currentChatId;
 
         if (!activeId) {
             activeId = Date.now().toString();
-            const newChatSession = { id: activeId, title: text.substring(0, 30) + (text.length > 30 ? '...' : ''), messages: [] };
+            const sessionTitle = attachedFiles.length > 0 
+                ? `PO Batch (${attachedFiles.length}): ${attachedFiles[0].name}` 
+                : userPrompt.substring(0, 30) + (userPrompt.length > 30 ? '...' : '');
+
+            const newChatSession = { id: activeId, title: sessionTitle, messages: [] };
             setChatHistory((prev) => [newChatSession, ...prev]);
             setCurrentChatId(activeId);
         }
 
-        appendMessage(activeId, { sender: 'user', text });
         setInput('');
+        setSelectedFiles([]);
+        if (fileInputRef.current) fileInputRef.current.value = "";
         setIsSending(true);
 
         try {
-            const response = await fetch(`${API_BASE_URL}/api/chat`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: text, session_id: activeId }),
-            });
+            if (attachedFiles.length > 0) {
+                const filesListText = attachedFiles.map(f => `• 📄 **${f.name}**`).join('\n');
+                const fileMsgText = userPrompt.trim() 
+                    ? `📎 **Attached Files (${attachedFiles.length})**:\n${filesListText}\n\n💬 ${userPrompt}` 
+                    : `📎 **Processing Upload Batch (${attachedFiles.length} files)**:\n${filesListText}`;
 
-            if (!response.ok) {
-                throw new Error(`Agent responded with status ${response.status}`);
-            }
+                appendMessage(activeId, { sender: 'user', text: fileMsgText });
+                setIsUploading(true);
 
-            const data = await response.json();
-            appendMessage(activeId, { sender: 'bot', text: data.reply });
+                for (let i = 0; i < attachedFiles.length; i++) {
+                    const file = attachedFiles[i];
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    formData.append('session_id', activeId);
 
-            if (data.audio) {
-                const audio = new Audio(`data:audio/wav;base64,${data.audio}`);
-                audio.play().catch(() => {});
+                    const res = await fetch(`${API_BASE_URL}/api/upload-po`, {
+                        method: 'POST',
+                        body: formData,
+                    });
+
+                    if (!res.ok) throw new Error(`OCR Processing failed for ${file.name}`);
+
+                    const ocrResult = await res.json();
+                    const data = ocrResult.ocr_data;
+
+                    appendMessage(activeId, {
+                        sender: 'bot',
+                        text: `✅ **Extracted (${i + 1}/${attachedFiles.length})**: ${file.name}\n\n* **Vendor**: ${data.vendor_name || 'N/A'}\n* **PO Ref**: ${data.po_number || 'N/A'}\n* **Delivery Date**: ${data.delivery_date || 'N/A'}\n* **Items**: ${data.items ? data.items.length : 0}\n\n*Drafting Purchase Order...*`
+                    });
+
+                    const baseOcrPrompt = `Use tool process_ocr_po_and_create_order to create the PO. Vendor: ${data.vendor_name}, PO Number: ${data.po_number || ''}, Delivery Date: ${data.delivery_date || ''}. Items: ${JSON.stringify(data.items || [])}`;
+                    const finalPrompt = userPrompt.trim() 
+                        ? `${baseOcrPrompt}\n\nUser Instructions: ${userPrompt}` 
+                        : baseOcrPrompt;
+
+                    const chatRes = await fetch(`${API_BASE_URL}/api/chat`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ message: finalPrompt, session_id: activeId }),
+                    });
+
+                    const chatData = await chatRes.json();
+                    appendMessage(activeId, { sender: 'bot', text: chatData.reply });
+
+                    if (chatData.audio) {
+                        const audio = new Audio(`data:audio/wav;base64,${chatData.audio}`);
+                        audio.play().catch(() => {});
+                    }
+                }
+            } else {
+                appendMessage(activeId, { sender: 'user', text: userPrompt });
+
+                const response = await fetch(`${API_BASE_URL}/api/chat`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: userPrompt, session_id: activeId }),
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Agent responded with status ${response.status}`);
+                }
+
+                const data = await response.json();
+                appendMessage(activeId, { sender: 'bot', text: data.reply });
+
+                if (data.audio) {
+                    const audio = new Audio(`data:audio/wav;base64,${data.audio}`);
+                    audio.play().catch(() => {});
+                }
             }
         } catch (err) {
-            console.error('Agent request failed:', err);
+            console.error('Execution Error:', err);
             appendMessage(activeId, {
                 sender: 'bot',
-                text: "I couldn't reach the agent backend just now. Make sure ERP/server.py is running and reachable, then try again.",
+                text: "❌ Request processing encountered an issue. Please verify backend state.",
             });
         } finally {
+            setIsUploading(false);
             setIsSending(false);
         }
     };
 
     if (!isOpen) return null;
+
+    // 🟢 Animated Blinking File Badges Component
+    const RenderFileBadges = () => {
+        if (selectedFiles.length === 0) return null;
+        return (
+            <div style={{
+                display: 'flex', flexWrap: 'wrap', gap: '6px',
+                padding: '6px 8px', marginBottom: '4px',
+                maxHeight: '80px', overflowY: 'auto'
+            }}>
+                {selectedFiles.map((file, idx) => (
+                    <motion.div 
+                        key={idx}
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ 
+                            opacity: [0.75, 1, 0.75], 
+                            scale: [0.98, 1.02, 0.98],
+                            borderColor: ['rgba(56, 189, 248, 0.3)', 'rgba(56, 189, 248, 0.8)', 'rgba(56, 189, 248, 0.3)'],
+                            boxShadow: [
+                                '0 0 0px rgba(56, 189, 248, 0)',
+                                '0 0 10px rgba(56, 189, 248, 0.35)',
+                                '0 0 0px rgba(56, 189, 248, 0)'
+                            ]
+                        }}
+                        transition={{ 
+                            duration: 1.8, 
+                            repeat: Infinity, 
+                            ease: 'easeInOut' 
+                        }}
+                        style={{
+                            display: 'inline-flex', alignItems: 'center', gap: '6px',
+                            padding: '4px 10px', borderRadius: '8px',
+                            backgroundColor: 'rgba(56, 189, 248, 0.15)',
+                            border: '1px solid rgba(56, 189, 248, 0.4)',
+                            color: 'var(--text-color, #0f172a)', fontSize: '11.5px',
+                            fontWeight: '600', backdropFilter: 'blur(8px)'
+                        }}
+                    >
+                        {/* Pulse Dot */}
+                        <span style={{
+                            width: '6px', height: '6px', borderRadius: '50%',
+                            backgroundColor: '#38bdf8', boxShadow: '0 0 6px #38bdf8'
+                        }} />
+                        <span>📄 {file.name.length > 22 ? file.name.substring(0, 20) + '...' : file.name}</span>
+                        <button 
+                            onClick={() => handleRemoveFile(idx)}
+                            style={{ 
+                                border: 'none', background: 'none', cursor: 'pointer', 
+                                color: '#ef4444', padding: '0 2px', fontSize: '12px', 
+                                fontWeight: '700', lineHeight: 1 
+                            }}
+                            title="Remove file"
+                        >
+                            ✕
+                        </button>
+                    </motion.div>
+                ))}
+            </div>
+        );
+    };
 
     return (
         <AnimatePresence>
@@ -246,13 +314,14 @@ export default function AssistantPortal({ isOpen, onClose }) {
                     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif'
                 }}
             >
-                {/* Hidden File Input Element */}
+                {/* Hidden File Input Element with MULTIPLE enabled */}
                 <input 
                     type="file" 
                     ref={fileInputRef} 
                     style={{ display: 'none' }} 
                     accept="image/*,application/pdf" 
-                    onChange={handleFileUpload} 
+                    multiple
+                    onChange={handleFileSelect} 
                 />
 
                 {/* DYNAMIC LIQUID GRADIENT BACKGROUND ANIMATION */}
@@ -309,7 +378,7 @@ export default function AssistantPortal({ isOpen, onClose }) {
                         chatHistory={chatHistory} 
                         currentChatId={currentChatId} 
                         onSelectChat={setCurrentChatId} 
-                        onNewChat={() => { setCurrentChatId(null); setMessages([]); setInput(''); }} 
+                        onNewChat={() => { setCurrentChatId(null); setMessages([]); setInput(''); setSelectedFiles([]); }} 
                         isCollapsed={isCollapsed}
                         setIsCollapsed={setIsCollapsed}
                     />
@@ -359,7 +428,7 @@ export default function AssistantPortal({ isOpen, onClose }) {
                                         exit={{ opacity: 0, y: -8 }}
                                         style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '32px 24px', overflowY: 'auto' }}
                                     >
-                                        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+                                        <div style={{ textAlign: 'center', marginBottom: '28px' }}>
                                             <h1 style={{ 
                                                 fontSize: '34px', fontWeight: '850', margin: '0 0 10px 0', 
                                                 letterSpacing: '-1.2px', lineHeight: '1.15',
@@ -372,75 +441,81 @@ export default function AssistantPortal({ isOpen, onClose }) {
                                             </p>
                                         </div>
 
-                                        {/* Welcome Input Box */}
+                                        {/* Seamless Input Card Container */}
                                         <div className="magna-input-box" style={{
-                                            width: '100%', maxWidth: '600px',
-                                            borderRadius: '14px', padding: '8px 12px',
-                                            display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '32px',
-                                            boxShadow: '0 10px 30px -10px rgba(0, 0, 0, 0.1)',
-                                            position: 'relative', boxSizing: 'border-box'
+                                            width: '100%', maxWidth: '640px',
+                                            borderRadius: '16px', padding: '8px 12px',
+                                            display: 'flex', flexDirection: 'column',
+                                            marginBottom: '32px',
+                                            boxShadow: '0 12px 32px -10px rgba(0, 0, 0, 0.08)',
+                                            boxSizing: 'border-box'
                                         }}>
-                                            {/* File Attach Button */}
-                                            <motion.button
-                                                whileHover={{ scale: 1.06 }}
-                                                whileTap={{ scale: 0.94 }}
-                                                onClick={() => fileInputRef.current && fileInputRef.current.click()}
-                                                disabled={isUploading}
-                                                style={{
-                                                    background: 'transparent', border: 'none', borderRadius: '8px',
-                                                    width: '28px', height: '28px', cursor: 'pointer',
-                                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                    flexShrink: 0
-                                                }}
-                                                title="Upload Purchase Order (Image / PDF)"
-                                            >
-                                                <UploadIcon isUploading={isUploading} />
-                                            </motion.button>
+                                            {/* Top Section: Animated File Badges */}
+                                            <RenderFileBadges />
 
-                                            <input
-                                                type="text"
-                                                placeholder="Ask Magna or upload PO document..."
-                                                value={input}
-                                                onChange={(e) => setInput(e.target.value)}
-                                                onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                                                style={{ 
-                                                    flex: 1, background: 'none', border: 'none', outline: 'none', 
-                                                    fontSize: '13.5px', color: 'var(--text-color, #0f172a)' 
-                                                }}
-                                            />
-                                            
-                                            <motion.button
-                                                whileHover={{ scale: 1.06 }}
-                                                whileTap={{ scale: 0.94 }}
-                                                onClick={handleVoiceInput}
-                                                style={{
-                                                    background: isListening ? 'rgba(239, 68, 68, 0.15)' : 'transparent',
-                                                    border: isListening ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid transparent',
-                                                    borderRadius: '8px', width: '28px', height: '28px', cursor: 'pointer',
-                                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                    flexShrink: 0
-                                                }}
-                                                title="Speak via Audio Input"
-                                            >
-                                                <MicIcon isListening={isListening} />
-                                            </motion.button>
+                                            {/* Bottom Section: Controls & Text Input */}
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%' }}>
+                                                <motion.button
+                                                    whileHover={{ scale: 1.06 }}
+                                                    whileTap={{ scale: 0.94 }}
+                                                    onClick={() => fileInputRef.current && fileInputRef.current.click()}
+                                                    disabled={isUploading}
+                                                    style={{
+                                                        background: 'transparent', border: 'none', borderRadius: '8px',
+                                                        width: '28px', height: '28px', cursor: 'pointer',
+                                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                        flexShrink: 0
+                                                    }}
+                                                    title="Upload PO Documents (PDF / Images)"
+                                                >
+                                                    <UploadIcon isUploading={isUploading} count={selectedFiles.length} />
+                                                </motion.button>
 
-                                            <motion.button
-                                                whileHover={{ scale: 1.02 }}
-                                                whileTap={{ scale: 0.98 }}
-                                                onClick={() => handleSend()}
-                                                disabled={isSending}
-                                                style={{
-                                                    background: 'var(--text-color, #0f172a)', 
-                                                    border: 'none', 
-                                                    color: 'var(--card-bg, #ffffff)',
-                                                    padding: '7px 14px', borderRadius: '8px', fontSize: '12px',
-                                                    fontWeight: '600', cursor: isSending ? 'default' : 'pointer',
-                                                    opacity: isSending ? 0.6 : 1
-                                                }}
-                                            >
-                                                {isSending ? 'Executing…' : 'Execute'}
-                                            </motion.button>
+                                                <input
+                                                    type="text"
+                                                    placeholder={selectedFiles.length > 0 ? `Add prompt for ${selectedFiles.length} file(s) or press Execute...` : "Ask Magna or attach PO documents..."}
+                                                    value={input}
+                                                    onChange={(e) => setInput(e.target.value)}
+                                                    onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                                                    style={{ 
+                                                        flex: 1, background: 'none', border: 'none', outline: 'none', 
+                                                        fontSize: '13.5px', color: 'var(--text-color, #0f172a)' 
+                                                    }}
+                                                />
+                                                
+                                                <motion.button
+                                                    whileHover={{ scale: 1.06 }}
+                                                    whileTap={{ scale: 0.94 }}
+                                                    onClick={handleVoiceInput}
+                                                    style={{
+                                                        background: isListening ? 'rgba(239, 68, 68, 0.15)' : 'transparent',
+                                                        border: isListening ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid transparent',
+                                                        borderRadius: '8px', width: '28px', height: '28px', cursor: 'pointer',
+                                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                        flexShrink: 0
+                                                    }}
+                                                    title="Speak via Voice"
+                                                >
+                                                    <MicIcon isListening={isListening} />
+                                                </motion.button>
+
+                                                <motion.button
+                                                    whileHover={{ scale: 1.02 }}
+                                                    whileTap={{ scale: 0.98 }}
+                                                    onClick={() => handleSend()}
+                                                    disabled={isSending}
+                                                    style={{
+                                                        background: 'var(--text-color, #0f172a)', 
+                                                        border: 'none', 
+                                                        color: 'var(--card-bg, #ffffff)',
+                                                        padding: '7px 15px', borderRadius: '9px', fontSize: '12px',
+                                                        fontWeight: '600', cursor: isSending ? 'default' : 'pointer',
+                                                        opacity: isSending ? 0.6 : 1
+                                                    }}
+                                                >
+                                                    {isSending ? 'Executing…' : 'Execute'}
+                                                </motion.button>
+                                            </div>
                                         </div>
 
                                         <BentoWelcome onCardClick={handleSend} />
@@ -453,69 +528,73 @@ export default function AssistantPortal({ isOpen, onClose }) {
                                         <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border-color, rgba(148, 163, 184, 0.15))' }}>
                                             <div className="magna-input-box" style={{
                                                 maxWidth: '750px', margin: '0 auto',
-                                                borderRadius: '12px', padding: '6px 10px',
-                                                display: 'flex', alignItems: 'center', gap: '8px',
-                                                boxShadow: '0 4px 16px rgba(0, 0, 0, 0.05)'
+                                                borderRadius: '14px', padding: '6px 10px',
+                                                display: 'flex', flexDirection: 'column',
+                                                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)'
                                             }}>
-                                                {/* File Attach Button */}
-                                                <motion.button
-                                                    whileHover={{ scale: 1.06 }}
-                                                    whileTap={{ scale: 0.94 }}
-                                                    onClick={() => fileInputRef.current && fileInputRef.current.click()}
-                                                    disabled={isUploading}
-                                                    style={{
-                                                        background: 'transparent', border: 'none', borderRadius: '8px',
-                                                        width: '28px', height: '28px', cursor: 'pointer',
-                                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                        flexShrink: 0
-                                                    }}
-                                                    title="Upload Purchase Order (Image / PDF)"
-                                                >
-                                                    <UploadIcon isUploading={isUploading} />
-                                                </motion.button>
+                                                {/* File Badges Area */}
+                                                <RenderFileBadges />
 
-                                                <input
-                                                    type="text"
-                                                    placeholder="Reply or upload document..."
-                                                    value={input}
-                                                    onChange={(e) => setInput(e.target.value)}
-                                                    onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                                                    style={{ 
-                                                        flex: 1, background: 'none', border: 'none', outline: 'none', 
-                                                        fontSize: '13px', color: 'var(--text-color, #0f172a)' 
-                                                    }}
-                                                />
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%' }}>
+                                                    <motion.button
+                                                        whileHover={{ scale: 1.06 }}
+                                                        whileTap={{ scale: 0.94 }}
+                                                        onClick={() => fileInputRef.current && fileInputRef.current.click()}
+                                                        disabled={isUploading}
+                                                        style={{
+                                                            background: 'transparent', border: 'none', borderRadius: '8px',
+                                                            width: '28px', height: '28px', cursor: 'pointer',
+                                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                            flexShrink: 0
+                                                        }}
+                                                        title="Upload PO Documents (PDF / Images)"
+                                                    >
+                                                        <UploadIcon isUploading={isUploading} count={selectedFiles.length} />
+                                                    </motion.button>
 
-                                                <motion.button
-                                                    whileHover={{ scale: 1.06 }}
-                                                    whileTap={{ scale: 0.94 }}
-                                                    onClick={handleVoiceInput}
-                                                    style={{
-                                                        background: isListening ? 'rgba(239, 68, 68, 0.15)' : 'transparent',
-                                                        border: isListening ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid transparent',
-                                                        borderRadius: '8px', width: '28px', height: '28px', cursor: 'pointer',
-                                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                        flexShrink: 0
-                                                    }}
-                                                    title="Speak via Audio Input"
-                                                >
-                                                    <MicIcon isListening={isListening} />
-                                                </motion.button>
+                                                    <input
+                                                        type="text"
+                                                        placeholder={selectedFiles.length > 0 ? `Add instructions for attached ${selectedFiles.length} file(s)...` : "Reply or upload document..."}
+                                                        value={input}
+                                                        onChange={(e) => setInput(e.target.value)}
+                                                        onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                                                        style={{ 
+                                                            flex: 1, background: 'none', border: 'none', outline: 'none', 
+                                                            fontSize: '13px', color: 'var(--text-color, #0f172a)' 
+                                                        }}
+                                                    />
 
-                                                <button 
-                                                    onClick={() => handleSend()} 
-                                                    disabled={isSending}
-                                                    style={{ 
-                                                        background: 'var(--text-color, #0f172a)', 
-                                                        border: 'none', 
-                                                        color: 'var(--card-bg, #ffffff)', 
-                                                        padding: '6px 12px', borderRadius: '7px', fontSize: '11.5px', 
-                                                        fontWeight: '600', cursor: isSending ? 'default' : 'pointer',
-                                                        opacity: isSending ? 0.6 : 1
-                                                    }}
-                                                >
-                                                    {isSending ? '…' : 'Send'}
-                                                </button>
+                                                    <motion.button
+                                                        whileHover={{ scale: 1.06 }}
+                                                        whileTap={{ scale: 0.94 }}
+                                                        onClick={handleVoiceInput}
+                                                        style={{
+                                                            background: isListening ? 'rgba(239, 68, 68, 0.15)' : 'transparent',
+                                                            border: isListening ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid transparent',
+                                                            borderRadius: '8px', width: '28px', height: '28px', cursor: 'pointer',
+                                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                            flexShrink: 0
+                                                        }}
+                                                        title="Speak via Voice"
+                                                    >
+                                                        <MicIcon isListening={isListening} />
+                                                    </motion.button>
+
+                                                    <button 
+                                                        onClick={() => handleSend()} 
+                                                        disabled={isSending}
+                                                        style={{ 
+                                                            background: 'var(--text-color, #0f172a)', 
+                                                            border: 'none', 
+                                                            color: 'var(--card-bg, #ffffff)', 
+                                                            padding: '6px 14px', borderRadius: '8px', fontSize: '11.5px', 
+                                                            fontWeight: '600', cursor: isSending ? 'default' : 'pointer',
+                                                            opacity: isSending ? 0.6 : 1
+                                                        }}
+                                                    >
+                                                        {isSending ? '…' : 'Send'}
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
                                     </motion.div>
