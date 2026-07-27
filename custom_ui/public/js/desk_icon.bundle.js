@@ -1,19 +1,34 @@
 /**
  * Custom UI - Dynamic Theme Adaptive Premium Grid Icon Mapper for Frappe v16
- * Fixes: Added Home, Support, MagnaERP + Removed Icons Fallback Support
+ * Fix: Exact Dynamic SPA Route Checking for Consistent Smooth Scrolling Across All Pages
  */
 
 (function () {
-    // Lock Scroll Across Viewports
+    // 1. Precise Frappe Route Checker
+    function isOnlyDeskHome() {
+        if (window.frappe && frappe.get_route) {
+            const currentRoute = frappe.get_route();
+            // Checking if current active view is strictly the main Desk Home/Workspaces grid
+            return Array.isArray(currentRoute) && (currentRoute.length === 0 || currentRoute[0] === 'desk' || currentRoute[0] === 'workspaces');
+        }
+        // Fallback DOM Inspection
+        return Boolean(document.querySelector('.desktop-wrapper, .workspace-desktop') && !document.querySelector('.page-container .form-page, .list-page, .report-page, .modal-open'));
+    }
+
+    // 2. Event Listeners with Active Route Validation
     window.addEventListener('wheel', function (e) {
-        e.preventDefault();
+        if (isOnlyDeskHome()) {
+            e.preventDefault();
+        }
     }, { passive: false });
 
     window.addEventListener('touchmove', function (e) {
-        e.preventDefault();
+        if (isOnlyDeskHome()) {
+            e.preventDefault();
+        }
     }, { passive: false });
 
-    // Lucide Icon Mapping (Added Home, Support, MagnaERP)
+    // Lucide Icon Mapping
     const ICON_MAPPING = {
         // Main Workspace & Common Desk Icons
         "Home": "home",
@@ -70,7 +85,7 @@
         "Tenure": "hourglass"
     };
 
-    // Color Gradients per Module
+    // Color Gradients
     const COLOR_MAPPING = {
         "Home": "linear-gradient(135deg, #64748b 0%, #334155 100%)",
         "Support": "linear-gradient(135deg, #f97316 0%, #ea580c 100%)",
@@ -93,7 +108,7 @@
         "MagnaHR": "linear-gradient(135deg, #34d399 0%, #059669 100%)"
     };
 
-    // Deep Glow Shadow Values
+    // Glow Shadows
     const SHADOW_MAPPING = {
         "Home": "rgba(51, 65, 85, 0.65)",
         "Support": "rgba(234, 88, 12, 0.65)",
@@ -153,12 +168,11 @@
             element.style.visibility = "visible";
 
         } catch (error) {
-            console.error(`[MagnaERP UI] Render error for ${iconName}:`, error);
+            console.error(`[MagnaERP UI] Render error:`, error);
         }
     }
 
     function executeGlobalIconScan() {
-        // Target active desktop cards + removed section icons in edit mode
         const targetCards = document.querySelectorAll('.desktop-icon, .workspace-link-item, [data-link-type="workspace"], .removed-icon-item, .extra-icon-item');
         if (!targetCards.length) return;
 
@@ -171,7 +185,6 @@
 
             if (!label) return;
 
-            // Fallback for missing icon definitions
             const matchedIcon = ICON_MAPPING[label] || "app-window";
 
             card.classList.add('custom-premium-card');
@@ -229,22 +242,10 @@
         }
     }
 
-    // Stylesheet: Upscaled Dimensions + Edit Mode Controls
+    // Stylesheet: Pure Non-Intrusive Layout (Zero Global Overflow Overrides)
     const style = document.createElement('style');
     style.innerHTML = `
-        /* Lock Viewport Scroll Strictly */
-        html, body, #body, #app, .page-container, .main-section, .layout-main-section, 
-        .desk-container, .workspace-desktop, .desktop-icons, .page-content,
-        .desktop-wrapper, .layout-main-section-wrapper {
-            overflow: hidden !important;
-            overscroll-behavior: none !important;
-            touch-action: none !important;
-            max-height: 100vh !important;
-            height: 100vh !important;
-            box-sizing: border-box !important;
-        }
-
-        /* Desktop Container Grid */
+        /* Desktop Cards Grid Spacing */
         .desktop-container, .desktop-icons, .workspace-desktop, .desk-container {
             padding-top: 10px !important;
             padding-bottom: 0px !important;
@@ -281,28 +282,14 @@
             border: 1px solid rgba(255, 255, 255, 0.2) !important;
         }
 
-        .edit-mode-buttons .discard,
-        .edit-mode-buttons .save {
-            margin: 0 !important;
-            cursor: pointer !important;
-            font-size: 13px !important;
-            font-weight: 600 !important;
-            transition: transform 0.15s ease !important;
-        }
-
-        .edit-mode-buttons .discard:hover,
-        .edit-mode-buttons .save:hover {
-            transform: translateY(-1px) !important;
-        }
-
-        /* Hide Native Icons */
+        /* Hide Native SVGs/Images */
         .icon-container img, .link-icon img,
         .icon-container svg:not(.custom-adaptive-icon),
         .link-icon svg:not(.custom-adaptive-icon) {
             display: none !important;
         }
 
-        /* Upscaled Premium Glass Cards */
+        /* Upscaled Glass Cards */
         .custom-premium-card, .desktop-icon, .workspace-link-item {
             display: flex !important;
             flex-direction: column !important;
@@ -334,7 +321,7 @@
             border: 1px solid rgba(255, 255, 255, 0.15) !important;
         }
 
-        /* Upscaled ICON BADGE (48px Width/Height) */
+        /* Upscaled Icon Circle (48px) */
         .custom-premium-card .icon-container, 
         .custom-premium-card .link-icon,
         .desktop-icon .icon-container,
@@ -370,7 +357,7 @@
             transition: transform 0.25s ease !important;
         }
 
-        /* HOVER ANIMATIONS & PHYSICS SHADOW EFFECTS */
+        /* Hover Elevation Effects */
         .custom-premium-card:hover, 
         .desktop-icon:hover {
             transform: translateY(-5px) scale(1.03) !important;

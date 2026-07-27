@@ -761,3 +761,23 @@ html[data-theme-mode="purple"] .body-sidebar::after {
 html[data-theme-mode="purple"] .widget.spacer {
     display: none !important;
 }
+html[data-theme-mode="purple"] .sticky-column {
+    appearance: auto !important;
+    -webkit-appearance: checkbox !important;
+
+    width: 14px !important;
+    height: 14px !important;
+
+    min-width: 14px !important;
+    min-height: 14px !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+
+    accent-color: #ba6ef9 !important;
+}
