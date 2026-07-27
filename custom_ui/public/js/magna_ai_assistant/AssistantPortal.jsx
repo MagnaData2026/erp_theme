@@ -69,7 +69,7 @@ export default function AssistantPortal({ isOpen, onClose }) {
     const [isSending, setIsSending] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     
-    // 🟢 MULTI-FILE STATE: Holds array of selected files
+    // MULTI-FILE STATE
     const [selectedFiles, setSelectedFiles] = useState([]);
 
     const fileInputRef = useRef(null);
@@ -119,11 +119,10 @@ export default function AssistantPortal({ isOpen, onClose }) {
         });
     };
 
-    // 🟢 MULTI-FILE SELECTION HANDLER
     const handleFileSelect = (event) => {
         const newFiles = Array.from(event.target.files || []);
         if (newFiles.length === 0) return;
-        
+
         setSelectedFiles(prev => [...prev, ...newFiles]);
         if (fileInputRef.current) fileInputRef.current.value = "";
     };
@@ -132,7 +131,6 @@ export default function AssistantPortal({ isOpen, onClose }) {
         setSelectedFiles(prev => prev.filter((_, idx) => idx !== indexToRemove));
     };
 
-    // 🟢 MULTI-FILE BATCH & PROMPT EXECUTION
     const handleSend = async (textToSend) => {
         const userPrompt = textToSend || input;
         const attachedFiles = [...selectedFiles];
@@ -146,13 +144,12 @@ export default function AssistantPortal({ isOpen, onClose }) {
             const sessionTitle = attachedFiles.length > 0 
                 ? `PO Batch (${attachedFiles.length}): ${attachedFiles[0].name}` 
                 : userPrompt.substring(0, 30) + (userPrompt.length > 30 ? '...' : '');
-            
+
             const newChatSession = { id: activeId, title: sessionTitle, messages: [] };
             setChatHistory((prev) => [newChatSession, ...prev]);
             setCurrentChatId(activeId);
         }
 
-        // Reset inputs
         setInput('');
         setSelectedFiles([]);
         if (fileInputRef.current) fileInputRef.current.value = "";
@@ -160,7 +157,6 @@ export default function AssistantPortal({ isOpen, onClose }) {
 
         try {
             if (attachedFiles.length > 0) {
-                // Render User's initial message with file summary
                 const filesListText = attachedFiles.map(f => `• 📄 **${f.name}**`).join('\n');
                 const fileMsgText = userPrompt.trim() 
                     ? `📎 **Attached Files (${attachedFiles.length})**:\n${filesListText}\n\n💬 ${userPrompt}` 
@@ -169,7 +165,6 @@ export default function AssistantPortal({ isOpen, onClose }) {
                 appendMessage(activeId, { sender: 'user', text: fileMsgText });
                 setIsUploading(true);
 
-                // Process files sequentially or in batch
                 for (let i = 0; i < attachedFiles.length; i++) {
                     const file = attachedFiles[i];
                     const formData = new FormData();
@@ -191,7 +186,6 @@ export default function AssistantPortal({ isOpen, onClose }) {
                         text: `✅ **Extracted (${i + 1}/${attachedFiles.length})**: ${file.name}\n\n* **Vendor**: ${data.vendor_name || 'N/A'}\n* **PO Ref**: ${data.po_number || 'N/A'}\n* **Delivery Date**: ${data.delivery_date || 'N/A'}\n* **Items**: ${data.items ? data.items.length : 0}\n\n*Drafting Purchase Order...*`
                     });
 
-                    // Trigger AI Agent per document
                     const baseOcrPrompt = `Use tool process_ocr_po_and_create_order to create the PO. Vendor: ${data.vendor_name}, PO Number: ${data.po_number || ''}, Delivery Date: ${data.delivery_date || ''}. Items: ${JSON.stringify(data.items || [])}`;
                     const finalPrompt = userPrompt.trim() 
                         ? `${baseOcrPrompt}\n\nUser Instructions: ${userPrompt}` 
@@ -212,7 +206,6 @@ export default function AssistantPortal({ isOpen, onClose }) {
                     }
                 }
             } else {
-                // NORMAL CHAT (No Files)
                 appendMessage(activeId, { sender: 'user', text: userPrompt });
 
                 const response = await fetch(`${API_BASE_URL}/api/chat`, {
@@ -247,7 +240,7 @@ export default function AssistantPortal({ isOpen, onClose }) {
 
     if (!isOpen) return null;
 
-    // Inner component for file pills to keep UI ultra clean
+    // 🟢 Animated Blinking File Badges Component
     const RenderFileBadges = () => {
         if (selectedFiles.length === 0) return null;
         return (
@@ -259,18 +252,36 @@ export default function AssistantPortal({ isOpen, onClose }) {
                 {selectedFiles.map((file, idx) => (
                     <motion.div 
                         key={idx}
-                        initial={{ opacity: 0, scale: 0.9 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.9 }}
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ 
+                            opacity: [0.75, 1, 0.75], 
+                            scale: [0.98, 1.02, 0.98],
+                            borderColor: ['rgba(56, 189, 248, 0.3)', 'rgba(56, 189, 248, 0.8)', 'rgba(56, 189, 248, 0.3)'],
+                            boxShadow: [
+                                '0 0 0px rgba(56, 189, 248, 0)',
+                                '0 0 10px rgba(56, 189, 248, 0.35)',
+                                '0 0 0px rgba(56, 189, 248, 0)'
+                            ]
+                        }}
+                        transition={{ 
+                            duration: 1.8, 
+                            repeat: Infinity, 
+                            ease: 'easeInOut' 
+                        }}
                         style={{
                             display: 'inline-flex', alignItems: 'center', gap: '6px',
-                            padding: '3px 9px', borderRadius: '8px',
-                            backgroundColor: 'rgba(56, 189, 248, 0.12)',
-                            border: '1px solid rgba(56, 189, 248, 0.3)',
+                            padding: '4px 10px', borderRadius: '8px',
+                            backgroundColor: 'rgba(56, 189, 248, 0.15)',
+                            border: '1px solid rgba(56, 189, 248, 0.4)',
                             color: 'var(--text-color, #0f172a)', fontSize: '11.5px',
-                            fontWeight: '550', backdropFilter: 'blur(8px)'
+                            fontWeight: '600', backdropFilter: 'blur(8px)'
                         }}
                     >
+                        {/* Pulse Dot */}
+                        <span style={{
+                            width: '6px', height: '6px', borderRadius: '50%',
+                            backgroundColor: '#38bdf8', boxShadow: '0 0 6px #38bdf8'
+                        }} />
                         <span>📄 {file.name.length > 22 ? file.name.substring(0, 20) + '...' : file.name}</span>
                         <button 
                             onClick={() => handleRemoveFile(idx)}
@@ -439,7 +450,7 @@ export default function AssistantPortal({ isOpen, onClose }) {
                                             boxShadow: '0 12px 32px -10px rgba(0, 0, 0, 0.08)',
                                             boxSizing: 'border-box'
                                         }}>
-                                            {/* Top Section: Attached File Badges */}
+                                            {/* Top Section: Animated File Badges */}
                                             <RenderFileBadges />
 
                                             {/* Bottom Section: Controls & Text Input */}
