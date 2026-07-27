@@ -1,12 +1,25 @@
 /**
  * Custom UI - Dynamic Theme Adaptive Premium Grid Icon Mapper for Frappe v16
- * UI Design: Perfect Circular Icon Badges + Glass Cards + Deep Layered Ambient Shadows
+ * Fixes: Added Home, Support, MagnaERP + Removed Icons Fallback Support
  */
 
 (function () {
-    // Lucide Icon Mapping
+    // Lock Scroll Across Viewports
+    window.addEventListener('wheel', function (e) {
+        e.preventDefault();
+    }, { passive: false });
+
+    window.addEventListener('touchmove', function (e) {
+        e.preventDefault();
+    }, { passive: false });
+
+    // Lucide Icon Mapping (Added Home, Support, MagnaERP)
     const ICON_MAPPING = {
-        // Main Workspace Icons
+        // Main Workspace & Common Desk Icons
+        "Home": "home",
+        "Support": "headset",
+        "MagnaERP": "cpu",
+        "CRM": "briefcase-business",
         "Framework": "box",
         "Organization": "building-2",
         "Accounting": "layout-grid",
@@ -22,8 +35,6 @@
         "MagnaERP Settings": "settings",
         "Frappe HR": "user-check",
         "MagnaHR": "user",
-        "CRM": "briefcase-business",
-        "MagnaERP": "cpu",
 
         // Framework Sub-Items
         "Automation": "cpu",
@@ -61,6 +72,10 @@
 
     // Color Gradients per Module
     const COLOR_MAPPING = {
+        "Home": "linear-gradient(135deg, #64748b 0%, #334155 100%)",
+        "Support": "linear-gradient(135deg, #f97316 0%, #ea580c 100%)",
+        "MagnaERP": "linear-gradient(135deg, #818cf8 0%, #4f46e5 100%)",
+        "CRM": "linear-gradient(135deg, #f472b6 0%, #db2777 100%)",
         "Framework": "linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%)",
         "Organization": "linear-gradient(135deg, #60a5fa 0%, #2563eb 100%)",
         "Accounting": "linear-gradient(135deg, #34d399 0%, #059669 100%)",
@@ -75,30 +90,30 @@
         "ERPNext Settings": "linear-gradient(135deg, #38bdf8 0%, #0284c7 100%)",
         "MagnaERP Settings": "linear-gradient(135deg, #38bdf8 0%, #0284c7 100%)",
         "Frappe HR": "linear-gradient(135deg, #f87171 0%, #dc2626 100%)",
-        "MagnaHR": "linear-gradient(135deg, #34d399 0%, #059669 100%)",
-        "CRM": "linear-gradient(135deg, #f472b6 0%, #db2777 100%)",
-        "MagnaERP": "linear-gradient(135deg, #818cf8 0%, #4f46e5 100%)"
+        "MagnaHR": "linear-gradient(135deg, #34d399 0%, #059669 100%)"
     };
 
-    // High-Contrast Deep Glow Shadow Values
+    // Deep Glow Shadow Values
     const SHADOW_MAPPING = {
-        "Framework": "rgba(124, 58, 237, 0.55)",
-        "Organization": "rgba(37, 99, 235, 0.55)",
-        "Accounting": "rgba(5, 150, 105, 0.55)",
-        "Assets": "rgba(234, 88, 12, 0.55)",
-        "Buying": "rgba(2, 132, 199, 0.55)",
-        "Manufacturing": "rgba(79, 70, 229, 0.55)",
-        "Projects": "rgba(13, 148, 136, 0.55)",
-        "Quality": "rgba(29, 78, 216, 0.55)",
-        "Selling": "rgba(147, 51, 234, 0.55)",
-        "Stock": "rgba(29, 78, 216, 0.55)",
-        "Subcontracting": "rgba(217, 119, 6, 0.55)",
-        "ERPNext Settings": "rgba(2, 132, 199, 0.55)",
-        "MagnaERP Settings": "rgba(2, 132, 199, 0.55)",
-        "Frappe HR": "rgba(220, 38, 38, 0.55)",
-        "MagnaHR": "rgba(5, 150, 105, 0.55)",
-        "CRM": "rgba(219, 39, 119, 0.55)",
-        "MagnaERP": "rgba(79, 70, 229, 0.55)"
+        "Home": "rgba(51, 65, 85, 0.65)",
+        "Support": "rgba(234, 88, 12, 0.65)",
+        "MagnaERP": "rgba(79, 70, 229, 0.65)",
+        "CRM": "rgba(219, 39, 119, 0.65)",
+        "Framework": "rgba(124, 58, 237, 0.65)",
+        "Organization": "rgba(37, 99, 235, 0.65)",
+        "Accounting": "rgba(5, 150, 105, 0.65)",
+        "Assets": "rgba(234, 88, 12, 0.65)",
+        "Buying": "rgba(2, 132, 199, 0.65)",
+        "Manufacturing": "rgba(79, 70, 229, 0.65)",
+        "Projects": "rgba(13, 148, 136, 0.65)",
+        "Quality": "rgba(29, 78, 216, 0.65)",
+        "Selling": "rgba(147, 51, 234, 0.65)",
+        "Stock": "rgba(29, 78, 216, 0.65)",
+        "Subcontracting": "rgba(217, 119, 6, 0.65)",
+        "ERPNext Settings": "rgba(2, 132, 199, 0.65)",
+        "MagnaERP Settings": "rgba(2, 132, 199, 0.65)",
+        "Frappe HR": "rgba(220, 38, 38, 0.65)",
+        "MagnaHR": "rgba(5, 150, 105, 0.65)"
     };
 
     function injectLucideIcon(element, iconName, label) {
@@ -115,7 +130,7 @@
             element.appendChild(iconNode);
 
             const bgGradient = COLOR_MAPPING[label] || "linear-gradient(135deg, #818cf8, #4f46e5)";
-            const glowColor = SHADOW_MAPPING[label] || "rgba(79, 70, 229, 0.55)";
+            const glowColor = SHADOW_MAPPING[label] || "rgba(79, 70, 229, 0.65)";
 
             element.style.background = bgGradient;
             element.style.setProperty('--glow-color', glowColor);
@@ -123,8 +138,8 @@
             window.lucide.createIcons({
                 attrs: {
                     'stroke-width': 2.2,
-                    'width': '25',
-                    'height': '25'
+                    'width': '26',
+                    'height': '26'
                 }
             });
 
@@ -143,22 +158,25 @@
     }
 
     function executeGlobalIconScan() {
-        const targetCards = document.querySelectorAll('.desktop-icon, .workspace-link-item, [data-link-type="workspace"]');
+        // Target active desktop cards + removed section icons in edit mode
+        const targetCards = document.querySelectorAll('.desktop-icon, .workspace-link-item, [data-link-type="workspace"], .removed-icon-item, .extra-icon-item');
         if (!targetCards.length) return;
 
         targetCards.forEach(card => {
-            let label = card.getAttribute('data-id') || card.getAttribute('data-label');
+            let label = card.getAttribute('data-id') || card.getAttribute('data-label') || card.getAttribute('title');
             if (!label) {
-                const textEl = card.querySelector('.link-text, .desktop-icon-label, h3, span');
+                const textEl = card.querySelector('.link-text, .desktop-icon-label, h3, span, .label');
                 if (textEl) label = textEl.textContent.trim();
             }
 
-            if (!label || !ICON_MAPPING[label]) return;
+            if (!label) return;
+
+            // Fallback for missing icon definitions
+            const matchedIcon = ICON_MAPPING[label] || "app-window";
 
             card.classList.add('custom-premium-card');
-            
 
-            const targetIconContainer = card.querySelector('.icon-container, .link-icon, .icon-wrapper');
+            const targetIconContainer = card.querySelector('.icon-container, .link-icon, .icon-wrapper, .avatar-frame, .icon-box');
             if (targetIconContainer) {
                 const nativeImg = targetIconContainer.querySelector('img');
                 if (nativeImg) nativeImg.style.display = 'none';
@@ -166,7 +184,7 @@
                 const nativeSvg = targetIconContainer.querySelector('svg:not(.custom-adaptive-icon)');
                 if (nativeSvg) nativeSvg.style.display = 'none';
 
-                injectLucideIcon(targetIconContainer, ICON_MAPPING[label], label);
+                injectLucideIcon(targetIconContainer, matchedIcon, label);
             }
         });
     }
@@ -182,7 +200,7 @@
         }
 
         document.body.addEventListener('click', function(e) {
-            if (e.target.closest('.desktop-icon') || e.target.closest('.btn') || e.target.closest('.theme-selector')) {
+            if (e.target.closest('.desktop-icon') || e.target.closest('.btn') || e.target.closest('.theme-selector') || e.target.closest('.add-workspace')) {
                 setTimeout(executeGlobalIconScan, 120);
                 setTimeout(executeGlobalIconScan, 450); 
             }
@@ -211,17 +229,80 @@
         }
     }
 
-    // Stylesheet: Enhanced Deep Layered Shadows & Glass Effect
+    // Stylesheet: Upscaled Dimensions + Edit Mode Controls
     const style = document.createElement('style');
     style.innerHTML = `
-        /* Hide native assets */
+        /* Lock Viewport Scroll Strictly */
+        html, body, #body, #app, .page-container, .main-section, .layout-main-section, 
+        .desk-container, .workspace-desktop, .desktop-icons, .page-content,
+        .desktop-wrapper, .layout-main-section-wrapper {
+            overflow: hidden !important;
+            overscroll-behavior: none !important;
+            touch-action: none !important;
+            max-height: 100vh !important;
+            height: 100vh !important;
+            box-sizing: border-box !important;
+        }
+
+        /* Desktop Container Grid */
+        .desktop-container, .desktop-icons, .workspace-desktop, .desk-container {
+            padding-top: 10px !important;
+            padding-bottom: 0px !important;
+            display: flex !important;
+            flex-wrap: wrap !important;
+            align-content: flex-start !important;
+            gap: 12px !important;
+        }
+
+        /* Hide Edit Buttons by Default */
+        .edit-mode-buttons {
+            display: none !important;
+        }
+
+        /* SHOW Discard & Save ONLY in Edit Mode */
+        .desktop-wrapper[data-mode="Edit"] .edit-mode-buttons {
+            position: fixed !important;
+            bottom: 25px !important;
+            right: 30px !important;
+            z-index: 999999 !important;
+            display: flex !important;
+            gap: 12px !important;
+            padding: 8px 16px !important;
+            background: rgba(255, 255, 255, 0.85) !important;
+            backdrop-filter: blur(12px) !important;
+            -webkit-backdrop-filter: blur(12px) !important;
+            border-radius: 12px !important;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25) !important;
+            border: 1px solid rgba(255, 255, 255, 0.7) !important;
+        }
+
+        [data-theme="dark"] .desktop-wrapper[data-mode="Edit"] .edit-mode-buttons {
+            background: rgba(15, 23, 42, 0.85) !important;
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        }
+
+        .edit-mode-buttons .discard,
+        .edit-mode-buttons .save {
+            margin: 0 !important;
+            cursor: pointer !important;
+            font-size: 13px !important;
+            font-weight: 600 !important;
+            transition: transform 0.15s ease !important;
+        }
+
+        .edit-mode-buttons .discard:hover,
+        .edit-mode-buttons .save:hover {
+            transform: translateY(-1px) !important;
+        }
+
+        /* Hide Native Icons */
         .icon-container img, .link-icon img,
         .icon-container svg:not(.custom-adaptive-icon),
         .link-icon svg:not(.custom-adaptive-icon) {
             display: none !important;
         }
 
-        /* Glassmorphic Card with Deep Multi-Layer Shadow */
+        /* Upscaled Premium Glass Cards */
         .custom-premium-card, .desktop-icon, .workspace-link-item {
             display: flex !important;
             flex-direction: column !important;
@@ -229,113 +310,114 @@
             justify-content: center !important;
             text-align: center !important;
             
-            padding: 16px 10px !important;
-            border-radius: 24px !important;
+            padding: 14px 10px !important;
+            min-width: 96px !important;
+            border-radius: 18px !important;
             
-            background: rgba(255, 255, 255, 0.55) !important;
+            background: rgba(255, 255, 255, 0.65) !important;
             backdrop-filter: blur(16px) saturate(200%) !important;
             -webkit-backdrop-filter: blur(16px) saturate(200%) !important;
-            border: 1px solid rgba(255, 255, 255, 0.75) !important;
+            border: 1px solid rgba(255, 255, 255, 0.85) !important;
             
-            /* Deep Layered Card Drop-Shadow */
             box-shadow: 
-                0 12px 28px -6px rgba(0, 0, 0, 0.08),
-                0 4px 10px -2px rgba(0, 0, 0, 0.04),
-                inset 0 1px 1.5px rgba(255, 255, 255, 0.9) !important;
+                0 6px 16px -3px rgba(0, 0, 0, 0.06),
+                inset 0 1px 2px rgba(255, 255, 255, 0.95) !important;
             
-            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+            transition: all 0.28s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
             cursor: pointer !important;
+            will-change: transform, box-shadow !important;
         }
 
-        /* Dark Mode Glass Card Shadow */
         [data-theme="dark"] .custom-premium-card, 
         [data-theme="dark"] .desktop-icon {
-            background: rgba(15, 23, 42, 0.6) !important;
+            background: rgba(15, 23, 42, 0.65) !important;
             border: 1px solid rgba(255, 255, 255, 0.15) !important;
-            box-shadow: 
-                0 14px 30px -5px rgba(0, 0, 0, 0.45),
-                0 4px 12px -2px rgba(0, 0, 0, 0.2) !important;
         }
 
-        /* PERFECT CIRCLE ICON BADGE WITH AMBIENT COLOR GLOW SHADOW */
+        /* Upscaled ICON BADGE (48px Width/Height) */
         .custom-premium-card .icon-container, 
         .custom-premium-card .link-icon,
         .desktop-icon .icon-container,
-        .custom-premium-card .icon-wrapper {
+        .custom-premium-card .icon-wrapper,
+        .custom-premium-card .avatar-frame,
+        .custom-premium-card .icon-box {
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
             
-            width: 58px !important;
-            height: 58px !important;
-            min-width: 58px !important;
-            min-height: 58px !important;
+            width: 48px !important;
+            height: 48px !important;
+            min-width: 48px !important;
+            min-height: 48px !important;
             aspect-ratio: 1 / 1 !important;
             
-            margin: 0 0 10px 0 !important;
+            margin: 0 0 8px 0 !important;
             border-radius: 50% !important;
             overflow: hidden !important;
             
-            /* Ultra Deep Ambient Glowing Shadow */
             box-shadow: 
-                0 12px 24px -2px var(--glow-color, rgba(0, 0, 0, 0.4)),
-                0 4px 8px -1px var(--glow-color, rgba(0, 0, 0, 0.3)),
-                inset 0 2px 3px rgba(255, 255, 255, 0.6),
-                inset 0 -2px 2px rgba(0, 0, 0, 0.15) !important;
+                0 6px 14px -2px var(--glow-color, rgba(0, 0, 0, 0.35)),
+                inset 0 2px 3px rgba(255, 255, 255, 0.7) !important;
                 
-            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease !important;
+            transition: all 0.28s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+            will-change: transform, box-shadow !important;
         }
 
-        /* Lucide SVG Icon Styling & Drop Shadow */
+        /* Lucide SVG Styling */
         .custom-adaptive-icon {
             color: #FFFFFF !important;
             filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.25));
             transition: transform 0.25s ease !important;
         }
 
-        /* Hover State with Lifted Shadow Elevation */
-        .custom-premium-card:hover, .desktop-icon:hover {
-            transform: translateY(-7px) !important;
-            background: rgba(255, 255, 255, 0.8) !important;
-            border-color: rgba(255, 255, 255, 0.95) !important;
+        /* HOVER ANIMATIONS & PHYSICS SHADOW EFFECTS */
+        .custom-premium-card:hover, 
+        .desktop-icon:hover {
+            transform: translateY(-5px) scale(1.03) !important;
+            background: rgba(255, 255, 255, 0.85) !important;
+            border-color: rgba(255, 255, 255, 1) !important;
             box-shadow: 
-                0 20px 40px -8px rgba(0, 0, 0, 0.12),
-                0 8px 16px -4px rgba(0, 0, 0, 0.06),
+                0 14px 28px -6px rgba(0, 0, 0, 0.14),
+                0 6px 12px -2px var(--glow-color, rgba(0, 0, 0, 0.18)),
                 inset 0 1px 2px rgba(255, 255, 255, 1) !important;
         }
 
-        [data-theme="dark"] .custom-premium-card:hover {
-            background: rgba(15, 23, 42, 0.8) !important;
+        [data-theme="dark"] .custom-premium-card:hover, 
+        [data-theme="dark"] .desktop-icon:hover {
+            background: rgba(30, 41, 59, 0.85) !important;
             border-color: rgba(255, 255, 255, 0.3) !important;
             box-shadow: 
-                0 22px 45px -8px rgba(0, 0, 0, 0.6),
-                0 8px 18px -4px rgba(0, 0, 0, 0.3) !important;
+                0 14px 28px -6px rgba(0, 0, 0, 0.5),
+                0 6px 14px -2px var(--glow-color, rgba(255, 255, 255, 0.12)) !important;
         }
 
         .custom-premium-card:hover .icon-container,
-        .custom-premium-card:hover .link-icon {
-            transform: scale(1.12) !important;
+        .custom-premium-card:hover .link-icon,
+        .desktop-icon:hover .icon-container,
+        .custom-premium-card:hover .icon-wrapper,
+        .custom-premium-card:hover .avatar-frame,
+        .custom-premium-card:hover .icon-box {
+            transform: scale(1.1) rotate(2deg) !important;
             box-shadow: 
-                0 18px 36px -2px var(--glow-color, rgba(0, 0, 0, 0.55)),
-                0 8px 14px -1px var(--glow-color, rgba(0, 0, 0, 0.4)),
-                inset 0 3px 4px rgba(255, 255, 255, 0.8) !important;
+                0 10px 24px 0px var(--glow-color, rgba(0, 0, 0, 0.55)),
+                0 0 14px 2px var(--glow-color, rgba(255, 255, 255, 0.45)),
+                inset 0 2px 3px rgba(255, 255, 255, 0.85) !important;
         }
 
         .custom-premium-card:hover .custom-adaptive-icon {
-            transform: scale(1.08) rotate(-2deg) !important;
+            transform: scale(1.08) !important;
         }
 
         /* Typography */
         .desktop-icon-label, .link-text, .custom-premium-card h3, .custom-premium-card span {
-            font-size: 13px !important;
+            font-size: 11.5px !important;
             font-weight: 600 !important;
             color: var(--text-color, #0f172a) !important;
-            letter-spacing: -0.015em !important;
-            line-height: 1.35 !important;
+            letter-spacing: -0.01em !important;
+            line-height: 1.2 !important;
             margin: 0 !important;
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            transition: color 0.2s ease !important;
         }
-            
     `;
     
     document.head.appendChild(style);

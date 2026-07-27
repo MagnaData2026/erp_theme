@@ -304,17 +304,20 @@ font-size:26px!important;
     position:relative;
 }
 
-.for-login .field-icon{
+/* Input Icons */
+.field-icon{
     position:absolute;
-    left:16px;
+    left:18px;
     top:50%;
     transform:translateY(-50%);
-    z-index:5;
     color:#9ca3af;
+    z-index:10;
+    pointer-events:none;
 }
 
-.for-login .form-control{
-    padding-left:46px !important;
+/* Space between icon and text */
+.form-control{
+    padding-left:54px !important;
 }
 
 /* ===========================
@@ -425,4 +428,114 @@ main.container,
 body.frappe-session-status-logged-out .page-header-wrapper,
 body.frappe-session-status-logged-out .page-footer{
     display:none !important;
+}
+/* ===========================================
+        FORGOT PASSWORD PAGE
+=========================================== */
+
+.for-forgot-password{
+    width:100%;
+    min-height:100vh;
+
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+
+    background:#F3F3F3;
+}
+
+.for-forgot-password .page-card{
+    width:470px !important;
+    max-width:92%;
+    padding:50px !important;
+    border-radius:22px !important;
+    background:rgba(255,255,255,.92) !important;
+    backdrop-filter:blur(18px);
+    border:none !important;
+    box-shadow:0 20px 60px rgba(0,0,0,.12);
+    position:relative;
+    overflow:hidden;
+}
+
+.for-forgot-password .page-card::before{
+    content:"";
+    position:absolute;
+    top:0;
+    left:0;
+    width:100%;
+    height:5px;
+    background:linear-gradient(90deg,#2563eb,#60a5fa);
+}
+
+.for-forgot-password .page-card-head h4{
+    font-size:32px !important;
+    font-weight:700;
+    color:#111827;
+    margin-bottom:30px;
+    text-align:center;
+}
+
+.for-forgot-password .form-control{
+    height:54px !important;
+    border-radius:14px !important;
+    padding-left:18px !important;
+}
+
+.for-forgot-password .btn-primary{
+    width:100%;
+    height:54px;
+    border-radius:14px;
+    background:linear-gradient(135deg,#2563eb,#3b82f6) !important;
+    border:none;
+    color:#fff;
+    font-weight:600;
+}
+
+.for-forgot-password a{
+    color:#2563eb;
+}
+.forgot-logo{
+    display:block;
+    width:230px;
+    height:auto;
+    margin:0 auto 18px;
+}
+.for-forgot-password .page-card-head{
+    text-align:center;
+}
+.for-forgot-password .form-control{
+    padding-left:46px !important;
+}
+/* Full page background for Forgot Password */
+
+body:has(.for-forgot){
+    background:#F3F3F3 !important;
+}
+
+body:has(.for-forgot) #page-login,
+body:has(.for-forgot) .page-content-wrapper,
+body:has(.for-forgot) main.container{
+    background:#F3F3F3 !important;
+}
+/* Forgot Password card top blue line */
+
+.for-forgot .page-card{
+    position: relative !important;
+    overflow: hidden !important;
+}
+
+.for-forgot .page-card::before{
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 5px;
+    background: linear-gradient(
+        90deg,
+        #2563eb,
+        #60a5fa
+    );
+    z-index: 2;
 }
