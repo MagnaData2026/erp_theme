@@ -141,7 +141,7 @@
             const iconNode = document.createElement('i');
             iconNode.setAttribute('data-lucide', iconName);
             iconNode.classList.add("custom-adaptive-icon");
-            
+
             element.appendChild(iconNode);
 
             const bgGradient = COLOR_MAPPING[label] || "linear-gradient(135deg, #818cf8, #4f46e5)";
@@ -212,10 +212,10 @@
             });
         }
 
-        document.body.addEventListener('click', function(e) {
+        document.body.addEventListener('click', function (e) {
             if (e.target.closest('.desktop-icon') || e.target.closest('.btn') || e.target.closest('.theme-selector') || e.target.closest('.add-workspace')) {
                 setTimeout(executeGlobalIconScan, 120);
-                setTimeout(executeGlobalIconScan, 450); 
+                setTimeout(executeGlobalIconScan, 450);
             }
         });
 
@@ -234,7 +234,7 @@
         document.head.appendChild(script);
     } else {
         if (window.$) {
-            $(document).on('app_ready', function() {
+            $(document).on('app_ready', function () {
                 initializeIconSystem();
             });
         } else {
@@ -252,7 +252,7 @@
             display: flex !important;
             flex-wrap: wrap !important;
             align-content: flex-start !important;
-            gap: 12px !important;
+            gap: 18px !important;
         }
 
         /* Hide Edit Buttons by Default */
@@ -290,30 +290,52 @@
         }
 
         /* Upscaled Glass Cards */
-        .custom-premium-card, .desktop-icon, .workspace-link-item {
-            display: flex !important;
-            flex-direction: column !important;
-            align-items: center !important;
-            justify-content: center !important;
-            text-align: center !important;
-            
-            padding: 14px 10px !important;
-            min-width: 96px !important;
-            border-radius: 18px !important;
-            
-            background: rgba(255, 255, 255, 0.65) !important;
-            backdrop-filter: blur(16px) saturate(200%) !important;
-            -webkit-backdrop-filter: blur(16px) saturate(200%) !important;
-            border: 1px solid rgba(255, 255, 255, 0.85) !important;
-            
-            box-shadow: 
-                0 6px 16px -3px rgba(0, 0, 0, 0.06),
-                inset 0 1px 2px rgba(255, 255, 255, 0.95) !important;
-            
-            transition: all 0.28s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
-            cursor: pointer !important;
-            will-change: transform, box-shadow !important;
-        }
+        /* Desk Page Cards */
+.desktop-icon,
+.custom-premium-card {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+
+    padding: 14px 10px !important;
+    min-width: 96px !important;
+    border-radius: 18px !important;
+
+    background: rgba(255,255,255,.65) !important;
+    backdrop-filter: blur(16px) saturate(200%) !important;
+    border: 1px solid rgba(0,0,0,.08) !important;
+
+    box-shadow:
+        0 8px 20px rgba(0,0,0,.10),
+        0 2px 6px rgba(0,0,0,.06),
+        inset 0 1px 2px rgba(255,255,255,.9) !important;
+        
+}
+
+/* Drawer Cards Only */
+.workspace-link-item {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+
+    padding: 8px 8px !important;
+    min-width: 82px !important;
+    min-height: 88px !important;
+    border-radius: 16px !important;
+
+    background: rgba(255,255,255,.65) !important;
+    backdrop-filter: blur(16px) saturate(200%) !important;
+    border: 1px solid rgba(0,0,0,.08) !important;
+
+    box-shadow:
+        0 8px 20px rgba(0,0,0,.10),
+        0 2px 6px rgba(0,0,0,.06),
+        inset 0 1px 2px rgba(255,255,255,.9) !important;
+}
 
         [data-theme="dark"] .custom-premium-card, 
         [data-theme="dark"] .desktop-icon {
@@ -358,16 +380,19 @@
         }
 
         /* Hover Elevation Effects */
-        .custom-premium-card:hover, 
-        .desktop-icon:hover {
-            transform: translateY(-5px) scale(1.03) !important;
-            background: rgba(255, 255, 255, 0.85) !important;
-            border-color: rgba(255, 255, 255, 1) !important;
-            box-shadow: 
-                0 14px 28px -6px rgba(0, 0, 0, 0.14),
-                0 6px 12px -2px var(--glow-color, rgba(0, 0, 0, 0.18)),
-                inset 0 1px 2px rgba(255, 255, 255, 1) !important;
-        }
+        .custom-premium-card:hover,
+.desktop-icon:hover {
+    transform: translateY(-2px) scale(1.01) !important;
+     z-index: 10 !important;
+    position: relative !important;
+    background: rgba(255,255,255,.82) !important;
+    border-color: rgba(0,0,0,.08) !important;
+
+    box-shadow:
+        0 10px 18px rgba(0,0,0,.12),
+        0 3px 8px rgba(0,0,0,.08),
+        inset 0 1px 2px rgba(255,255,255,.95) !important;
+}
 
         [data-theme="dark"] .custom-premium-card:hover, 
         [data-theme="dark"] .desktop-icon:hover {
@@ -379,17 +404,19 @@
         }
 
         .custom-premium-card:hover .icon-container,
-        .custom-premium-card:hover .link-icon,
-        .desktop-icon:hover .icon-container,
-        .custom-premium-card:hover .icon-wrapper,
-        .custom-premium-card:hover .avatar-frame,
-        .custom-premium-card:hover .icon-box {
-            transform: scale(1.1) rotate(2deg) !important;
-            box-shadow: 
-                0 10px 24px 0px var(--glow-color, rgba(0, 0, 0, 0.55)),
-                0 0 14px 2px var(--glow-color, rgba(255, 255, 255, 0.45)),
-                inset 0 2px 3px rgba(255, 255, 255, 0.85) !important;
-        }
+.custom-premium-card:hover .link-icon,
+.desktop-icon:hover .icon-container,
+.custom-premium-card:hover .icon-wrapper,
+.custom-premium-card:hover .avatar-frame,
+.custom-premium-card:hover .icon-box {
+
+    transform: scale(1.03) !important;
+
+    box-shadow:
+        0 8px 16px rgba(0,0,0,.12),
+        0 0 8px var(--glow-color),
+        inset 0 1px 2px rgba(255,255,255,.85) !important;
+}
 
         .custom-premium-card:hover .custom-adaptive-icon {
             transform: scale(1.08) !important;
@@ -406,6 +433,6 @@
             transition: color 0.2s ease !important;
         }
     `;
-    
+
     document.head.appendChild(style);
 })();
