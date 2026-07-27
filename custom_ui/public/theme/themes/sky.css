@@ -1,423 +1,503 @@
-[data-theme-mode="sky"] {
-	--surface-page: #dcecff;
-	--surface-sidebar: #ffffff;
-	--surface-card: #ffffff;
-	--surface-input: #ffffff;
-	--surface-hover: #d7e9ff;
-	--border: #e2e8f0;
-	--primary: #2f5fb8;
-	--text-primary: #1e293b;
-	--text-secondary: #64748b;
+/* ==========================================================
+   SKY THEME VARIABLES & DESIGN TOKENS
+========================================================== */
 
-	--subtle-accent: #eaf3fc; /* dashboard loading bg color */
-	--surface-modal: #ffffff; /* context menu / modals */
+html[data-theme-mode="sky"] {
+    --primary: #2f5fb8;
+    --primary-hover: #1e4fa0;
+    --primary-light: #5f9eff;
+    --primary-glow: rgba(47, 111, 237, 0.35);
 
-	/* Map custom variables to standard Frappe CSS variables */
-	--bg-color: var(--surface-page);
-	--fg-color: var(--surface-sidebar);
-	--surface-menu-bar: var(--surface-sidebar);
-	--navbar-bg: var(--surface-sidebar);
-	--card-bg: var(--surface-card);
-	--control-bg: var(--surface-input);
-	--control-bg-on-gray: var(--surface-input);
-	--border-color: var(--border);
-	--primary-color: var(--primary);
-	--text-color: var(--text-primary);
-	--heading-color: var(--text-primary);
-	--text-muted: var(--text-secondary);
-	--text-light: var(--text-secondary);
-	--fg-hover-color: var(--surface-hover);
-	--sidebar-select-color: #b8d5ff;
-	--btn-default-bg: var(--surface-input);
-	--btn-default-hover-bg: var(--surface-hover);
-	--awesomebar-focus-bg: var(--surface-hover);
-	--modal-bg: var(--surface-modal);
-	--toast-bg: var(--surface-card);
-	--scrollbar-thumb-color: #c7d8ef;
-	--scrollbar-track-color: var(--surface-page);
-	--card-shadow: var(--shadow-light-lg);
-	--card-shadow-hover: var(--shadow-light-hover);
-}
+    --background: #eaf3fc;
+    --surface: #ffffff;
+    --border: #e2e8f0;
+    --border-light: #cfe2fb;
 
-/* Soft gradient wash on the main workspace, like the reference screenshot */
-[data-theme-mode="sky"] .content,
-[data-theme-mode="sky"] .desk-body,
-[data-theme-mode="sky"] .page-content {
-	background: linear-gradient(180deg,#f7fbff 0%,#dfefff 40%,#c9e2ff 100%) !important;
-}
+    --text: #1e293b;
+    --text-secondary: #64748b;
+    --text-muted: #64748b;
 
-/* -------------------------------------------------------------------- */
-/* HRMS module sidebar (.body-sidebar) — verified against actual DOM    */
-/* -------------------------------------------------------------------- */
+    --radius: 18px;
+    --radius-sm: 12px;
+    --radius-lg: 22px;
 
-[data-theme-mode="sky"] .body-sidebar {
-	background-color: var(--surface-sidebar);
-	border-right: 1px solid var(--border);
+    --shadow-sm: 0 4px 12px rgba(47, 111, 237, 0.08);
+    --shadow-md: 0 8px 18px rgba(47, 111, 237, 0.10);
+    --shadow-lg: 0 18px 40px rgba(47, 111, 237, 0.12);
+    --shadow-hover: 0 12px 24px rgba(47, 111, 237, 0.16);
+
+    /* Frappe Variable Mapping */
+    --bg-color: var(--background);
+    --fg-color: var(--surface);
+    --surface-menu-bar: var(--surface);
+    --navbar-bg: var(--surface);
+    --card-bg: var(--surface);
+    --control-bg: var(--surface);
+    --control-bg-on-gray: var(--surface);
+    --border-color: var(--border-light);
+    --primary-color: var(--primary);
+    --text-color: var(--text);
+    --heading-color: var(--text);
+    --fg-hover-color: #d7e9ff;
+    --sidebar-select-color: #b8d5ff;
+    --btn-default-bg: var(--surface);
+    --btn-default-hover-bg: #d7e9ff;
+    --awesomebar-focus-bg: #d7e9ff;
+    --modal-bg: var(--surface);
+    --toast-bg: var(--surface);
+    --scrollbar-thumb-color: #c7d8ef;
+    --scrollbar-track-color: var(--background);
 }
 
-/* Module header (logo + title/subtitle at top, e.g. "Recruitment / Frappe HR") */
-[data-theme-mode="sky"] .body-sidebar .sidebar-header .header-title {
-	color: var(--text-primary);
-}
-[data-theme-mode="sky"] .body-sidebar .sidebar-header .header-subtitle {
-	color: var(--text-secondary);
-}
-[data-theme-mode="sky"] .body-sidebar .sidebar-header > .sidebar-item-icon {
-	background-color: var(--sidebar-select-color);
-	border-radius: var(--radius-sm);
+/* ==========================================================
+   GLOBAL LAYOUT & BACKGROUND
+========================================================== */
+
+html[data-theme-mode="sky"],
+html[data-theme-mode="sky"] body,
+html[data-theme-mode="sky"] #body,
+html[data-theme-mode="sky"] .app,
+html[data-theme-mode="sky"] .desk-container,
+html[data-theme-mode="sky"] .layout-main,
+html[data-theme-mode="sky"] .layout-main-section {
+    min-height: 100vh !important;
+    overflow: visible !important;
 }
 
-/* Default item label + icon color.
-   NOTE: icons render as <svg stroke="currentColor" class="... text-ink-gray-7">
-   so "currentColor" resolves from the CSS `color` property, not `stroke`.
-   We set both `color` and `stroke` here to cover it either way. */
-[data-theme-mode="sky"] .body-sidebar .sidebar-item-label,
-[data-theme-mode="sky"] .body-sidebar .sidebar-item-suffix {
-	color: var(--text-secondary);
-}
-[data-theme-mode="sky"] .body-sidebar .sidebar-item-icon svg.text-ink-gray-7,
-[data-theme-mode="sky"] .body-sidebar .sidebar-item-icon svg.text-ink-gray-7 use {
-	color: var(--text-secondary);
-	stroke: var(--text-secondary);
+html[data-theme-mode="sky"] body {
+    position: relative;
+    overflow-x: hidden;
+    background:
+        radial-gradient(circle at 105% 12%, rgba(47, 111, 237, .35) 0%, rgba(95, 158, 255, .30) 22%, rgba(201, 226, 255, .20) 42%, transparent 58%),
+        radial-gradient(circle at -5% 105%, rgba(47, 111, 237, .35) 0%, rgba(95, 158, 255, .30) 22%, rgba(201, 226, 255, .20) 42%, transparent 58%),
+        linear-gradient(180deg, #f7fbff 0%, #eaf3fc 45%, #c9e2ff 100%) !important;
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-attachment: fixed;
 }
 
-/* Hover state */
-[data-theme-mode="sky"] .body-sidebar .standard-sidebar-item:hover {
-	background-color: var(--surface-hover);
-	border-radius: var(--radius-sm);
+html[data-theme-mode="sky"] body::before {
+    content: "";
+    position: fixed;
+    top: -220px;
+    right: -250px;
+    width: 900px;
+    height: 900px;
+    border-radius: 50%;
+    background: #6ca4f7;
+    opacity: .55;
+    z-index: -1;
+    pointer-events: none;
 }
 
-/* Active / selected item — real class is `.active-sidebar` on `.standard-sidebar-item`,
-   confirmed from live markup (NOT `.selected`, which doesn't exist in v16). */
-[data-theme-mode="sky"] .body-sidebar .standard-sidebar-item.active-sidebar {
-	background-color: var(--sidebar-select-color);
-	border-radius: var(--radius-sm);
-}
-[data-theme-mode="sky"] .body-sidebar .standard-sidebar-item.active-sidebar .sidebar-item-label {
-	color: var(--primary);
-	font-weight: 500;
-}
-[data-theme-mode="sky"] .body-sidebar .standard-sidebar-item.active-sidebar .sidebar-item-icon svg.text-ink-gray-7,
-[data-theme-mode="sky"] .body-sidebar .standard-sidebar-item.active-sidebar .sidebar-item-icon svg.text-ink-gray-7 use {
-	color: var(--primary);
-	stroke: var(--primary);
+html[data-theme-mode="sky"] body::after {
+    content: "";
+    position: fixed;
+    left: -260px;
+    bottom: -250px;
+    width: 700px;
+    height: 700px;
+    border-radius: 50%;
+    background: #d7eaff;
+    opacity: .70;
+    z-index: -1;
+    pointer-events: none;
 }
 
-/* Section headers (Planning, Reports, Setup ...) — `.section-item > .standard-sidebar-item.indent` */
-[data-theme-mode="sky"] .body-sidebar .section-item > .standard-sidebar-item .sidebar-item-label {
-	color: var(--text-primary);
-	font-weight: 500;
+html[data-theme-mode="sky"] .page-content,
+html[data-theme-mode="sky"] .layout-main-section-wrapper,
+html[data-theme-mode="sky"] .desk-page,
+html[data-theme-mode="sky"] .page-container,
+html[data-theme-mode="sky"] .workspace-body,
+html[data-theme-mode="sky"] .dashboard,
+html[data-theme-mode="sky"] .page-body,
+html[data-theme-mode="sky"] .page-wrapper,
+html[data-theme-mode="sky"] .dashboard-graph,
+html[data-theme-mode="sky"] .widget-group,
+html[data-theme-mode="sky"] .widget-group-body {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
 }
 
-/* Collapse chevron (drop-icon) — Frappe sets stroke="#7c7c7c" as an inline SVG attribute
-   via JS, which beats a plain CSS selector, so this needs !important to win. */
-[data-theme-mode="sky"] .body-sidebar .sidebar-item-control .drop-icon svg,
-[data-theme-mode="sky"] .body-sidebar .sidebar-item-control .drop-icon svg use {
-	stroke: var(--text-secondary) !important;
+html[data-theme-mode="sky"] .layout-main-section > * {
+    position: relative;
+    z-index: 5;
 }
 
-/* Drag handle / "..." settings button, shown only in edit mode */
-[data-theme-mode="sky"] .body-sidebar .sidebar-item-edit-controls .setting-btn,
-[data-theme-mode="sky"] .body-sidebar .sidebar-item-edit-controls .drag-handle {
-	background-color: var(--surface-input);
-	border: 1px solid var(--border);
+/* ==========================================================
+   DASHBOARD & CARDS
+========================================================== */
+
+html[data-theme-mode="sky"] .widget,
+html[data-theme-mode="sky"] .dashboard-widget,
+html[data-theme-mode="sky"] .number-widget-box,
+html[data-theme-mode="sky"] .chart-widget {
+    position: relative;
+    overflow: hidden;
+    background: rgba(255, 255, 255, .90) !important;
+    backdrop-filter: blur(18px);
+    border: 1px solid rgba(207, 226, 251, .70) !important;
+    border-radius: var(--radius-lg) !important;
+    box-shadow: var(--shadow-md), var(--shadow-lg), inset 0 1px rgba(255, 255, 255, .65) !important;
+    min-height: 125px !important;
+    padding: 24px 28px !important;
+    transition: .30s ease;
 }
 
-/* Nested / child items — indented under a collapsible section */
-[data-theme-mode="sky"] .body-sidebar .sidebar-child-item.nested-container {
-	border-left: 1px solid var(--border);
-	margin-left: 12px;
+html[data-theme-mode="sky"] .widget::before,
+html[data-theme-mode="sky"] .number-widget-box::before,
+html[data-theme-mode="sky"] .chart-widget::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 7px;
+    background: linear-gradient(90deg, #2f5fb8 0%, #4d8cf5 30%, #9fc8ff 65%, #dbeafe 100%);
+    box-shadow: 0 2px 10px rgba(47, 111, 237, .35);
 }
 
-/* Search + Notification quick links at the top */
-[data-theme-mode="sky"] .body-sidebar .navbar-search-bar .keyboard-shortcut {
-	background-color: var(--surface-hover);
-	color: var(--text-secondary);
-	border-radius: var(--radius-xs);
+html[data-theme-mode="sky"] .widget:hover,
+html[data-theme-mode="sky"] .number-widget-box:hover,
+html[data-theme-mode="sky"] .chart-widget:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-hover), 0 24px 55px rgba(47, 111, 237, .22) !important;
 }
 
-/* Bottom user card (avatar, name, email) */
-[data-theme-mode="sky"] .body-sidebar .sidebar-user-button {
-	border-top: 1px solid var(--border);
-}
-[data-theme-mode="sky"] .body-sidebar .avatar-name-email .text-secondary {
-	color: var(--text-secondary) !important;
-}
-
-/* Collapse/expand toggle + resize handle at the sidebar edge */
-[data-theme-mode="sky"] .body-sidebar .sidebar-toggle-btn {
-	background-color: var(--surface-card);
-	border: 1px solid var(--border);
-	color: var(--text-secondary);
-}
-[data-theme-mode="sky"] .body-sidebar .sidebar-resize-handle:hover {
-	background-color: var(--primary);
-	opacity: 0.3;
+html[data-theme-mode="sky"] .widget-title {
+    color: var(--text) !important;
+    font-size: 16px !important;
+    font-weight: 700 !important;
+    line-height: 1.4 !important;
 }
 
-/* Sidebar's own scrollbar */
-[data-theme-mode="sky"] .body-sidebar ::-webkit-scrollbar-thumb {
-	background-color: var(--scrollbar-thumb-color);
-	border-radius: var(--radius-sm);
+html[data-theme-mode="sky"] .number {
+    color: var(--text) !important;
+    font-size: 42px !important;
+    font-weight: 700 !important;
+    margin-top: 16px !important;
 }
-[data-theme-mode="sky"] .body-sidebar ::-webkit-scrollbar-track {
-	background-color: var(--scrollbar-track-color);
+
+html[data-theme-mode="sky"] .widget-head {
+    margin-bottom: 22px !important;
+    align-items: flex-start !important;
 }
-/* ==========================================================================
-   SKY SIDEBAR
-   ========================================================================== */
+
+html[data-theme-mode="sky"] .widget.spacer,
+html[data-theme-mode="sky"] .widget:empty {
+    display: none !important;
+}
+
+/* ==========================================================
+   SIDEBAR
+========================================================== */
 
 html[data-theme-mode="sky"] .body-sidebar {
-
-	background: linear-gradient(
-    180deg,
-    #edf6ff 0%,
-    #d7eaff 35%,
-    #bddcff 70%,
-    #9fc8ff 100%
-) !important;
-
-	border-right: 1px solid #dce8f5;
-
-	box-shadow: 8px 0 30px rgba(47,111,237,.08);
-
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(180deg, #f0f5ff 0%, #dbe7fc 25%, #c3d9fb 55%, #a6c5f9 80%, #8ab2f6 100%) !important;
+    border-right: 1px solid #cbddeff0 !important;
+    box-shadow: 10px 0 30px rgba(47, 111, 237, .18);
 }
 
-/* ==========================================================================
-   SIDEBAR ITEMS
-   ========================================================================== */
-
-html[data-theme-mode="sky"] .standard-sidebar-item {
-
-	margin: 4px 10px;
-
-	border-radius: 12px;
-
-	color: #64748b;
-
-	transition: .25s ease;
-
+html[data-theme-mode="sky"] .body-sidebar::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+        radial-gradient(circle at 100% 100%, rgba(47, 111, 237, .14), transparent 55%),
+        radial-gradient(circle at 0% 0%, rgba(255, 255, 255, .35), transparent 50%);
 }
 
-html[data-theme-mode="sky"] .standard-sidebar-item:hover {
-
-	background: #d8eaff !important;
-
-	color: #2f6fed !important;
-
-}
-
-/* ==========================================================================
-   ACTIVE ITEM
-   ========================================================================== */
-
-html[data-theme-mode="sky"] .standard-sidebar-item.active-sidebar {
-
-	background: linear-gradient(
-    180deg,
-    #4d8cf5,
-    #2f5fb8
-) !important;
-
-	box-shadow: 0 8px 20px rgba(47,111,237,.28);
-
-	border-radius: 12px;
-
-}
-
-html[data-theme-mode="sky"] .standard-sidebar-item.active-sidebar .sidebar-item-label {
-
-	color: white !important;
-
-	font-weight: 600;
-
-}
-
-html[data-theme-mode="sky"] .standard-sidebar-item.active-sidebar svg {
-
-	stroke: white !important;
-
-}
-
-/* ==========================================================================
-   ICONS
-   ========================================================================== */
-
-html[data-theme-mode="sky"] .standard-sidebar-item svg {
-
-	stroke: #64748b;
-
-	transition: .25s;
-
-}
-
-html[data-theme-mode="sky"] .standard-sidebar-item:hover svg {
-
-	stroke: #2f6fed;
-
-}
-
-/* ==========================================================================
-   CHILD MENU
-   ========================================================================== */
-
-html[data-theme-mode="sky"] .sidebar-child-item {
-
-	border-radius: 10px;
-
-	color: #64748b;
-
-	transition: .25s;
-
-}
-
-html[data-theme-mode="sky"] .sidebar-child-item:hover {
-
-	background: #edf5ff;
-
-	color: #2f6fed;
-
-}
-
-html[data-theme-mode="sky"] .sidebar-child-item.active-sidebar {
-
-	background: #dbeafe;
-
-	color: #2f6fed;
-
-	font-weight: 600;
-
-}
-
-/* ==========================================================================
-   HEADER
-   ========================================================================== */
-
+html[data-theme-mode="sky"] .body-sidebar-top,
+html[data-theme-mode="sky"] .body-sidebar-bottom,
+html[data-theme-mode="sky"] .body-sidebar-cards,
+html[data-theme-mode="sky"] .standard-items-sections,
+html[data-theme-mode="sky"] .standard-sidebar-section,
 html[data-theme-mode="sky"] .sidebar-header {
-
-	background: transparent;
-
+    background: transparent !important;
 }
 
+html[data-theme-mode="sky"] .desk-sidebar .standard-sidebar-label,
+html[data-theme-mode="sky"] .layout-side-section .app-title,
 html[data-theme-mode="sky"] .sidebar-header .header-title {
-
-	color: #1e293b;
-
-	font-weight: 700;
-
+    color: var(--text);
+    font-weight: 700;
 }
 
 html[data-theme-mode="sky"] .sidebar-header .header-subtitle {
-
-	color: #64748b;
-
+    color: var(--text-secondary);
 }
 
-/* ==========================================================================
-   USER
-   ========================================================================== */
+html[data-theme-mode="sky"] .sidebar-header .sidebar-item-label.header-subtitle {
+    display: none !important;
+}
+
+html[data-theme-mode="sky"] .standard-sidebar-item {
+    border-radius: var(--radius-sm);
+    transition: .25s ease;
+    color: #475569;
+}
+
+html[data-theme-mode="sky"] .standard-sidebar-item:hover {
+    background: rgba(255, 255, 255, 0.65) !important;
+    color: var(--primary) !important;
+}
+
+html[data-theme-mode="sky"] .standard-sidebar-item.selected,
+html[data-theme-mode="sky"] .standard-sidebar-item.active-sidebar,
+html[data-theme-mode="sky"] .standard-sidebar-item.active,
+html[data-theme-mode="sky"] .standard-sidebar-item.router-link-active,
+html[data-theme-mode="sky"] .standard-sidebar-item[aria-current="page"] {
+    background: linear-gradient(90deg, #4d8cf5, #2f5fb8) !important;
+    color: #fff !important;
+    box-shadow: 0 8px 18px rgba(47, 111, 237, .28);
+}
+
+html[data-theme-mode="sky"] .standard-sidebar-item.selected .sidebar-item-label,
+html[data-theme-mode="sky"] .standard-sidebar-item.active-sidebar .sidebar-item-label {
+    color: #fff !important;
+    font-weight: 600;
+}
+
+html[data-theme-mode="sky"] .standard-sidebar-item svg,
+html[data-theme-mode="sky"] .sidebar-item-control svg,
+html[data-theme-mode="sky"] .indicator-icon svg,
+html[data-theme-mode="sky"] .collapse-indicator svg {
+    stroke: #475569 !important;
+    color: #475569 !important;
+    transition: .25s;
+}
+
+html[data-theme-mode="sky"] .standard-sidebar-item:hover svg {
+    stroke: var(--primary) !important;
+    color: var(--primary) !important;
+}
+
+html[data-theme-mode="sky"] .standard-sidebar-item.selected svg,
+html[data-theme-mode="sky"] .standard-sidebar-item.active-sidebar svg,
+html[data-theme-mode="sky"] .standard-sidebar-item.active svg,
+html[data-theme-mode="sky"] .standard-sidebar-item.router-link-active svg {
+    stroke: #fff !important;
+    color: #fff !important;
+    fill: #2f5fb8 !important;
+}
+
+html[data-theme-mode="sky"] .standard-sidebar-item a {
+    color: inherit;
+}
+
+html[data-theme-mode="sky"] .standard-sidebar-item:hover a {
+    color: var(--primary);
+}
+
+html[data-theme-mode="sky"] .standard-sidebar-item.selected a {
+    color: #fff !important;
+}
+
+html[data-theme-mode="sky"] .sidebar-child-item {
+    border-radius: 10px;
+    color: #475569;
+    transition: .25s;
+}
+
+html[data-theme-mode="sky"] .sidebar-child-item:hover {
+    background: rgba(255, 255, 255, 0.65);
+    color: var(--primary);
+}
+
+html[data-theme-mode="sky"] .sidebar-child-item.selected,
+html[data-theme-mode="sky"] .sidebar-child-item.active-sidebar {
+    background: rgba(255, 255, 255, 0.85);
+    color: var(--primary);
+    font-weight: 600;
+}
+
+html[data-theme-mode="sky"] .sidebar-bottom,
+html[data-theme-mode="sky"] .desk-sidebar-bottom {
+    background: rgba(219, 231, 252, .75);
+    border-top: 1px solid #cbddeff0;
+}
+
+html[data-theme-mode="sky"] .sidebar-bottom .user-info,
+html[data-theme-mode="sky"] .desk-sidebar .user-info {
+    background: rgba(255, 255, 255, .75);
+    backdrop-filter: blur(14px);
+    border-radius: 16px;
+}
 
 html[data-theme-mode="sky"] .sidebar-user-button {
-
-	border-radius: 14px;
-
-	transition: .25s;
-
+    border-radius: 14px;
+    transition: .25s;
 }
 
 html[data-theme-mode="sky"] .sidebar-user-button:hover {
-
-	background: #edf5ff;
-
+    background: rgba(255, 255, 255, 0.85) !important;
 }
 
-/* ==========================================================================
-   SCROLLBAR
-   ========================================================================== */
-
 html[data-theme-mode="sky"] .body-sidebar::-webkit-scrollbar {
-
-	width: 8px;
-
+    width: 8px;
 }
 
 html[data-theme-mode="sky"] .body-sidebar::-webkit-scrollbar-thumb {
-
-	background: #bfd4ef;
-
-	border-radius: 20px;
-
+    background: #a6c5f9;
+    border-radius: 20px;
 }
 
-html[data-theme-mode="sky"] .card,
-html[data-theme-mode="sky"] .widget,
-html[data-theme-mode="sky"] .dashboard-widget {
-	background: #fdfefe;
-	border: 1px solid #cfe2fb;
+html[data-theme-mode="sky"] .body-sidebar::-webkit-scrollbar-track {
+    background: var(--background);
 }
 
-/* ==========================================================================
-   PRIMARY BUTTONS
-   ========================================================================== */
+/* ==========================================================
+   BUTTONS
+========================================================== */
 
 html[data-theme-mode="sky"] .btn-primary,
 html[data-theme-mode="sky"] .btn.btn-primary,
 html[data-theme-mode="sky"] button.btn-primary,
 html[data-theme-mode="sky"] .page-actions .btn-primary,
 html[data-theme-mode="sky"] .page-form .btn-primary,
-html[data-theme-mode="sky"] .primary-action,
-html[data-theme-mode="sky"] .btn-primary:not(:disabled) {
-
-	background: linear-gradient(
-		180deg,
-		#5f9eff 0%,
-		#3a67c2 100%
-	) !important;
-
-	border: 1px solid #2f5fb8 !important;
-
-	color: #ffffff !important;
-
-	box-shadow: 0 8px 20px rgba(58, 103, 194, 0.25);
-
-	transition: all .25s ease;
-
+html[data-theme-mode="sky"] .primary-action {
+    background: linear-gradient(180deg, #5f9eff, #2f5fb8) !important;
+    border: 1px solid #2f5fb8 !important;
+    color: #ffffff !important;
+    border-radius: var(--radius-sm);
+    box-shadow: 0 8px 20px rgba(47, 111, 237, .25);
 }
 
 html[data-theme-mode="sky"] .btn-primary:hover,
 html[data-theme-mode="sky"] .btn.btn-primary:hover,
 html[data-theme-mode="sky"] .primary-action:hover {
-
-	background: linear-gradient(
-		180deg,
-		#6cabff 0%,
-		#4a78d8 100%
-	) !important;
-
-	border-color: #3a67c2 !important;
-
-	box-shadow: 0 12px 24px rgba(58, 103, 194, 0.35);
-
+    background: linear-gradient(180deg, #6cabff, #1e4fa0) !important;
+    border-color: #1e4fa0 !important;
+    box-shadow: 0 12px 24px rgba(47, 111, 237, .35);
 }
 
 html[data-theme-mode="sky"] .btn-primary:active,
 html[data-theme-mode="sky"] .primary-action:active {
-
-	background: #2f5fb8 !important;
-
-	border-color: #2f5fb8 !important;
-
+    background: #1e4fa0 !important;
+    border-color: #1e4fa0 !important;
 }
 
-.body-sidebar .sidebar-header .sidebar-item-label.header-subtitle {
-    display: none !important;
+html[data-theme-mode="sky"] .btn-default,
+html[data-theme-mode="sky"] .btn-secondary {
+    border-radius: var(--radius-sm);
+    background: rgba(255, 255, 255, .82);
+    border: 1px solid #cfe2fb;
 }
 
-/* Frappe HR icon - match blue theme */
-.desktop-icon[data-id="Frappe HR"] img.app-icon {
-    filter: hue-rotate(67deg) saturate(1.8) !important;
+/* ==========================================================
+   INPUTS & CONTROLS
+========================================================== */
+
+html[data-theme-mode="sky"] .form-control {
+    background: rgba(255, 255, 255, .92);
+    border: 1px solid #cfe2fb;
 }
 
+html[data-theme-mode="sky"] .form-control:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px rgba(47, 111, 237, .18);
+}
+
+html[data-theme-mode="sky"] input[type="checkbox"] {
+    accent-color: var(--primary);
+    width: 14px !important;
+    height: 14px !important;
+    margin: 0 6px 0 0 !important;
+    vertical-align: middle;
+    position: relative;
+    top: -1px;
+}
+
+html[data-theme-mode="sky"] .checkbox,
+html[data-theme-mode="sky"] .frappe-control[data-fieldtype="Check"] .checkbox {
+    display: flex;
+    align-items: center;
+}
+
+/* ==========================================================
+   FORMS & LAYOUT CONTAINERS (STYLED CARDS WITH MATCHING ALIGNMENT)
+========================================================== */
+
+html[data-theme-mode="sky"] .form-layout > .form-page,
+html[data-theme-mode="sky"] .form-layout-main,
+html[data-theme-mode="sky"] .form-dashboard-section {
+    background: rgba(255, 255, 255, 0.75) !important;
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(207, 226, 251, 0.8) !important;
+    box-shadow: var(--shadow-sm) !important;
+    border-radius: var(--radius-lg) !important;
+    padding: 24px !important;
+    margin-bottom: 20px !important;
+}
+
+html[data-theme-mode="sky"] .form-column {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 12px !important;
+}
+
+html[data-theme-mode="sky"] .section-body {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+}
+
+html[data-theme-mode="sky"] .section-head {
+    color: var(--text);
+    font-weight: 600;
+    font-size: 15px;
+    margin-bottom: 14px;
+}
+
+html[data-theme-mode="sky"] .form-tabs-list .nav-link {
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    margin-right: 16px;
+    padding: 8px 0;
+    color: var(--text-secondary);
+    position: relative;
+    transition: .25s;
+}
+
+html[data-theme-mode="sky"] .form-tabs-list .nav-link:hover {
+    background: transparent !important;
+    color: var(--primary);
+}
+
+html[data-theme-mode="sky"] .form-tabs-list .nav-link.active {
+    background: transparent !important;
+    color: var(--primary) !important;
+    font-weight: 600;
+    box-shadow: none !important;
+}
+
+html[data-theme-mode="sky"] .form-tabs-list .nav-link.active::after {
+    content: "";
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: var(--primary);
+}
+
+/* ==========================================================
+   APP ICONS & MODULES
+========================================================== */
+
+html[data-theme-mode="sky"] .app-icon {
+    background: rgba(159, 200, 255, .25);
+    color: var(--primary);
+}
+
+.desktop-icon[data-id="Frappe HR"] img.app-icon,
 .desktop-icon[data-id="Expenses"] img.app-icon,
 .desktop-icon[data-id="HR Setup"] img.app-icon,
 .desktop-icon[data-id="Leaves"] img.app-icon,
@@ -430,745 +510,95 @@ html[data-theme-mode="sky"] .primary-action:active {
     filter: hue-rotate(67deg) saturate(1.8) !important;
 }
 
-/* ============================================================
-   BELOW: FULL-PAGE TREATMENT (backgrounds, forms, buttons,
-   dashboard widgets) — built from the same pattern as the
-   peach theme, recolored using ONLY this file's own sky
-   palette (--primary #2f5fb8, #2f6fed accent, #5f9eff/#3a67c2
-   button gradient, #edf6ff/#d7eaff/#bddcff/#9fc8ff sidebar
-   gradient, #eaf3fc subtle-accent, #cfe2fb card border, etc.)
-   ============================================================ */
-
 /* ==========================================================
-   MAGNADATA ERP SKY THEME
+   THEME PREVIEW
 ========================================================== */
 
-html[data-theme-mode="sky"] {
-
-    --primary: #2f5fb8;
-
-    --primary-hover: #1e4fa0;
-
-    --background: #eaf3fc;
-
-    --surface: #ffffff;
-
-    --border: #e2e8f0;
-
-    --text: #222;
-
-    --radius: 18px;
-    --shadow: 0 8px 24px rgba(0, 0, 0, .05);
-
-}
-
-/* ==========================================================
-   MAGNADATA SKY BACKGROUND
-========================================================== */
-
-html[data-theme-mode="sky"],
-html[data-theme-mode="sky"] body {
-
-    background: #eaf3fc !important;
-
-}
-
-html[data-theme-mode="sky"] .layout-main-section {
-
-    background: rgba(255, 248, 243, .75);
-
-}
-
-/* ==========================================================
-   LIST VIEW
-========================================================== */
-
-/* Toolbar */
-
-html[data-theme-mode="sky"] .list-row-container,
-html[data-theme-mode="sky"] .result,
-html[data-theme-mode="sky"] .frappe-list {
-
-    background: transparent;
-
-}
-
-/* Search */
-
-html[data-theme-mode="sky"] .list-filters input,
-html[data-theme-mode="sky"] input.form-control {
-
-    border-radius: 12px !important;
-
-    border: 1px solid #cfe2fb !important;
-
-    background: rgba(255, 255, 255, .82);
-
-    backdrop-filter: blur(14px);
-
-}
-
-/* Buttons */
-
-html[data-theme-mode="sky"] .btn-default {
-
-    border-radius: 12px;
-
-    background: rgba(255, 255, 255, .82);
-
-    border: 1px solid #cfe2fb;
-
-}
-
-html[data-theme-mode="sky"] .btn-primary {
-
-    background: linear-gradient(180deg,
-            #5f9eff,
-            #2f5fb8) !important;
-
-    border: none;
-
-    color: white;
-
-    border-radius: 12px;
-
-    box-shadow: 0 8px 22px rgba(58, 103, 194, .25);
-
-}
-
-/* ==========================================================
-   DOC TYPE FORM
-========================================================== */
-
-html[data-theme-mode="sky"] .layout-main-section .form-page,
-html[data-theme-mode="sky"] .layout-main-section .page-form,
-html[data-theme-mode="sky"] .form-layout {
-
-    background: transparent !important;
-
-}
-
-/* Main White Card */
-
-html[data-theme-mode="sky"] .form-layout>.form-page,
-html[data-theme-mode="sky"] .form-layout-main,
-html[data-theme-mode="sky"] .form-dashboard-section,
-html[data-theme-mode="sky"] .form-column {
-
-    background: rgba(255, 255, 255, .75) !important;
-
-    backdrop-filter: blur(18px);
-
-    border: 1px solid rgba(255, 255, 255, .7);
-
-    border-radius: 22px;
-
-    box-shadow: 0 12px 35px rgba(0, 0, 0, .05);
-
-}
-
-/* ==========================================================
-   FORM SECTION
-========================================================== */
-
-html[data-theme-mode="sky"] .section-body {
-
-    background: rgba(255, 255, 255, .82);
-
-    border-radius: 18px;
-
-    padding: 20px;
-
-    border: 1px solid #e2e8f0;
-
-    box-shadow: 0 8px 20px rgba(0, 0, 0, .04);
-
-}
-
-html[data-theme-mode="sky"] .section-head {
-
-    color: #222;
-
-    font-weight: 600;
-
-    font-size: 15px;
-
-    margin-bottom: 14px;
-
-}
-
-/* ==========================================================
-   BUTTONS
-========================================================== */
-
-html[data-theme-mode="sky"] .btn-primary {
-
-    background: #2f5fb8 !important;
-
-    border: none !important;
-
-    color: white !important;
-
-    border-radius: 12px;
-
-    box-shadow: 0 10px 24px rgba(58, 103, 194, .22);
-
-}
-
-html[data-theme-mode="sky"] .btn-primary:hover {
-
-    background: #1e4fa0 !important;
-
-    transform: translateY(-1px);
-
-}
-
-/* ==========================================================
-   FORM TABS
-========================================================== */
-
-html[data-theme-mode="sky"] .form-tabs-list {
-
-    border-bottom: none;
-
-    margin-bottom: 20px;
-
-}
-
-html[data-theme-mode="sky"] .form-tabs-list .nav-link {
-
-    border-radius: 12px;
-
-    margin-right: 8px;
-
-    color: #666;
-
-    transition: .25s;
-
-}
-
-html[data-theme-mode="sky"] .form-tabs-list .nav-link.active {
-
-    background: #dbeafe;
-
-    color: #2f5fb8;
-
-    font-weight: 600;
-
-}
-
-/* ==========================================================
-   GLOBAL DESK INPUT STYLE
-========================================================== */
-
-html[data-theme-mode="sky"] .frappe-control .form-control,
-html[data-theme-mode="sky"] .frappe-control input,
-html[data-theme-mode="sky"] .frappe-control textarea,
-html[data-theme-mode="sky"] .frappe-control select,
-html[data-theme-mode="sky"] .awesomplete input,
-html[data-theme-mode="sky"] .control-input,
-html[data-theme-mode="sky"] .link-field input {
-
-    background: rgba(255, 255, 255, .92) !important;
-
-    border: 1px solid #cfe2fb !important;
-
-    border-radius: 14px !important;
-
-    transition: all .25s ease;
-
-}
-
-html[data-theme-mode="sky"] .frappe-control .form-control:focus,
-html[data-theme-mode="sky"] .frappe-control input:focus,
-html[data-theme-mode="sky"] .frappe-control textarea:focus,
-html[data-theme-mode="sky"] .frappe-control select:focus,
-html[data-theme-mode="sky"] .awesomplete input:focus,
-html[data-theme-mode="sky"] .control-input:focus,
-html[data-theme-mode="sky"] .link-field input:focus {
-
-    border-color: #2f5fb8 !important;
-
-    box-shadow: 0 0 0 4px rgba(47, 111, 237, .15) !important;
-
-    outline: none !important;
-
-}
-
-html[data-theme-mode="sky"] .frappe-control.focus,
-html[data-theme-mode="sky"] .control-input-wrapper.focus,
-html[data-theme-mode="sky"] .form-group.focus {
-
-    border-radius: 14px;
-
-}
-
-/* ==========================================================
-   SIDEBAR CHILD MENU
-========================================================== */
-html[data-theme-mode="sky"] .sidebar-child-item {
-
-    color: #666;
-
-    border-radius: 10px;
-
-    transition: .25s;
-
-}
-
-html[data-theme-mode="sky"] .sidebar-child-item:hover {
-
-    background: #edf5ff;
-
-    color: #2f5fb8;
-
-}
-
-html[data-theme-mode="sky"] .sidebar-child-item.selected {
-
-    background: #dbeafe;
-
-    color: #2f5fb8;
-
-    font-weight: 600;
-
-}
-
-/* ==========================================================
-   SIDEBAR LINKS
-========================================================== */
-html[data-theme-mode="sky"] .standard-sidebar-item a {
-
-    color: inherit;
-
-}
-
-html[data-theme-mode="sky"] .standard-sidebar-item:hover a {
-
-    color: #2f5fb8;
-
-}
-
-html[data-theme-mode="sky"] .standard-sidebar-item.selected a {
-
-    color: white !important;
-
-}
-
-/* ==========================================================
-   SIDEBAR BACKGROUND
-========================================================== */
-
-html[data-theme-mode="sky"] .layout-side-section {
-
-    background:
-        linear-gradient(180deg,
-            #edf6ff 0%,
-            #f7fbff 35%,
-            #eaf3fc 70%,
-            #9fc8ff 100%) !important;
-
-    border-right: 1px solid #dce8f5;
-
-    box-shadow:
-        8px 0 35px rgba(47, 111, 237, .08);
-
-}
-
-html[data-theme-mode="sky"] .standard-sidebar-section {
-
-    background: transparent !important;
-
-}
-
-html[data-theme-mode="sky"] .desk-sidebar .standard-sidebar-label,
-html[data-theme-mode="sky"] .layout-side-section .app-title {
-
-    color: #1e293b;
-
-    font-weight: 700;
-
-}
-
-html[data-theme-mode="sky"] .standard-sidebar-item {
-
-    color: #64748b;
-
-}
-
-html[data-theme-mode="sky"] .sidebar-bottom,
-html[data-theme-mode="sky"] .desk-sidebar-bottom {
-
-    background: rgba(237, 246, 255, .65);
-
-    border-top: 1px solid #dce8f5;
-
-}
-
-html[data-theme-mode="sky"] .sidebar-bottom .user-info,
-html[data-theme-mode="sky"] .desk-sidebar .user-info {
-
-    background: rgba(255, 255, 255, .60);
-
-    backdrop-filter: blur(14px);
-
-    border-radius: 16px;
-
-}
-
-/* ==========================================================
-   SKY SIDEBAR BACKGROUND
-========================================================== */
-
-html[data-theme-mode="sky"] .body-sidebar {
-
-    background: linear-gradient(180deg,
-            #edf6ff 0%,
-            #d7eaff 35%,
-            #bddcff 70%,
-            #9fc8ff 100%) !important;
-
-    border-right: 1px solid #dce8f5;
-
-    box-shadow:
-        10px 0 28px rgba(47, 111, 237, .08);
-
-}
-
-html[data-theme-mode="sky"] .body-sidebar-top,
-html[data-theme-mode="sky"] .body-sidebar-bottom,
-html[data-theme-mode="sky"] .body-sidebar-cards,
-html[data-theme-mode="sky"] .standard-items-sections {
-
-    background: transparent !important;
-
-}
-
-html[data-theme-mode="sky"] .sidebar-header {
-
-    background: transparent !important;
-
-}
-
-html[data-theme-mode="sky"] .sidebar-user-button {
-
-    border-radius: 14px;
-
-    transition: .25s;
-
-}
-
-html[data-theme-mode="sky"] .sidebar-user-button:hover {
-
-    background: #edf5ff !important;
-
-}
-
-/* ==========================================================
-   PREMIUM DASHBOARD CARDS
-========================================================== */
-
-html[data-theme-mode="sky"] .dashboard,
-html[data-theme-mode="sky"] .dashboard-graph,
-html[data-theme-mode="sky"] .widget-group,
-html[data-theme-mode="sky"] .widget-group-body,
-html[data-theme-mode="sky"] .widget-group-body.grid-col-1,
-html[data-theme-mode="sky"] .widget-group-body.grid-col-2,
-html[data-theme-mode="sky"] .widget-group-body.grid-col-3 {
-
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-}
-
-html[data-theme-mode="sky"] .widget,
-html[data-theme-mode="sky"] .dashboard-widget,
-html[data-theme-mode="sky"] .number-widget-box,
-html[data-theme-mode="sky"] .chart-widget {
-
-    position: relative;
-    overflow: hidden;
-
-    background: rgba(255, 255, 255, .90) !important;
-    backdrop-filter: blur(18px);
-
-    border: 1px solid rgba(207, 226, 251, .65) !important;
-
-    border-radius: 22px !important;
-
-    box-shadow:
-        0 8px 18px rgba(47, 111, 237, .08),
-        0 18px 40px rgba(47, 111, 237, .08),
-        inset 0 1px rgba(255, 255, 255, .65) !important;
-    min-height: 125px !important;
-    padding: 24px 28px !important;
-
-    transition: .30s ease;
-}
-
-html[data-theme-mode="sky"] .widget::before,
-html[data-theme-mode="sky"] .number-widget-box::before,
-html[data-theme-mode="sky"] .chart-widget::before {
-
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 7px;
-
-    background: linear-gradient(90deg,
-            #2f5fb8 0%,
-            #2f5fb8 25%,
-            #5f9eff 60%,
-            #bddcff 100%);
-
-    box-shadow:
-        0 2px 10px rgba(47, 111, 237, .35);
-}
-
-html[data-theme-mode="sky"] .widget:hover,
-html[data-theme-mode="sky"] .number-widget-box:hover,
-html[data-theme-mode="sky"] .chart-widget:hover {
-
-    transform: translateY(-4px);
-
-    box-shadow:
-        0 10px 22px rgba(47, 111, 237, .15),
-        0 25px 55px rgba(58, 103, 194, .22) !important;
-}
-
-html[data-theme-mode="sky"] .widget-title,
-html[data-theme-mode="sky"] .widget-title span,
-html[data-theme-mode="sky"] .widget-head .widget-title{
-
-    color:#1e293b !important;
-    font-size:16px !important;
-    font-weight:700 !important;
-    line-height:1.4 !important;
-    letter-spacing:.2px !important;
-}
-
-html[data-theme-mode="sky"] .widget-head{
-    margin-bottom:20px !important;
-    align-items:flex-start !important;
-}
-
-html[data-theme-mode="sky"] .number{
-    color:#1e293b !important;
-    font-size:44px !important;
-    font-weight:700 !important;
-    line-height:1;
-    margin-top:14px !important;
-}
-
-html[data-theme-mode="sky"] .widget-control {
-
-    background: #eaf3fc;
-    border-radius: 10px;
-}
-
-/* ==========================================================
-   TOP TOOLBAR BUTTONS
-========================================================== */
-
-html[data-theme-mode="sky"] .btn-default,
-html[data-theme-mode="sky"] .btn-secondary,
-html[data-theme-mode="sky"] .list-view-actions .btn,
-html[data-theme-mode="sky"] .page-actions .btn,
-html[data-theme-mode="sky"] .page-form .btn-default,
-html[data-theme-mode="sky"] .dropdown-toggle.btn {
-
-    background: linear-gradient(180deg,
-            #5f9eff,
-            #3a67c2) !important;
-
-    color: #ffffff !important;
-
-    border: none !important;
-
-    border-radius: 12px;
-
-    box-shadow: 0 8px 20px rgba(58, 103, 194, .25);
-
-}
-
-html[data-theme-mode="sky"] .btn-default:hover,
-html[data-theme-mode="sky"] .btn-secondary:hover,
-html[data-theme-mode="sky"] .dropdown-toggle.btn:hover {
-
-    background: linear-gradient(180deg,
-            #6cabff,
-            #4a78d8) !important;
-
-    color: #ffffff !important;
-
-}
-
-/* ==========================================================
-   FULL DESKTOP PAGE BACKGROUND
-========================================================== */
-
-html[data-theme-mode="sky"] html,
-html[data-theme-mode="sky"] body,
-html[data-theme-mode="sky"] #body,
-html[data-theme-mode="sky"] #page-desktop,
-html[data-theme-mode="sky"] .desktop-page,
-html[data-theme-mode="sky"] .desk-container,
-html[data-theme-mode="sky"] .layout-main,
-html[data-theme-mode="sky"] .layout-main-section {
-
-    min-height: 100vh !important;
-
-    background:
-        radial-gradient(circle at 105% 12%,
-            rgba(47, 111, 237, .35) 0%,
-            rgba(95, 158, 255, .30) 22%,
-            rgba(201, 226, 255, .20) 42%,
-            transparent 58%),
-
-        radial-gradient(circle at -5% 105%,
-            rgba(47, 111, 237, .35) 0%,
-            rgba(95, 158, 255, .30) 22%,
-            rgba(201, 226, 255, .20) 42%,
-            transparent 58%),
-        linear-gradient(180deg,
-            #f7fbff,
-            #eaf3fc,
-            #c9e2ff) !important;
-
-    background-repeat: no-repeat !important;
-    background-size: cover !important;
-
-}
-
-html[data-theme-mode="sky"] .layout-main-section {
-
-    background:
-        radial-gradient(circle at 100% 18%,
-            rgba(95, 158, 255, .30),
-            transparent 34%),
-
-        radial-gradient(circle at 0% 100%,
-            rgba(201, 226, 255, .30),
-            transparent 34%),
-
-        #eaf3fc !important;
-
-}
-/* Theme Switcher - Sky Preview */
 .theme-preview.preview-sky .background {
     background:
-        radial-gradient(circle at bottom left,
-            rgba(47, 111, 237, 0.35) 0%,
-            rgba(95, 158, 255, 0.18) 28%,
-            rgba(255,255,255,0) 55%),
-        radial-gradient(circle at top right,
-            rgba(47, 111, 237, 0.28) 0%,
-            rgba(255,255,255,0) 45%),
+        radial-gradient(circle at bottom left, rgba(47, 111, 237, 0.35) 0%, rgba(95, 158, 255, 0.18) 30%, rgba(255,255,255,0) 55%),
+        radial-gradient(circle at top right, rgba(47, 111, 237, 0.28) 0%, rgba(255,255,255,0) 45%),
         #ffffff;
 }
 
 .theme-preview.preview-sky .navbar {
     background: linear-gradient(90deg, #2f5fb8, #5f9eff);
 }
+
 /* ==========================================================
-   FIX DESKTOP FULL BACKGROUND - REMOVE BOTTOM WHITE STRIP
+   SKY THEME CHECKBOX FIX
 ========================================================== */
 
-html[data-theme-mode="sky"],
-html[data-theme-mode="sky"] body,
-html[data-theme-mode="sky"] #body,
-html[data-theme-mode="sky"] #page-desktop,
-html[data-theme-mode="sky"] .desktop-page,
-html[data-theme-mode="sky"] .desk-container {
-    background:
-        radial-gradient(circle at 105% 12%,
-            rgba(47, 111, 237, .35) 0%,
-            rgba(95, 158, 255, .30) 22%,
-            rgba(201, 226, 255, .20) 42%,
-            transparent 58%),
+html[data-theme-mode="sky"] input[type="checkbox"],
+html[data-theme-mode="sky"] .grid-row input[type="checkbox"],
+html[data-theme-mode="sky"] .modal input[type="checkbox"],
+html[data-theme-mode="sky"] .sticky-col-container input[type="checkbox"],
+html[data-theme-mode="sky"] div[class*="col-"] input[type="checkbox"] {
+    appearance: auto !important;
+    -webkit-appearance: checkbox !important;
 
-        radial-gradient(circle at -5% 105%,
-            rgba(47, 111, 237, .35) 0%,
-            rgba(95, 158, 255, .30) 22%,
-            rgba(201, 226, 255, .20) 42%,
-            transparent 58%),
+    width: 14px !important;
+    height: 14px !important;
 
-        linear-gradient(
-            180deg,
-            #f7fbff,
-            #eaf3fc,
-            #c9e2ff
-        ) !important;
+    min-width: 14px !important;
+    min-height: 14px !important;
 
-    background-attachment: fixed !important;
-    background-repeat: no-repeat !important;
-    background-size: cover !important;
-}
+    margin: 0 !important;
+    padding: 0 !important;
 
-html[data-theme-mode="sky"] #page-desktop,
-html[data-theme-mode="sky"] .desktop-page {
-    min-height: calc(100vh - 50px) !important;
-}
-
-html[data-theme-mode="sky"] #page-desktop > *,
-html[data-theme-mode="sky"] .desktop-page > *,
-html[data-theme-mode="sky"] .desktop-container,
-html[data-theme-mode="sky"] .desktop-wrapper,
-html[data-theme-mode="sky"] .desktop-content {
-    background-color: transparent !important;
-}
-
-html[data-theme-mode="sky"] #page-desktop,
-html[data-theme-mode="sky"] .desktop-page,
-html[data-theme-mode="sky"] .desk-container,
-html[data-theme-mode="sky"] .layout-main,
-html[data-theme-mode="sky"] .layout-main-section {
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
     background: transparent !important;
-}
 
-html[data-theme-mode="sky"] body {
-    min-height: 100vh !important;
+    accent-color: #2f5fb8 !important;
 
-    background:
-        radial-gradient(circle at 105% 12%,
-            rgba(47, 111, 237, .35) 0%,
-            rgba(95, 158, 255, .30) 22%,
-            rgba(201, 226, 255, .20) 42%,
-            transparent 58%),
-
-        radial-gradient(circle at -5% 105%,
-            rgba(47, 111, 237, .35) 0%,
-            rgba(95, 158, 255, .30) 22%,
-            rgba(201, 226, 255, .20) 42%,
-            transparent 58%),
-
-        linear-gradient(180deg,
-            #f7fbff,
-            #eaf3fc,
-            #c9e2ff) !important;
-
-    background-attachment: fixed !important;
-    background-repeat: no-repeat !important;
-    background-size: cover !important;
-}
-
-html[data-theme-mode="sky"] .widget:empty {
-    display: none !important;
+    pointer-events: auto !important;
+    opacity: 1 !important;
+    z-index: 999 !important;
+    position: relative !important;
+    cursor: pointer !important;
 }
 
 /* ==========================================================
-   SKY - TRANSPARENT PAGE CONTAINERS
+   SKY THEME CHECKBOX SPACING FIX
 ========================================================== */
 
-html[data-theme-mode="sky"] .page-content,
-html[data-theme-mode="sky"] .layout-main-section-wrapper,
-html[data-theme-mode="sky"] .desk-page,
-html[data-theme-mode="sky"] .page-container,
-html[data-theme-mode="sky"] .workspace-body,
-html[data-theme-mode="sky"] .dashboard,
-html[data-theme-mode="sky"] .page-body,
-html[data-theme-mode="sky"] .page-wrapper {
+html[data-theme-mode="sky"] input[type="checkbox"],
+html[data-theme-mode="sky"] .grid-row input[type="checkbox"],
+html[data-theme-mode="sky"] .modal input[type="checkbox"],
+html[data-theme-mode="sky"] .sticky-col-container input[type="checkbox"],
+html[data-theme-mode="sky"] div[class*="col-"] input[type="checkbox"] {
+    appearance: auto !important;
+    -webkit-appearance: checkbox !important;
+
+    width: 14px !important;
+    height: 14px !important;
+
+    min-width: 14px !important;
+    min-height: 14px !important;
+
+    margin: 0 10px 0 0 !important;
+    padding: 0 !important;
+
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
     background: transparent !important;
+
+    accent-color: #2f5fb8 !important;
+
+    pointer-events: auto !important;
+    opacity: 1 !important;
+    z-index: 999 !important;
+    position: relative !important;
+    cursor: pointer !important;
+}
+
+html[data-theme-mode="sky"] .checkbox,
+html[data-theme-mode="sky"] .frappe-control[data-fieldtype="Check"] .checkbox,
+html[data-theme-mode="sky"] .frappe-control[data-fieldtype="Check"] .label-area {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
 }

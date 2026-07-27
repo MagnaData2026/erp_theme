@@ -311,7 +311,44 @@
                 0 22px 45px -8px rgba(0, 0, 0, 0.6),
                 0 8px 18px -4px rgba(0, 0, 0, 0.3) !important;
         }
+.desktop-modal-body,
+.modal-body.ui-front.desktop-modal-body {
+    max-height: 75vh !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+}
 
+.desktop-modal-body .icons-container,
+.desktop-modal-body .icons,
+.modal-body .icons-container,
+.modal-body .icons {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 18px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    justify-content: flex-start !important;
+    padding: 14px 18px 24px 18px !important;
+}
+
+.desktop-modal-body .custom-premium-card,
+.modal-body .custom-premium-card,
+.desktop-modal-body .desktop-icon,
+.modal-body .desktop-icon {
+    flex: 0 0 calc(33.333% - 12px) !important;
+    width: calc(33.333% - 12px) !important;
+    min-width: 120px !important;
+    height: 150px !important;
+    min-height: 150px !important;
+    margin: 0 !important;
+    
+    /* Prominent 360-Degree Ambient Shadow to Make Cards Stand Out */
+    box-shadow: 
+        0 0 25px 4px rgba(0, 0, 0, 0.12),
+        0 10px 25px -4px rgba(0, 0, 0, 0.15),
+        0 -6px 18px -4px rgba(0, 0, 0, 0.08),
+        inset 0 1px 2px rgba(255, 255, 255, 0.95) !important;
+}
         .custom-premium-card:hover .icon-container,
         .custom-premium-card:hover .link-icon {
             transform: scale(1.12) !important;
