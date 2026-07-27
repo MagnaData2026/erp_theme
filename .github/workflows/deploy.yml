@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Deploy to EC2
+      - name: Deploy to Server
         uses: appleboy/ssh-action@v1.2.2
         with:
           host: ${{ secrets.EC2_HOST }}
@@ -18,35 +18,21 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           port: 22
           script: |
-            set -e
-
-            echo "Starting deployment..."
+            export NVM_DIR="$HOME/.nvm"
+            source "$NVM_DIR/nvm.sh"
 
             cd /home/ubuntu/frappe-bench-v16/apps/custom_ui
 
-            echo "Fetching latest code..."
             git fetch origin
-
-            echo "Resetting to latest main branch..."
             git reset --hard origin/main
-
-            echo "Removing untracked files..."
             git clean -fd
 
             cd /home/ubuntu/frappe-bench-v16
 
             source env/bin/activate
 
-            echo "Building assets..."
             bench build
-
-            echo "Running migrations..."
             bench --site all migrate
-
-            echo "Clearing cache..."
             bench --site all clear-cache
 
-            echo "Restarting Nginx..."
             sudo systemctl restart nginx
-
-            echo "Deployment completed successfully."
