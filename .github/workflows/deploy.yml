@@ -1,0 +1,30 @@
+name: Deploy ERP Theme
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: 22
+          script: |
+            cd /home/ubuntu/frappe-bench-v16/apps/custom_ui
+            git pull origin main
+
+            cd /home/ubuntu/frappe-bench-v16
+            source env/bin/activate
+
+            bench build
+            bench --site all clear-cache
+
+            sudo systemctl restart nginx
