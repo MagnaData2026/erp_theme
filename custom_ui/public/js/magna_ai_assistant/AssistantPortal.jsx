@@ -1,11 +1,11 @@
-// magna_ai_assistant/AssistantPortal.jsx
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from './Sidebar';
 import BentoWelcome from './BentoWelcome';
 import ChatArea from './ChatArea';
 
-const API_BASE_URL = 'https://ai.tjdem.online';
+// API Base configuration
+const API_BASE_URL = 'http://0.0.0.0:8050';
 
 const MicIcon = ({ isListening }) => (
     <svg 
@@ -20,7 +20,7 @@ const MicIcon = ({ isListening }) => (
         strokeLinejoin="round"
         style={{ display: 'block', transition: 'stroke 0.2s ease' }}
     >
-        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 6 0V5a3 3 0 0 0-3-3Z" />
+        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
         <path d="M19 10v1a7 7 0 0 1-14 0v-1" />
         <line x1="12" x2="12" y1="19" y2="22" />
     </svg>
@@ -69,9 +69,8 @@ export default function AssistantPortal({ isOpen, onClose }) {
     const [isSending, setIsSending] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     
-    // MULTI-FILE STATE
+    // Multi-File Management State
     const [selectedFiles, setSelectedFiles] = useState([]);
-
     const fileInputRef = useRef(null);
 
     const activeChat = chatHistory.find(c => c.id === currentChatId);
@@ -240,7 +239,7 @@ export default function AssistantPortal({ isOpen, onClose }) {
 
     if (!isOpen) return null;
 
-    // 🟢 Animated Blinking File Badges Component
+    // Animated File Badges Component
     const RenderFileBadges = () => {
         if (selectedFiles.length === 0) return null;
         return (
@@ -277,7 +276,6 @@ export default function AssistantPortal({ isOpen, onClose }) {
                             fontWeight: '600', backdropFilter: 'blur(8px)'
                         }}
                     >
-                        {/* Pulse Dot */}
                         <span style={{
                             width: '6px', height: '6px', borderRadius: '50%',
                             backgroundColor: '#38bdf8', boxShadow: '0 0 6px #38bdf8'
@@ -314,7 +312,6 @@ export default function AssistantPortal({ isOpen, onClose }) {
                     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif'
                 }}
             >
-                {/* Hidden File Input Element with MULTIPLE enabled */}
                 <input 
                     type="file" 
                     ref={fileInputRef} 
@@ -324,7 +321,7 @@ export default function AssistantPortal({ isOpen, onClose }) {
                     onChange={handleFileSelect} 
                 />
 
-                {/* DYNAMIC LIQUID GRADIENT BACKGROUND ANIMATION */}
+                {/* Ambient Dynamic Background Gradients */}
                 <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', zIndex: 0, pointerEvents: 'none' }}>
                     <motion.div 
                         animate={{
@@ -359,7 +356,7 @@ export default function AssistantPortal({ isOpen, onClose }) {
                     />
                 </div>
 
-                {/* MAIN WRAPPER PANEL */}
+                {/* Main Glass Panel */}
                 <motion.div
                     initial={{ opacity: 0, scale: 0.96, y: 15 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -417,7 +414,7 @@ export default function AssistantPortal({ isOpen, onClose }) {
                             </motion.button>
                         </div>
 
-                        {/* Main Interactive Workspace Area */}
+                        {/* Interactive Workspace Area */}
                         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', backgroundColor: 'transparent' }}>
                             <AnimatePresence mode="wait">
                                 {activeMessages.length === 0 ? (
@@ -441,7 +438,7 @@ export default function AssistantPortal({ isOpen, onClose }) {
                                             </p>
                                         </div>
 
-                                        {/* Seamless Input Card Container */}
+                                        {/* Seamless Input Bar */}
                                         <div className="magna-input-box" style={{
                                             width: '100%', maxWidth: '640px',
                                             borderRadius: '16px', padding: '8px 12px',
@@ -450,10 +447,8 @@ export default function AssistantPortal({ isOpen, onClose }) {
                                             boxShadow: '0 12px 32px -10px rgba(0, 0, 0, 0.08)',
                                             boxSizing: 'border-box'
                                         }}>
-                                            {/* Top Section: Animated File Badges */}
                                             <RenderFileBadges />
 
-                                            {/* Bottom Section: Controls & Text Input */}
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%' }}>
                                                 <motion.button
                                                     whileHover={{ scale: 1.06 }}
@@ -524,7 +519,7 @@ export default function AssistantPortal({ isOpen, onClose }) {
                                     <motion.div key="chat" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
                                         <ChatArea messages={activeMessages} isThinking={isSending} />
                                         
-                                        {/* Active Chat Input Area */}
+                                        {/* Active Chat Input Bar */}
                                         <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border-color, rgba(148, 163, 184, 0.15))' }}>
                                             <div className="magna-input-box" style={{
                                                 maxWidth: '750px', margin: '0 auto',
@@ -532,7 +527,6 @@ export default function AssistantPortal({ isOpen, onClose }) {
                                                 display: 'flex', flexDirection: 'column',
                                                 boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)'
                                             }}>
-                                                {/* File Badges Area */}
                                                 <RenderFileBadges />
 
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%' }}>
