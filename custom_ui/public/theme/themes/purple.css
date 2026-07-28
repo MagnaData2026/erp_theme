@@ -870,7 +870,7 @@ html[data-theme-mode="purple"] .tab-content,
 html[data-theme-mode="purple"] .tab-pane {
     background-color: #f4ecff !important;
 }
-/* Notification active */
+/* Notification active
 html[data-theme-mode="purple"] .sidebar-notification.active .standard-sidebar-item,
 html[data-theme-mode="purple"] .sidebar-notification.open .standard-sidebar-item {
 
@@ -893,7 +893,7 @@ html[data-theme-mode="purple"] .sidebar-notification.open svg {
 
 
 /* Search active */
-html[data-theme-mode="purple"] .navbar-search-bar.active .standard-sidebar-item {
+/* html[data-theme-mode="purple"] .navbar-search-bar.active .standard-sidebar-item {
 
     background: linear-gradient(180deg, #a855f7, #7c3aed) !important;
     border-radius: 10px;
@@ -912,4 +912,112 @@ html[data-theme-mode="purple"] .standard-sidebar-item.notification-active svg{
     color:#fff !important;
     stroke:#fff !important;
 
+} */ 
+/* ==========================================================
+   AWESOMPLETE / LINK FIELD DROPDOWN FIX (FINAL v2)
+========================================================== */
+
+html[data-theme-mode="purple"] .awesomplete {
+    position: relative;
+    z-index: 99999 !important;
+}
+
+html[data-theme-mode="purple"] .awesomplete > ul,
+html[data-theme-mode="purple"] ul[role="listbox"] {
+
+    background: #FFFFFF !important;
+    opacity: 1 !important;
+
+    border: 1px solid #E6D2FF !important;
+    border-radius: 12px !important;
+
+    box-shadow: 0 12px 30px rgba(190, 120, 255, .20) !important;
+
+    z-index: 999999 !important;
+
+    padding: 4px !important;
+
+    /* natural width raheu dya - forceपणे narrow karu naka */
+    min-width: 300px !important;
+    width: max-content !important;
+    max-width: 400px !important;
+}
+
+/* Each option: full width of the (now wider) ul, no wrapping */
+html[data-theme-mode="purple"] .awesomplete > ul > [role="option"] {
+    display: block !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+
+    background: #FFFFFF !important;
+    color: #2F2F38 !important;
+    opacity: 1 !important;
+
+    padding: 8px 12px !important;
+    margin: 2px 0 !important;
+    border-radius: 8px !important;
+
+    font-weight: 500 !important;
+    white-space: nowrap !important;
+}
+
+html[data-theme-mode="purple"] .awesomplete > ul > [role="option"]:hover,
+html[data-theme-mode="purple"] .awesomplete > ul > [role="option"][aria-selected="true"] {
+    background: #F5EAFF !important;
+    color: #9A4DF0 !important;
+}
+/* ==========================================================
+   FIX: FILTER ROW STACKING CONTEXT (so dropdown wins over table)
+========================================================== */
+
+html[data-theme-mode="purple"] .page-form,
+html[data-theme-mode="purple"] .standard-filter-section {
+    position: relative !important;
+    z-index: 100 !important;
+}
+
+/* ==========================================================
+   SIMPLE PURPLE SEARCH / COMMAND PALETTE (like sky theme)
+========================================================== */
+
+html[data-theme-mode="purple"] .modal-content input:focus,
+html[data-theme-mode="purple"] .search-dialog input:focus,
+html[data-theme-mode="purple"] input[type="text"]:focus {
+
+    border-color: #C97AF7 !important;
+    box-shadow: 0 0 0 3px rgba(201, 122, 247, .25) !important;
+}
+/* ==========================================================
+   MODAL SEARCH (Ctrl+K) — FULL WIDTH, NO BOX (like sky theme)
+========================================================== */
+
+html[data-theme-mode="purple"] .modal .awesomplete > ul,
+html[data-theme-mode="purple"] .modal ul[role="listbox"] {
+
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
+
+    padding: 0 !important;
+    background: #FFFFFF !important;
+}
+
+/* This modal's dropdown uses <li>, not div[role=option] */
+html[data-theme-mode="purple"] .modal .awesomplete > ul > li {
+    display: block !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+
+    background: #FFFFFF !important;
+    color: #2F2F38 !important;
+
+    padding: 10px 16px !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+
+    white-space: normal !important;
 }
