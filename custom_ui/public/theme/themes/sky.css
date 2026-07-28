@@ -602,3 +602,27 @@ html[data-theme-mode="sky"] .frappe-control[data-fieldtype="Check"] .label-area 
     align-items: center !important;
     gap: 8px !important;
 }
+
+/* Fix stacking context */
+
+html[data-theme-mode="sky"] .layout-main-section,
+html[data-theme-mode="sky"] .layout-main-list,
+html[data-theme-mode="sky"] .page-form,
+html[data-theme-mode="sky"] .standard-filter-section,
+html[data-theme-mode="sky"] .link-field,
+html[data-theme-mode="sky"] .awesomplete {
+    position: relative !important;
+    z-index: 9999 !important;
+}
+
+html[data-theme-mode="sky"] .frappe-list,
+html[data-theme-mode="sky"] .result-container,
+html[data-theme-mode="sky"] .result,
+html[data-theme-mode="sky"] .list-row-container {
+    position: relative !important;
+    z-index: 1 !important;
+}
+
+html[data-theme-mode="sky"] .awesomplete > ul {
+    z-index: 999999 !important;
+}
