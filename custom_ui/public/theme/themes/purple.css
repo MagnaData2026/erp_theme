@@ -64,9 +64,7 @@ html[data-theme-mode="purple"] .layout-main {
 
 html[data-theme-mode="purple"] .desk-container,
 html[data-theme-mode="purple"] .layout-main {
-
-    position: relative;
-    overflow: hidden;
+    overflow: visible !important;
 }
 
 html[data-theme-mode="purple"] .desk-container::before,
@@ -543,7 +541,7 @@ html[data-theme-mode="purple"] .body-sidebar {
     border-right: 1px solid #E8D8FA !important;
 
     box-shadow:
-        10px 0 30px rgba(180, 110, 255, .14);
+        10px 0 30px rgba(191, 94, 239, 0.868);
 
 }
 
@@ -597,7 +595,7 @@ html[data-theme-mode="purple"] .standard-sidebar-item.selected {
             #D78EFF,
             #BF6FFF) !important;
 
-    color: #fff !important;
+    color: #ffffff !important;
 
     box-shadow: 0 8px 18px rgba(190, 110, 255, .18);
 
@@ -721,9 +719,19 @@ html[data-theme-mode="purple"] .standard-sidebar-item.router-link-active svg {
 }
 
 html[data-theme-mode="purple"] .body-sidebar {
-
     position: relative;
-    overflow: hidden;
+    overflow: visible !important;
+}
+html[data-theme-mode="purple"] .dropdown-notifications {
+    position: absolute !important;
+    left: 100% !important;
+    top: 0 !important;
+
+    z-index: 999999 !important;
+
+    overflow: visible !important;
+
+    display: block;
 }
 
 html[data-theme-mode="purple"] .body-sidebar::after {
@@ -760,4 +768,148 @@ html[data-theme-mode="purple"] .body-sidebar::after {
 }
 html[data-theme-mode="purple"] .widget.spacer {
     display: none !important;
+}
+html[data-theme-mode="purple"] .sticky-column {
+    appearance: auto !important;
+    -webkit-appearance: checkbox !important;
+
+    width: 14px !important;
+    height: 14px !important;
+
+    min-width: 14px !important;
+    min-height: 14px !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+
+    accent-color: #ba6ef9 !important;
+}
+/* ===========================================
+   PURPLE SIDEBAR ACTIVE ITEM
+=========================================== */
+
+html[data-theme-mode="purple"] .standard-sidebar-item.active-sidebar {
+
+    background: linear-gradient(
+        180deg,
+        #9b5cff,
+        #6f42c1
+    ) !important;
+
+    box-shadow: 0 8px 20px rgba(111, 66, 193, .30);
+
+    border-radius: 12px;
+
+}
+
+html[data-theme-mode="purple"] .standard-sidebar-item.active-sidebar .sidebar-item-label {
+
+    color: #ffffff !important;
+
+    font-weight: 600;
+
+}
+
+html[data-theme-mode="purple"] .standard-sidebar-item.active-sidebar svg {
+
+    stroke: #ffffff !important;
+
+}
+/* ==========================================
+   PURPLE NOTIFICATION PANEL
+========================================== */
+
+
+html[data-theme-mode="purple"] .notification-item-tabs .notifications-category.active {
+    color: #8b3dff !important;
+    border-bottom: 2px solid #8b3dff !important;
+}
+
+html[data-theme-mode="purple"] .notification-item-tabs .notifications-category {
+    color: #5f4b7a !important;
+}
+
+html[data-theme-mode="purple"] .notification-list-header svg {
+    stroke: #8b3dff !important;
+}
+
+html[data-theme-mode="purple"] .notification-list-body strong,
+html[data-theme-mode="purple"] .notification-list-body h5 {
+    color: #6f42c1 !important;
+}
+/* Main wrapper */
+html[data-theme-mode="purple"] .dropdown-notifications {
+    background-color: #f4ecff !important;
+}
+
+/* List */
+html[data-theme-mode="purple"] .notifications-list {
+    background-color: #f4ecff !important;
+}
+
+/* Header */
+html[data-theme-mode="purple"] .notification-list-header {
+    background-color: #ede0ff !important;
+}
+
+/* Body */
+html[data-theme-mode="purple"] .notification-list-body {
+    background-color: #f4ecff !important;
+}
+
+/* Every tab/content */
+html[data-theme-mode="purple"] .notifications,
+html[data-theme-mode="purple"] .events,
+html[data-theme-mode="purple"] .changelog-feed,
+html[data-theme-mode="purple"] .tab-content,
+html[data-theme-mode="purple"] .tab-pane {
+    background-color: #f4ecff !important;
+}
+/* Notification active */
+html[data-theme-mode="purple"] .sidebar-notification.active .standard-sidebar-item,
+html[data-theme-mode="purple"] .sidebar-notification.open .standard-sidebar-item {
+
+    background: linear-gradient(180deg, #a855f7, #7c3aed) !important;
+    border-radius: 10px;
+    color: #fff !important;
+}
+
+html[data-theme-mode="purple"] .sidebar-notification.active .sidebar-item-label,
+html[data-theme-mode="purple"] .sidebar-notification.open .sidebar-item-label {
+
+    color: #fff !important;
+}
+
+html[data-theme-mode="purple"] .sidebar-notification.active svg,
+html[data-theme-mode="purple"] .sidebar-notification.open svg {
+
+    stroke: #fff !important;
+}
+
+
+/* Search active */
+html[data-theme-mode="purple"] .navbar-search-bar.active .standard-sidebar-item {
+
+    background: linear-gradient(180deg, #a855f7, #7c3aed) !important;
+    border-radius: 10px;
+}
+html[data-theme-mode="purple"] .standard-sidebar-item.notification-active {
+
+    background: linear-gradient(180deg,#a855f7,#7c3aed) !important;
+
+    border-radius:12px;
+
+}
+
+html[data-theme-mode="purple"] .standard-sidebar-item.notification-active .sidebar-item-label,
+html[data-theme-mode="purple"] .standard-sidebar-item.notification-active svg{
+
+    color:#fff !important;
+    stroke:#fff !important;
+
 }
