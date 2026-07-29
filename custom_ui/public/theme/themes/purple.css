@@ -32,22 +32,6 @@ html[data-theme-mode="purple"] body {
 
 }
 
-/* ==========================================================
-   PAGE BACKGROUND
-========================================================== */
-
-/* html[data-theme-mode="purple"] .layout-main-section {
-
-    position: relative;
-
-    overflow: visible !important;
-    min-height: 100vh !important;
-    height: auto !important;
-    padding-bottom: 80px !important;
-
-    background: #FFFBFF !important;
-
-} */
  html[data-theme-mode="purple"] .layout-main-section {
 
     position: relative;
@@ -71,10 +55,7 @@ html[data-theme-mode="purple"] .layout-main {
     background: #FFFBFF !important;
 }
 
-/* html[data-theme-mode="purple"] .desk-container,
-html[data-theme-mode="purple"] .layout-main {
-    overflow: visible !important;
-} */
+
 
 html[data-theme-mode="purple"] .desk-container,
 html[data-theme-mode="purple"] .layout-main {
@@ -887,49 +868,6 @@ html[data-theme-mode="purple"] .tab-content,
 html[data-theme-mode="purple"] .tab-pane {
     background-color: #f4ecff !important;
 }
-/* Notification active
-html[data-theme-mode="purple"] .sidebar-notification.active .standard-sidebar-item,
-html[data-theme-mode="purple"] .sidebar-notification.open .standard-sidebar-item {
-
-    background: linear-gradient(180deg, #a855f7, #7c3aed) !important;
-    border-radius: 10px;
-    color: #fff !important;
-}
-
-html[data-theme-mode="purple"] .sidebar-notification.active .sidebar-item-label,
-html[data-theme-mode="purple"] .sidebar-notification.open .sidebar-item-label {
-
-    color: #fff !important;
-}
-
-html[data-theme-mode="purple"] .sidebar-notification.active svg,
-html[data-theme-mode="purple"] .sidebar-notification.open svg {
-
-    stroke: #fff !important;
-}
-
-
-/* Search active */
-/* html[data-theme-mode="purple"] .navbar-search-bar.active .standard-sidebar-item {
-
-    background: linear-gradient(180deg, #a855f7, #7c3aed) !important;
-    border-radius: 10px;
-}
-html[data-theme-mode="purple"] .standard-sidebar-item.notification-active {
-
-    background: linear-gradient(180deg,#a855f7,#7c3aed) !important;
-
-    border-radius:12px;
-
-}
-
-html[data-theme-mode="purple"] .standard-sidebar-item.notification-active .sidebar-item-label,
-html[data-theme-mode="purple"] .standard-sidebar-item.notification-active svg{
-
-    color:#fff !important;
-    stroke:#fff !important;
-
-} */ 
 /* ==========================================================
    AWESOMPLETE / LINK FIELD DROPDOWN FIX (FINAL v2)
 ========================================================== */
@@ -954,7 +892,7 @@ html[data-theme-mode="purple"] ul[role="listbox"] {
 
     padding: 4px !important;
 
-    /* natural width raheu dya - forceपणे narrow karu naka */
+   
     min-width: 300px !important;
     width: max-content !important;
     max-width: 400px !important;
@@ -994,7 +932,7 @@ html[data-theme-mode="purple"] .standard-filter-section {
 }
 
 /* ==========================================================
-   SIMPLE PURPLE SEARCH / COMMAND PALETTE (like sky theme)
+   SIMPLE PURPLE SEARCH / COMMAND PALETTE 
 ========================================================== */
 
 html[data-theme-mode="purple"] .modal-content input:focus,
@@ -1005,7 +943,7 @@ html[data-theme-mode="purple"] input[type="text"]:focus {
     box-shadow: 0 0 0 3px rgba(201, 122, 247, .25) !important;
 }
 /* ==========================================================
-   MODAL SEARCH (Ctrl+K) — FULL WIDTH, NO BOX (like sky theme)
+     FULL WIDTH, NO BOX 
 ========================================================== */
 
 html[data-theme-mode="purple"] .modal .awesomplete > ul,
