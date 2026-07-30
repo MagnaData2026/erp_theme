@@ -19,7 +19,7 @@ app_include_js = [
 	# "desktop_theme_modifier.bundle.js"
 	"desk_icon.bundle.js",
 	"branding.js", 
-	"magna_login.js",
+	# "magna_login.js",
 ]
 
 web_include_css = [
