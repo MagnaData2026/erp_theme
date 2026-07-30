@@ -3,143 +3,211 @@ body{
 
     width:100%;
     height:100%;
+    overflow:hidden;
+
     margin:0;
     padding:0;
 
-    background:#f3f3f3;
-
+    background:#f3f3f3 !important;
 }
 
-body.frappe-session-status-logged-out{
-
-    background:#f3f3f3;
-
-}
-
-/* Full Width */
+/* Full Width - background added here too so scrolling never shows white */
 
 body.frappe-session-status-logged-out main.container,
 body.frappe-session-status-logged-out .page-content-wrapper,
 body.frappe-session-status-logged-out .page-content{
 
-    width:100% !important;
-    max-width:100% !important;
+    width:100vw !important;
+    max-width:100vw !important;
+    height:100vh !important;
 
-    min-height:100vh;
+    margin:0 !important;
+    padding:0 !important;
 
-    margin:0;
-    padding:0;
-
+    background:transparent !important;
+    box-shadow:none !important;
+    border:none !important;
 }
+/* Center both Login AND Forgot Password sections */
 
-.for-login{
+.for-login,
+.for-forgot{
 
-    min-height:100vh;
+    position:fixed;
+    inset:0;
 
     display:flex;
     justify-content:center;
     align-items:center;
 
+    background:#f3f3f3 !important;
 }
 
-/* Card */
+/* Outer wrapper - transparent, just holds Logo+Heading+Card in a column */
 
-.for-login .page-card{
+.for-login .page-card,
+.for-forgot .page-card{
 
-    width:470px !important;
+    width:420px !important;
 
-    padding:45px !important;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
 
-    border-radius:20px;
+    gap:26px;
 
+    margin:0 auto !important;
+
+    background:transparent !important;
     border:none !important;
+    box-shadow:none !important;
+}
+/* Remove old top bar from outer wrapper (moved to inner card below) */
+
+.for-login .page-card::before,
+.for-forgot .page-card::before{
+
+    display:none;
+
+}
+
+/* Logo - sits above heading, outside white card */
+
+.for-login .app-logo,
+.for-forgot .app-logo{
+
+    width:150px;
+    margin:0 auto 12px;
+}
+
+.for-login .page-card-head,
+.for-forgot .page-card-head{
+
+    margin:0 0 28px;
+    padding:0;
+
+    background:transparent !important;
+}
+
+.for-login .page-card-head h4,
+.for-forgot .page-card-head h4{
+
+    margin:0;
+    font-size:26px;
+    font-weight:700;
+}
+
+/* Heading - outside white card, on the grey background */
+
+/* Heading - Transparent */
+
+.for-login .page-card-head,
+.for-forgot .page-card-head{
+
+    text-align:center;
+
+    margin:0 0 24px;
+    padding:0;
+
+    background:transparent !important;
+    border:none !important;
+    box-shadow:none !important;
+
+}
+
+.for-login .page-card-head h4,
+.for-forgot .page-card-head h4{
+
+    font-size:26px;
+
+    font-weight:700;
+
+    color:#1f2937;
+
+    margin:0;
+
+}
+
+/* Subtitle text hidden to match reference (only heading shown) */
+
+.for-login .page-card-head p,
+.for-forgot .page-card-head p{
+
+    display:none;
+
+}
+
+/* Inner Card - this is the actual white box (form + links wrapped by JS) */
+
+.magna-card-body{
+
+    width:100%;
+    position:relative;
 
     background:#fff;
 
-    position:relative;
+    border-radius:16px;
 
-    box-shadow:0 20px 60px rgba(0,0,0,.12);
+    padding:35px 30px;
 
+    box-shadow:0 10px 30px rgba(0,0,0,.08);
 }
 
-.for-login .page-card::before{
+.magna-card-body::before{
 
     content:"";
-
     position:absolute;
 
     left:0;
     top:0;
 
     width:100%;
-
-    height:5px;
+    height:4px;
 
     background:linear-gradient(90deg,#2563eb,#60a5fa);
-
-}
-
-/* Logo */
-
-.for-login .app-logo{
-
-    display:block;
-
-    width:220px;
-
-    margin:0 auto 20px;
-
-}
-
-/* Heading */
-
-.for-login .page-card-head{
-
-    text-align:center;
-
-    margin-bottom:30px;
-
-}
-
-.for-login .page-card-head h4{
-
-    font-size:42px;
-
-    font-weight:700;
-
-}
-
-.for-login .page-card-head p{
-
-    color:#666;
-
+    border-radius:16px 16px 0 0;
 }
 
 /* Inputs */
 
 .form-control{
 
-    height:56px !important;
+    height:52px !important;
 
-    border-radius:14px !important;
+    border-radius:12px !important;
 
-    padding-left:50px !important;
+    padding-left:44px !important;
 
 }
 
 /* Button */
 
-.btn-primary{
+.btn-primary,
+.for-login .btn,
+.for-forgot .btn{
 
-    height:56px;
+    height:52px;
 
     width:100%;
 
-    border-radius:14px;
+    border-radius:12px;
 
     border:none;
 
     background:linear-gradient(135deg,#2563eb,#3b82f6)!important;
+
+    color:#fff !important;
+
+}
+
+/* "Back to Login" / "Back to sign in" link centered below button */
+
+.magna-card-body .sign-up-message,
+.magna-card-body .text-center{
+
+    text-align:center;
+
+    margin-top:14px;
 
 }
 
@@ -153,5 +221,50 @@ body.frappe-session-status-logged-out .page-content{
 .language-picker{
 
     display:none !important;
+
+}
+/* Remove Bootstrap container spacing */
+
+.container,
+.container-sm,
+.container-md,
+.container-lg,
+.container-xl,
+.container-xxl{
+
+    width:100vw !important;
+    max-width:100vw !important;
+
+    margin:0 !important;
+    padding:0 !important;
+
+    background:transparent !important;
+    border:none !important;
+    box-shadow:none !important;
+
+}
+.page-container::before,
+.page-wrapper::before,
+.page-content::before,
+.page-content-wrapper::before,
+main.container::before{
+
+    display:none !important;
+    content:none !important;
+
+}
+.page-container,
+.page-wrapper,
+.page-content,
+.page-content-wrapper,
+main.container{
+
+    border-top:none !important;
+}
+/* Forgot Password - Move form slightly down */
+
+.for-forgot .magna-card-body{
+
+    margin-top:20px !important;
 
 }
