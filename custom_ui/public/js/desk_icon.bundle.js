@@ -472,4 +472,27 @@
     `;
 
     document.head.appendChild(style);
+    $(document).on("app_ready", function () {
+
+    function removeSystemHealth() {
+
+        $(".menu-item-title").each(function () {
+
+            if ($(this).text().trim() === "System Health") {
+                $(this).closest(".dropdown-menu-item").remove();
+            }
+
+        });
+
+    }
+
+    removeSystemHealth();
+
+    new MutationObserver(removeSystemHealth).observe(document.body, {
+        childList: true,
+        subtree: true
+    });
+
+});
 })();
+

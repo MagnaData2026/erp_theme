@@ -18,7 +18,7 @@ app_include_js = [
 	# "manufacturing_dashboard_injector.bundle.js",
 	# "desktop_theme_modifier.bundle.js"
 	"desk_icon.bundle.js",
-	"branding.js", 
+	# "branding.js", 
 	# "magna_login.js",
 ]
 

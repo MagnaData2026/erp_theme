@@ -5,13 +5,13 @@ frappe.after_ajax(() => {
     console.log("Custom Desk Theme Loaded");
 });
 // Notification
-$(document).on("click", ".sidebar-notification", function () {
+// $(document).on("click", ".sidebar-notification", function () {
 
-    $(".standard-sidebar-item").removeClass("notification-active");
-    $(".navbar-search-bar .standard-sidebar-item").removeClass("notification-active");
+//     $(".standard-sidebar-item").removeClass("notification-active");
+//     $(".navbar-search-bar .standard-sidebar-item").removeClass("notification-active");
 
-    $(this).find(".standard-sidebar-item").addClass("notification-active");
-});
+//     $(this).find(".standard-sidebar-item").addClass("notification-active");
+// });
 
 // Search
 $(document).on("click", ".navbar-search-bar", function () {
