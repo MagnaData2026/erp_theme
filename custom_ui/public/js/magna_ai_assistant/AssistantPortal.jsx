@@ -5,10 +5,6 @@ import Sidebar from './Sidebar';
 import BentoWelcome from './BentoWelcome';
 import ChatArea from './ChatArea';
 
-<<<<<<< HEAD
-=======
-// API Base configuration
->>>>>>> a6c248b (API authentication)
 const API_BASE_URL = 'http://localhost:8050';
 
 const MicIcon = ({ isListening }) => (

@@ -152,11 +152,6 @@ function StreamingText({ text, speed = 6, onComplete }) {
         }, speed);
         return () => clearInterval(interval);
     }, [text, speed]);
-<<<<<<< HEAD
-    return <span style={{ color: '#0f172a', fontWeight: '450' }}>{displayedText}</span>;
-}
-
-=======
     return <FormattedMarkdownText text={displayedText} />;
 }
 
@@ -181,7 +176,6 @@ function getCleanTextAndChart(text) {
     return { cleanText, chartData };
 }
 
->>>>>>> a6c248b (API authentication)
 export default function ChatArea({ messages }) {
     const scrollBottomRef = useRef(null);
 
@@ -261,17 +255,9 @@ export default function ChatArea({ messages }) {
                                         </span>
                                     </div>
 
-<<<<<<< HEAD
-                                    {/* Message Glass Bubble Card */}
                                     <div style={{
                                         padding: '14px 18px',
                                         borderRadius: isUser ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
-                                        // User: Crisp White/Slate Minimal Card | Bot: Premium Dynamic Translucent Glass
-=======
-                                    <div style={{
-                                        padding: '14px 18px',
-                                        borderRadius: isUser ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
->>>>>>> a6c248b (API authentication)
                                         backgroundColor: isUser ? '#ffffff' : 'rgba(255, 255, 255, 0.55)',
                                         backdropFilter: isUser ? 'none' : 'blur(20px)',
                                         border: isUser ? '1px solid #e2e8f0' : '1px solid rgba(255, 255, 255, 0.6)',
@@ -279,25 +265,15 @@ export default function ChatArea({ messages }) {
                                             ? '0 4px 12px -2px rgba(15, 23, 42, 0.03), inset 0 1px 0px #ffffff' 
                                             : '0 8px 24px -6px rgba(15, 23, 42, 0.05), inset 0 1px 0px rgba(255, 255, 255, 0.8)',
                                         textAlign: 'left',
-<<<<<<< HEAD
-                                        position: 'relative'
-=======
                                         position: 'relative',
                                         width: chartData ? '560px' : 'auto',
                                         maxWidth: '100%'
->>>>>>> a6c248b (API authentication)
                                     }}>
                                         <div style={{ 
                                             fontSize: '13.5px', 
                                             lineHeight: '1.6', 
-<<<<<<< HEAD
-                                            color: '#0f172a', // High-contrast crisp light text lock
-                                            letterSpacing: '-0.1px', 
-                                            whiteSpace: 'pre-line' 
-=======
                                             color: '#0f172a',
                                             letterSpacing: '-0.1px'
->>>>>>> a6c248b (API authentication)
                                         }}>
                                             {!isUser && isLast ? (
                                                 <StreamingText text={cleanText} />
