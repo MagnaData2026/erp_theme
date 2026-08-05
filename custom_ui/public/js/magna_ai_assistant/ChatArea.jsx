@@ -26,7 +26,11 @@ function FormattedMarkdownText({ text }) {
         const parts = str.split(/(\*\*.*?\*\*)/g);
         return parts.map((part, i) => {
             if (part.startsWith('**') && part.endsWith('**') && part.length >= 4) {
-                return <strong key={i} style={{ fontWeight: '650', color: '#0f172a' }}>{part.slice(2, -2)}</strong>;
+                return (
+                    <strong key={i} style={{ fontWeight: '650', color: 'var(--text-color, #0f172a)' }}>
+                        {part.slice(2, -2)}
+                    </strong>
+                );
             }
             return part;
         });
@@ -84,7 +88,7 @@ function FormattedMarkdownText({ text }) {
             {blocks.map((block, idx) => {
                 if (block.type === 'heading') {
                     return (
-                        <h4 key={idx} style={{ fontSize: '14px', fontWeight: '700', color: '#0f172a', margin: '12px 0 4px 0' }}>
+                        <h4 key={idx} style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-color, #0f172a)', margin: '12px 0 4px 0' }}>
                             {renderInline(block.text)}
                         </h4>
                     );
@@ -98,15 +102,16 @@ function FormattedMarkdownText({ text }) {
                     );
                 }
                 if (block.type === 'table') {
+                    const CELL_BORDER = '1px solid var(--border-color, #cbd5e1)';
                     const headers = block.rows[0] || [];
                     const dataRows = block.rows.slice(1);
                     return (
-                        <div key={idx} style={{ overflowX: 'auto', margin: '10px 0', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', backgroundColor: '#ffffff' }}>
+                        <div key={idx} style={{ overflowX: 'auto', margin: '10px 0' }}>
+                            <table style={{ borderCollapse: 'collapse', width: '100%', fontSize: '12px', backgroundColor: 'rgba(255, 255, 255, 0.8)', border: CELL_BORDER, borderRadius: '6px' }}>
                                 <thead>
-                                    <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1.5px solid #e2e8f0' }}>
+                                    <tr style={{ backgroundColor: 'rgba(217, 217, 217, 0.4)' }}>
                                         {headers.map((h, hIdx) => (
-                                            <th key={hIdx} style={{ padding: '8px 12px', textAlign: 'left', fontWeight: '650', color: '#334155' }}>
+                                            <th key={hIdx} style={{ padding: '6px 10px', textAlign: 'left', fontWeight: '700', color: 'var(--text-color, #0f172a)', border: CELL_BORDER }}>
                                                 {renderInline(h)}
                                             </th>
                                         ))}
@@ -114,9 +119,9 @@ function FormattedMarkdownText({ text }) {
                                 </thead>
                                 <tbody>
                                     {dataRows.map((r, rIdx) => (
-                                        <tr key={rIdx} style={{ borderBottom: rIdx === dataRows.length - 1 ? 'none' : '1px solid #f1f5f9', backgroundColor: rIdx % 2 === 1 ? '#f8fafc' : '#ffffff' }}>
+                                        <tr key={rIdx}>
                                             {r.map((c, cIdx) => (
-                                                <td key={cIdx} style={{ padding: '8px 12px', color: '#0f172a' }}>
+                                                <td key={cIdx} style={{ padding: '6px 10px', color: 'var(--text-color, #0f172a)', border: CELL_BORDER }}>
                                                     {renderInline(c)}
                                                 </td>
                                             ))}
@@ -128,7 +133,7 @@ function FormattedMarkdownText({ text }) {
                     );
                 }
                 return (
-                    <p key={idx} style={{ margin: '2px 0', fontSize: '13.5px', color: '#0f172a', lineHeight: '1.5' }}>
+                    <p key={idx} style={{ margin: '2px 0', fontSize: '13.5px', color: 'var(--text-color, #0f172a)', lineHeight: '1.5' }}>
                         {renderInline(block.text)}
                     </p>
                 );
@@ -152,6 +157,7 @@ function StreamingText({ text, speed = 6, onComplete }) {
         }, speed);
         return () => clearInterval(interval);
     }, [text, speed]);
+
     return <FormattedMarkdownText text={displayedText} />;
 }
 
@@ -176,12 +182,83 @@ function getCleanTextAndChart(text) {
     return { cleanText, chartData };
 }
 
-export default function ChatArea({ messages }) {
+// 🧠 Dedicated AI Thinking Indicator Component
+function ThinkingIndicator() {
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: 12, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+            style={{ display: 'flex', justifyContent: 'flex-start', width: '100%' }}
+        >
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', maxWidth: '82%', gap: '6px' }}>
+                {/* Thinking Sender Meta */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '0 4px' }}>
+                    <span style={{ 
+                        width: '6px', height: '6px', borderRadius: '50%', 
+                        backgroundColor: '#3b82f6', boxShadow: '0 0 8px #3b82f6' 
+                    }} />
+                    <span style={{ fontSize: '11.5px', fontWeight: '650', color: 'var(--text-muted, #64748b)', letterSpacing: '-0.1px' }}>
+                        Magna System Agent
+                    </span>
+                    <span style={{ 
+                        fontSize: '9.5px', padding: '1px 6px', borderRadius: '50px', 
+                        backgroundColor: 'rgba(59, 130, 246, 0.12)', 
+                        border: '1px solid rgba(59, 130, 246, 0.2)', 
+                        color: '#3b82f6', fontWeight: '600' 
+                    }}>
+                        Thinking...
+                    </span>
+                </div>
+
+                {/* Thinking Glass Card */}
+                <div className="magna-glass-card" style={{
+                    padding: '12px 18px',
+                    borderRadius: '18px 18px 18px 4px',
+                    backdropFilter: 'blur(20px)',
+                    boxShadow: '0 8px 24px -6px rgba(0, 0, 0, 0.05)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px'
+                }}>
+                    <span style={{ fontSize: '13px', fontWeight: '500', color: 'var(--text-color, #0f172a)' }}>
+                        Magna AI is thinking
+                    </span>
+                    
+                    {/* Glowing Pulsing Dots Animation */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        {[0, 1, 2].map((dot) => (
+                            <motion.span
+                                key={dot}
+                                animate={{ opacity: [0.3, 1, 0.3], scale: [0.8, 1.2, 0.8] }}
+                                transition={{ duration: 1.2, repeat: Infinity, delay: dot * 0.2 }}
+                                style={{
+                                    width: '5px',
+                                    height: '5px',
+                                    borderRadius: '50%',
+                                    backgroundColor: '#3b82f6',
+                                    display: 'inline-block'
+                                }}
+                            />
+                        ))}
+                    </div>
+                </div>
+            </div>
+        </motion.div>
+    );
+}
+
+export default function ChatArea({ messages = [], isThinking }) {
     const scrollBottomRef = useRef(null);
+
+    // Auto-detect thinking state: If last message in list was sent by 'user' OR explicitly passed via isThinking
+    const lastMsg = messages[messages.length - 1];
+    const showThinking = isThinking !== undefined ? isThinking : (lastMsg && lastMsg.sender === 'user');
 
     useEffect(() => {
         scrollBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [messages]);
+    }, [messages, showThinking]);
 
     return (
         <div style={{ flex: 1, overflowY: 'auto', padding: '32px 24px', backgroundColor: 'transparent' }}>
@@ -190,7 +267,7 @@ export default function ChatArea({ messages }) {
                     {messages.map((msg, index) => {
                         const isUser = msg.sender === 'user';
                         const isLast = index === messages.length - 1;
-                        
+
                         const { cleanText, chartData } = getCleanTextAndChart(msg.text);
 
                         let pieData = null;
@@ -235,6 +312,7 @@ export default function ChatArea({ messages }) {
                                     maxWidth: '82%',
                                     gap: '6px'
                                 }}>
+                                    {/* Sender Meta Info */}
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '0 4px' }}>
                                         {!isUser && (
                                             <span style={{ 
@@ -242,38 +320,38 @@ export default function ChatArea({ messages }) {
                                                 backgroundColor: '#3b82f6', boxShadow: '0 0 8px #3b82f6' 
                                             }} />
                                         )}
-                                        <span style={{ fontSize: '11.5px', fontWeight: '650', color: '#475569', letterSpacing: '-0.1px' }}>
+                                        <span style={{ fontSize: '11.5px', fontWeight: '650', color: 'var(--text-muted, #64748b)', letterSpacing: '-0.1px' }}>
                                             {isUser ? 'Workspace Executive' : 'Magna System Agent'}
                                         </span>
                                         <span style={{ 
                                             fontSize: '9.5px', padding: '1px 6px', borderRadius: '50px', 
-                                            backgroundColor: isUser ? 'rgba(15, 23, 42, 0.05)' : 'rgba(59, 130, 246, 0.08)', 
-                                            border: isUser ? '1px solid rgba(15, 23, 42, 0.04)' : '1px solid rgba(59, 130, 246, 0.12)', 
-                                            color: isUser ? '#475569' : '#2563eb', fontWeight: '600' 
+                                            backgroundColor: isUser ? 'var(--border-color, rgba(148, 163, 184, 0.15))' : 'rgba(59, 130, 246, 0.12)', 
+                                            border: isUser ? '1px solid var(--border-color, rgba(148, 163, 184, 0.2))' : '1px solid rgba(59, 130, 246, 0.2)', 
+                                            color: isUser ? 'var(--text-muted, #64748b)' : '#3b82f6', fontWeight: '600' 
                                         }}>
                                             {isUser ? 'Prompt' : 'Engine Response'}
                                         </span>
                                     </div>
 
-                                    <div style={{
-                                        padding: '14px 18px',
-                                        borderRadius: isUser ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
-                                        backgroundColor: isUser ? '#ffffff' : 'rgba(255, 255, 255, 0.55)',
-                                        backdropFilter: isUser ? 'none' : 'blur(20px)',
-                                        border: isUser ? '1px solid #e2e8f0' : '1px solid rgba(255, 255, 255, 0.6)',
-                                        boxShadow: isUser 
-                                            ? '0 4px 12px -2px rgba(15, 23, 42, 0.03), inset 0 1px 0px #ffffff' 
-                                            : '0 8px 24px -6px rgba(15, 23, 42, 0.05), inset 0 1px 0px rgba(255, 255, 255, 0.8)',
-                                        textAlign: 'left',
-                                        position: 'relative',
-                                        width: chartData ? '560px' : 'auto',
-                                        maxWidth: '100%'
-                                    }}>
+                                    {/* Message Glass Bubble Card */}
+                                    <div 
+                                        className={isUser ? "magna-input-box" : "magna-glass-card"}
+                                        style={{
+                                            padding: '14px 18px',
+                                            borderRadius: isUser ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
+                                            backdropFilter: 'blur(20px)',
+                                            boxShadow: '0 4px 16px -2px rgba(0, 0, 0, 0.05)',
+                                            textAlign: 'left',
+                                            position: 'relative',
+                                            width: chartData ? '560px' : 'auto',
+                                            maxWidth: '100%'
+                                        }}
+                                    >
                                         <div style={{ 
                                             fontSize: '13.5px', 
                                             lineHeight: '1.6', 
-                                            color: '#0f172a',
-                                            letterSpacing: '-0.1px'
+                                            color: 'var(--text-color, #0f172a)', 
+                                            letterSpacing: '-0.1px' 
                                         }}>
                                             {!isUser && isLast ? (
                                                 <StreamingText text={cleanText} />
@@ -282,6 +360,7 @@ export default function ChatArea({ messages }) {
                                             )}
                                         </div>
 
+                                        {/* Chart Rendering Section */}
                                         {chartData && (
                                             <div style={{ 
                                                 height: '280px', 
@@ -396,6 +475,9 @@ export default function ChatArea({ messages }) {
                             </motion.div>
                         );
                     })}
+
+                    {/* Show Thinking Card when AI is processing */}
+                    {showThinking && <ThinkingIndicator key="thinking-state" />}
                 </AnimatePresence>
                 <div ref={scrollBottomRef} />
             </div>
