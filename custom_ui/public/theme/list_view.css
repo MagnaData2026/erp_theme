@@ -1,0 +1,351 @@
+.list-row-head,
+.list-row{
+    min-height:46px !important;
+    height:46px !important;
+}
+
+.list-row-head{
+    background:#f6f8fce9 !important;
+    border:1px solid #e6ebf3 !important;
+    border-radius:14px;
+    margin-top: 12px !important;
+    margin-bottom: 6px !important; 
+}
+
+.list-row{
+    background:#fff;
+    border:1px solid #edf1f7;
+    border-radius:14px;
+    margin-bottom:4px;
+}
+
+.list-row-head .list-row-col,
+.list-row .list-row-col{
+    padding:0 16px !important;
+}
+/* Filter / Search Card */
+
+.page-form.flex,
+.list-filters {
+    background: #ffffff !important;
+    border: 1px solid #e8edf5 !important;
+    border-radius: 14px !important;
+
+    padding: 16px !important;
+    margin-bottom: 16px !important;
+
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04) !important;
+}
+/* Filter card spacing from page */
+.page-form.flex,
+.list-filters {
+    margin-top: 16px !important;
+    margin-bottom: 18px !important;
+}
+
+/* Header row spacing from filter card */
+.list-row-head {
+    margin-top: 16px !important;
+    margin-bottom: 8px !important;
+}
+
+/* List starts after header */
+.result,
+.result-container,
+.result-list,
+.list-rows {
+    padding-top: 0 !important;
+}
+/* Remove default header margins completely */
+
+.list-row-head{
+    margin: 0 !important;
+    margin-top: 0 !important;
+    margin-bottom: 4px !important;
+}
+
+/* Remove browser/user-agent margin from header element */
+
+header.list-row-head{
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* Parent wrapper spacing */
+
+.list-row-container{
+    margin: 0 !important;
+    padding: 0 !important;
+}
+/* ==========================
+   Table Outer Card
+   ========================== */
+
+.result-container{
+    background: #fff !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 16px !important;
+    padding: 12px !important;
+    box-shadow: 0 2px 8px rgba(15,23,42,.04) !important;
+    overflow: hidden !important;
+}
+/* Enable vertical scrolling */
+
+.result.no-list-assign-to{
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+}
+
+/* Keep horizontal scrolling if needed */
+
+.result-container{
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+}
+/* Row should occupy full wrapper width */
+.list-row{
+    width: 100% !important;
+    box-sizing: border-box !important;
+    border: 1px solid #e6ebf5 !important;
+    border-radius: 14px !important;
+    margin-bottom: 6px !important;
+}
+
+/* Wrapper spacing */
+.list-row-container{
+    padding: 0 10px !important;
+    box-sizing: border-box !important;
+    background: transparent !important;
+    border: none !important;
+}
+/* ==========================================================
+   LIST VIEW : LIGHT THEMES
+   ========================================================== */
+
+.list-row-head{
+    background:#f7f8fb !important;
+    border:1px solid #e6ebf5 !important;
+}
+
+.list-row{
+    background:#ffffff !important;
+    border:1px solid #e6ebf5 !important;
+}
+
+
+/* ==========================================================
+   DARK THEME
+   ========================================================== */
+
+html[data-theme-mode="dark"] .list-row-head,
+html[data-theme="dark"] .list-row-head{
+
+    background:#1d2433 !important;
+    border:1px solid rgba(255,255,255,.08) !important;
+    color:#f5f5f5 !important;
+}
+
+html[data-theme-mode="dark"] .list-row,
+html[data-theme="dark"] .list-row{
+
+    background:#232c3d !important;
+    border:1px solid rgba(255,255,255,.08) !important;
+    color:#ffffff !important;
+}
+
+
+/* row text */
+
+html[data-theme-mode="dark"] .list-row a,
+html[data-theme-mode="dark"] .list-row span,
+html[data-theme-mode="dark"] .list-row .ellipsis,
+html[data-theme="dark"] .list-row a,
+html[data-theme="dark"] .list-row span,
+html[data-theme="dark"] .list-row .ellipsis{
+
+    color:#f5f5f5 !important;
+}
+
+
+/* header text */
+
+html[data-theme-mode="dark"] .list-row-head span,
+html[data-theme="dark"] .list-row-head span{
+
+    color:#cfd6e4 !important;
+}
+
+
+/* ==========================================================
+   OCEAN BLUE THEME
+   ========================================================== */
+
+html[data-theme-mode="ocean-blue"] .list-row-head,
+html[data-theme="ocean-blue"] .list-row-head{
+
+    background:#16324d !important;
+    border:1px solid rgba(255,255,255,.08) !important;
+}
+
+html[data-theme-mode="ocean-blue"] .list-row,
+html[data-theme="ocean-blue"] .list-row{
+
+    background:#1d4365 !important;
+    border:1px solid rgba(255,255,255,.08) !important;
+}
+
+html[data-theme-mode="ocean-blue"] .list-row a,
+html[data-theme-mode="ocean-blue"] .list-row span,
+html[data-theme-mode="ocean-blue"] .list-row .ellipsis,
+html[data-theme="ocean-blue"] .list-row a,
+html[data-theme="ocean-blue"] .list-row span,
+html[data-theme="ocean-blue"] .list-row .ellipsis{
+
+    color:#ffffff !important;
+}
+
+html[data-theme-mode="ocean-blue"] .list-row-head span,
+html[data-theme="ocean-blue"] .list-row-head span{
+
+    color:#dbe7f7 !important;
+}
+/* ==========================================================
+   DARK THEME - LIST VIEW
+   ========================================================== */
+
+html[data-theme-mode="dark"] .result-container,
+html[data-theme="dark"] .result-container{
+    background:#151515 !important;
+    border:1px solid #2b2b2b !important;
+}
+
+html[data-theme-mode="dark"] .list-row-head,
+html[data-theme="dark"] .list-row-head{
+    background:#222222 !important;
+    border:1px solid #353535 !important;
+}
+
+html[data-theme-mode="dark"] .list-row,
+html[data-theme="dark"] .list-row{
+    background:#2d2d2d !important;
+    border:1px solid #3b3b3b !important;
+    transition:.2s ease;
+}
+
+html[data-theme-mode="dark"] .list-row:hover,
+html[data-theme="dark"] .list-row:hover{
+    background:#373737 !important;
+    border-color:#4b4b4b !important;
+}
+
+html[data-theme-mode="dark"] .list-row *,
+html[data-theme-mode="dark"] .list-row-head *,
+html[data-theme="dark"] .list-row *,
+html[data-theme="dark"] .list-row-head *{
+    color:#f3f4f6 !important;
+}
+
+
+/* ==========================================================
+   OCEAN BLUE - LIST VIEW
+   ========================================================== */
+
+html[data-theme="dark"][data-theme-mode="blue"] .result-container{
+    background:#0d1c2d !important;
+    border:1px solid #203a56 !important;
+}
+
+html[data-theme="dark"][data-theme-mode="blue"] .list-row-head{
+    background:#16304a !important;
+    border:1px solid #244765 !important;
+}
+
+html[data-theme="dark"][data-theme-mode="blue"] .list-row{
+    background:#1d3c59 !important;
+    border:1px solid #2b5578 !important;
+    transition:.2s ease;
+}
+
+html[data-theme="dark"][data-theme-mode="blue"] .list-row:hover{
+    background:#285070 !important;
+    border-color:#3c6992 !important;
+}
+
+html[data-theme="dark"][data-theme-mode="blue"] .list-row *,
+html[data-theme="dark"][data-theme-mode="blue"] .list-row-head *{
+    color:#eef6ff !important;
+}
+
+
+/* ==========================================================
+   OCEAN BLUE - FILTER CARD
+   ========================================================== */
+
+html[data-theme="dark"][data-theme-mode="blue"] .page-form.flex,
+html[data-theme="dark"][data-theme-mode="blue"] .list-filters{
+    background:#16304a !important;
+    border:1px solid #244765 !important;
+    box-shadow:none !important;
+}
+
+html[data-theme="dark"][data-theme-mode="blue"] .page-form input,
+html[data-theme="dark"][data-theme-mode="blue"] .page-form .form-control{
+    background:#1d3c59 !important;
+    border:1px solid #2b5578 !important;
+    color:#ffffff !important;
+}
+
+html[data-theme="dark"][data-theme-mode="blue"] .page-form input::placeholder{
+    color:#cfe2f6 !important;
+}
+
+html[data-theme="dark"][data-theme-mode="blue"] .page-form .btn{
+    background:#1d3c59 !important;
+    border:1px solid #2b5578 !important;
+    color:#ffffff !important;
+}
+
+html[data-theme="dark"][data-theme-mode="blue"] .page-form .btn:hover{
+    background:#285070 !important;
+}
+/* ==========================================================
+   DARK THEME - FILTER CARD
+   ========================================================== */
+
+html[data-theme-mode="dark"] .page-form.flex,
+html[data-theme="dark"] .page-form.flex,
+html[data-theme-mode="dark"] .list-filters,
+html[data-theme="dark"] .list-filters{
+
+    background:#222222 !important;
+    border:1px solid #353535 !important;
+    box-shadow:none !important;
+}
+
+/* Inputs */
+
+html[data-theme-mode="dark"] .page-form input,
+html[data-theme="dark"] .page-form input,
+html[data-theme-mode="dark"] .page-form .form-control,
+html[data-theme="dark"] .page-form .form-control{
+
+    background:#303030 !important;
+    border:1px solid #454545 !important;
+    color:#ffffff !important;
+}
+/* Placeholder */
+
+html[data-theme-mode="dark"] .page-form input::placeholder,
+html[data-theme="dark"] .page-form input::placeholder{
+
+   color:#8f9399 !important;
+}
+
+/* Filter Buttons */
+html[data-theme-mode="dark"] .page-form .btn,
+html[data-theme="dark"] .page-form .btn{
+
+    background:#303030 !important;
+    border:1px solid #454545 !important;
+    color:#ffffff !important;
+}

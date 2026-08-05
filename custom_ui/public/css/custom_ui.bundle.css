@@ -7,6 +7,7 @@
 @import "../custom_ui/custom_ui/public/theme/spacing.css";
 @import "../custom_ui/custom_ui/public/theme/shadows.css";
 @import "../custom_ui/custom_ui/public/theme/global.css";
+@import "../custom_ui/custom_ui/public/theme/list_view.css";
 
 /* theme */
 @import "../custom_ui/custom_ui/public/theme/themes/dark.css";
