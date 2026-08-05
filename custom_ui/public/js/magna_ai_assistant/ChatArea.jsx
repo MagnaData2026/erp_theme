@@ -1,6 +1,146 @@
 // magna_ai_assistant/ChatArea.jsx
 import React, { useRef, useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { 
+    ResponsiveContainer, 
+    BarChart, 
+    Bar, 
+    LineChart, 
+    Line, 
+    PieChart, 
+    Pie, 
+    Cell, 
+    XAxis, 
+    YAxis, 
+    CartesianGrid, 
+    Tooltip, 
+    Legend 
+} from 'recharts';
+
+function FormattedMarkdownText({ text }) {
+    if (!text) return null;
+
+    // Helper to render inline formatting like **bold**
+    const renderInline = (str) => {
+        if (!str) return null;
+        const parts = str.split(/(\*\*.*?\*\*)/g);
+        return parts.map((part, i) => {
+            if (part.startsWith('**') && part.endsWith('**') && part.length >= 4) {
+                return (
+                    <strong key={i} style={{ fontWeight: '650', color: 'var(--text-color, #0f172a)' }}>
+                        {part.slice(2, -2)}
+                    </strong>
+                );
+            }
+            return part;
+        });
+    };
+
+    // Split text into blocks (tables vs paragraphs/headings/lists)
+    const lines = text.split('\n');
+    const blocks = [];
+    let currentTable = null;
+
+    lines.forEach((line) => {
+        const trimmed = line.trim();
+
+        // Detect Markdown Table row
+        if (trimmed.startsWith('|') && trimmed.endsWith('|')) {
+            if (!currentTable) currentTable = [];
+            // Skip separator line |---|---|
+            if (!trimmed.match(/^\|[\s\-:|]+\|$/)) {
+                const cells = trimmed.split('|').slice(1, -1).map(c => c.trim());
+                currentTable.push(cells);
+            }
+            return;
+        } else if (currentTable) {
+            blocks.push({ type: 'table', rows: currentTable });
+            currentTable = null;
+        }
+
+        // Detect Headings
+        if (trimmed.startsWith('### ') || trimmed.startsWith('## ') || trimmed.startsWith('# ')) {
+            const level = trimmed.startsWith('### ') ? 3 : trimmed.startsWith('## ') ? 2 : 1;
+            const headingText = trimmed.replace(/^#+\s*/, '');
+            blocks.push({ type: 'heading', level, text: headingText });
+            return;
+        }
+
+        // Detect Bullet Points
+        if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
+            const bulletText = trimmed.substring(2);
+            blocks.push({ type: 'bullet', text: bulletText });
+            return;
+        }
+
+        // Standard Paragraph line
+        if (trimmed.length > 0) {
+            blocks.push({ type: 'p', text: trimmed });
+        }
+    });
+
+    if (currentTable) {
+        blocks.push({ type: 'table', rows: currentTable });
+    }
+
+    return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {blocks.map((block, idx) => {
+                if (block.type === 'heading') {
+                    return (
+                        <h4 key={idx} style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-color, #0f172a)', margin: '12px 0 4px 0' }}>
+                            {renderInline(block.text)}
+                        </h4>
+                    );
+                }
+                if (block.type === 'bullet') {
+                    return (
+                        <div key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginLeft: '4px', fontSize: '13px' }}>
+                            <span style={{ color: '#3b82f6', fontWeight: 'bold' }}>•</span>
+                            <span>{renderInline(block.text)}</span>
+                        </div>
+                    );
+                }
+                if (block.type === 'table') {
+                    const CELL_BORDER = '1px solid var(--border-color, #cbd5e1)';
+                    const headers = block.rows[0] || [];
+                    const dataRows = block.rows.slice(1);
+                    return (
+                        <div key={idx} style={{ overflowX: 'auto', margin: '10px 0' }}>
+                            <table style={{ borderCollapse: 'collapse', width: '100%', fontSize: '12px', backgroundColor: 'rgba(255, 255, 255, 0.8)', border: CELL_BORDER, borderRadius: '6px' }}>
+                                <thead>
+                                    <tr style={{ backgroundColor: 'rgba(217, 217, 217, 0.4)' }}>
+                                        {headers.map((h, hIdx) => (
+                                            <th key={hIdx} style={{ padding: '6px 10px', textAlign: 'left', fontWeight: '700', color: 'var(--text-color, #0f172a)', border: CELL_BORDER }}>
+                                                {renderInline(h)}
+                                            </th>
+                                        ))}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {dataRows.map((r, rIdx) => (
+                                        <tr key={rIdx}>
+                                            {r.map((c, cIdx) => (
+                                                <td key={cIdx} style={{ padding: '6px 10px', color: 'var(--text-color, #0f172a)', border: CELL_BORDER }}>
+                                                    {renderInline(c)}
+                                                </td>
+                                            ))}
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    );
+                }
+                return (
+                    <p key={idx} style={{ margin: '2px 0', fontSize: '13.5px', color: 'var(--text-color, #0f172a)', lineHeight: '1.5' }}>
+                        {renderInline(block.text)}
+                    </p>
+                );
+            })}
+        </div>
+    );
+}
 
 function StreamingText({ text, speed = 6, onComplete }) {
     const [displayedText, setDisplayedText] = useState('');
@@ -17,7 +157,29 @@ function StreamingText({ text, speed = 6, onComplete }) {
         }, speed);
         return () => clearInterval(interval);
     }, [text, speed]);
-    return <span style={{ color: 'var(--text-color, #0f172a)', fontWeight: '450' }}>{displayedText}</span>;
+
+    return <FormattedMarkdownText text={displayedText} />;
+}
+
+function getCleanTextAndChart(text) {
+    if (!text) return { cleanText: "", chartData: null };
+    
+    let chartData = null;
+    const chartRegex = /```chart\s*([\s\S]*?)\s*```/g;
+    let match;
+    
+    // Parse the last valid chart block in text
+    while ((match = chartRegex.exec(text)) !== null) {
+        try {
+            chartData = JSON.parse(match[1].trim());
+        } catch (e) {
+            console.error("Failed to parse chart block:", e);
+        }
+    }
+
+    // Strip ALL ```chart ... ``` blocks completely from cleanText
+    const cleanText = text.replace(/```chart\s*[\s\S]*?\s*```/g, '').trim();
+    return { cleanText, chartData };
 }
 
 // 🧠 Dedicated AI Thinking Indicator Component
@@ -87,12 +249,16 @@ function ThinkingIndicator() {
     );
 }
 
-export default function ChatArea({ messages, isThinking }) {
+export default function ChatArea({ messages = [], isThinking }) {
     const scrollBottomRef = useRef(null);
+
+    // Auto-detect thinking state: If last message in list was sent by 'user' OR explicitly passed via isThinking
+    const lastMsg = messages[messages.length - 1];
+    const showThinking = isThinking !== undefined ? isThinking : (lastMsg && lastMsg.sender === 'user');
 
     useEffect(() => {
         scrollBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [messages, isThinking]);
+    }, [messages, showThinking]);
 
     return (
         <div style={{ flex: 1, overflowY: 'auto', padding: '32px 24px', backgroundColor: 'transparent' }}>
@@ -101,6 +267,29 @@ export default function ChatArea({ messages, isThinking }) {
                     {messages.map((msg, index) => {
                         const isUser = msg.sender === 'user';
                         const isLast = index === messages.length - 1;
+
+                        const { cleanText, chartData } = getCleanTextAndChart(msg.text);
+
+                        let pieData = null;
+                        let xyData = null;
+                        const PIE_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+
+                        if (chartData) {
+                            if (chartData.type === 'pie') {
+                                pieData = (chartData.labels || []).map((lbl, idx) => ({
+                                    name: lbl,
+                                    value: (chartData.values || [])[idx] || 0
+                                }));
+                            } else {
+                                xyData = (chartData.xAxis || []).map((xVal, idx) => {
+                                    const row = { name: xVal };
+                                    (chartData.series || []).forEach(s => {
+                                        row[s.name] = (s.data || [])[idx];
+                                    });
+                                    return row;
+                                });
+                            }
+                        }
 
                         return (
                             <motion.div 
@@ -153,22 +342,134 @@ export default function ChatArea({ messages, isThinking }) {
                                             backdropFilter: 'blur(20px)',
                                             boxShadow: '0 4px 16px -2px rgba(0, 0, 0, 0.05)',
                                             textAlign: 'left',
-                                            position: 'relative'
+                                            position: 'relative',
+                                            width: chartData ? '560px' : 'auto',
+                                            maxWidth: '100%'
                                         }}
                                     >
                                         <div style={{ 
                                             fontSize: '13.5px', 
                                             lineHeight: '1.6', 
                                             color: 'var(--text-color, #0f172a)', 
-                                            letterSpacing: '-0.1px', 
-                                            whiteSpace: 'pre-line' 
+                                            letterSpacing: '-0.1px' 
                                         }}>
                                             {!isUser && isLast ? (
-                                                <StreamingText text={msg.text} />
+                                                <StreamingText text={cleanText} />
                                             ) : (
-                                                <span style={{ fontWeight: '450' }}>{msg.text}</span>
+                                                <FormattedMarkdownText text={cleanText} />
                                             )}
                                         </div>
+
+                                        {/* Chart Rendering Section */}
+                                        {chartData && (
+                                            <div style={{ 
+                                                height: '280px', 
+                                                width: '100%', 
+                                                marginTop: '16px', 
+                                                padding: '12px 12px 0 12px',
+                                                backgroundColor: '#ffffff',
+                                                borderRadius: '8px',
+                                                border: '1px solid #e2e8f0',
+                                                display: 'flex',
+                                                flexDirection: 'column'
+                                            }}>
+                                                <h4 style={{ 
+                                                    fontSize: '13px', 
+                                                    color: '#334155', 
+                                                    fontWeight: '600', 
+                                                    margin: '0 0 12px 0', 
+                                                    textAlign: 'center' 
+                                                }}>
+                                                    {chartData.title}
+                                                </h4>
+                                                
+                                                {chartData.type === 'pie' && pieData && (
+                                                    <ResponsiveContainer width="100%" height={210}>
+                                                        <PieChart>
+                                                            <Pie
+                                                                data={pieData}
+                                                                cx="50%"
+                                                                cy="50%"
+                                                                innerRadius={55}
+                                                                outerRadius={75}
+                                                                paddingAngle={3}
+                                                                dataKey="value"
+                                                                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                                                                labelLine={false}
+                                                            >
+                                                                {pieData.map((entry, idx) => (
+                                                                    <Cell key={`cell-${idx}`} fill={PIE_COLORS[idx % PIE_COLORS.length]} />
+                                                                ))}
+                                                            </Pie>
+                                                            <Tooltip formatter={(value) => [`${value}`, 'Quantity/Value']} />
+                                                            <Legend verticalAlign="bottom" iconType="circle" height={32} wrapperStyle={{ fontSize: '11px' }} />
+                                                        </PieChart>
+                                                    </ResponsiveContainer>
+                                                )}
+
+                                                {chartData.type === 'line' && xyData && (
+                                                    <ResponsiveContainer width="100%" height={210}>
+                                                        <LineChart data={xyData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
+                                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                                                            <XAxis 
+                                                                dataKey="name" 
+                                                                tick={{ fontSize: 10, fill: '#64748b' }} 
+                                                                tickLine={false}
+                                                                axisLine={{ stroke: '#cbd5e1' }}
+                                                            />
+                                                            <YAxis 
+                                                                tick={{ fontSize: 10, fill: '#64748b' }} 
+                                                                tickLine={false}
+                                                                axisLine={{ stroke: '#cbd5e1' }}
+                                                            />
+                                                            <Tooltip contentStyle={{ fontSize: '11px', borderRadius: '6px', border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }} />
+                                                            <Legend verticalAlign="bottom" height={32} iconType="plainline" wrapperStyle={{ fontSize: '11px' }} />
+                                                            {(chartData.series || []).map((s, idx) => (
+                                                                <Line 
+                                                                    key={s.name} 
+                                                                    type="monotone" 
+                                                                    dataKey={s.name} 
+                                                                    stroke={idx === 0 ? '#3b82f6' : '#10b981'} 
+                                                                    strokeWidth={2.5}
+                                                                    activeDot={{ r: 5 }} 
+                                                                    dot={{ strokeWidth: 2, r: 3 }}
+                                                                />
+                                                            ))}
+                                                        </LineChart>
+                                                    </ResponsiveContainer>
+                                                )}
+
+                                                {chartData.type === 'bar' && xyData && (
+                                                    <ResponsiveContainer width="100%" height={210}>
+                                                        <BarChart data={xyData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
+                                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                                                            <XAxis 
+                                                                dataKey="name" 
+                                                                tick={{ fontSize: 10, fill: '#64748b' }} 
+                                                                tickLine={false}
+                                                                axisLine={{ stroke: '#cbd5e1' }}
+                                                            />
+                                                            <YAxis 
+                                                                tick={{ fontSize: 10, fill: '#64748b' }} 
+                                                                tickLine={false}
+                                                                axisLine={{ stroke: '#cbd5e1' }}
+                                                            />
+                                                            <Tooltip contentStyle={{ fontSize: '11px', borderRadius: '6px', border: '1px solid #e2e8f0', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }} />
+                                                            <Legend verticalAlign="bottom" height={32} iconType="rect" wrapperStyle={{ fontSize: '11px' }} />
+                                                            {(chartData.series || []).map((s, idx) => (
+                                                                <Bar 
+                                                                    key={s.name} 
+                                                                    dataKey={s.name} 
+                                                                    fill={idx === 0 ? '#10b981' : '#3b82f6'} 
+                                                                    radius={[4, 4, 0, 0]} 
+                                                                    maxBarSize={30}
+                                                                />
+                                                            ))}
+                                                        </BarChart>
+                                                    </ResponsiveContainer>
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </motion.div>
@@ -176,7 +477,7 @@ export default function ChatArea({ messages, isThinking }) {
                     })}
 
                     {/* Show Thinking Card when AI is processing */}
-                    {isThinking && <ThinkingIndicator key="thinking-state" />}
+                    {showThinking && <ThinkingIndicator key="thinking-state" />}
                 </AnimatePresence>
                 <div ref={scrollBottomRef} />
             </div>

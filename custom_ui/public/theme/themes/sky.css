@@ -195,7 +195,7 @@ html[data-theme-mode="sky"] .widget:empty {
 
 html[data-theme-mode="sky"] .body-sidebar {
     position: relative;
-    overflow: hidden;
+    overflow: visible !important;
     background: linear-gradient(180deg, #f0f5ff 0%, #dbe7fc 25%, #c3d9fb 55%, #a6c5f9 80%, #8ab2f6 100%) !important;
     border-right: 1px solid #cbddeff0 !important;
     box-shadow: 10px 0 30px rgba(47, 111, 237, .18);

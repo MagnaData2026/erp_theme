@@ -5,7 +5,7 @@ import BentoWelcome from './BentoWelcome';
 import ChatArea from './ChatArea';
 
 // API Base configuration
-const API_BASE_URL = 'http://0.0.0.0:8050';
+const API_BASE_URL = 'http://0.0.0.0:8005';
 
 const MicIcon = ({ isListening }) => (
     <svg 
@@ -140,8 +140,8 @@ export default function AssistantPortal({ isOpen, onClose }) {
 
         if (!activeId) {
             activeId = Date.now().toString();
-            const sessionTitle = attachedFiles.length > 0 
-                ? `PO Batch (${attachedFiles.length}): ${attachedFiles[0].name}` 
+            const sessionTitle = attachedFiles.length > 0
+                ? `Documents (${attachedFiles.length}): ${attachedFiles[0].name}`
                 : userPrompt.substring(0, 30) + (userPrompt.length > 30 ? '...' : '');
 
             const newChatSession = { id: activeId, title: sessionTitle, messages: [] };
@@ -159,7 +159,7 @@ export default function AssistantPortal({ isOpen, onClose }) {
                 const filesListText = attachedFiles.map(f => `• 📄 **${f.name}**`).join('\n');
                 const fileMsgText = userPrompt.trim() 
                     ? `📎 **Attached Files (${attachedFiles.length})**:\n${filesListText}\n\n💬 ${userPrompt}` 
-                    : `📎 **Processing Upload Batch (${attachedFiles.length} files)**:\n${filesListText}`;
+                    : `📎 **Uploading Documents (${attachedFiles.length})**:\n${filesListText}`;
 
                 appendMessage(activeId, { sender: 'user', text: fileMsgText });
                 setIsUploading(true);
@@ -170,31 +170,34 @@ export default function AssistantPortal({ isOpen, onClose }) {
                     formData.append('file', file);
                     formData.append('session_id', activeId);
 
-                    const res = await fetch(`${API_BASE_URL}/api/upload-po`, {
+                    const res = await fetch(`${API_BASE_URL}/api/upload-document`, {
                         method: 'POST',
                         body: formData,
                     });
 
-                    if (!res.ok) throw new Error(`OCR Processing failed for ${file.name}`);
+                    if (!res.ok) throw new Error(`Document processing failed for ${file.name}`);
 
                     const ocrResult = await res.json();
-                    const data = ocrResult.ocr_data;
 
                     appendMessage(activeId, {
                         sender: 'bot',
-                        text: `✅ **Extracted (${i + 1}/${attachedFiles.length})**: ${file.name}\n\n* **Vendor**: ${data.vendor_name || 'N/A'}\n* **PO Ref**: ${data.po_number || 'N/A'}\n* **Delivery Date**: ${data.delivery_date || 'N/A'}\n* **Items**: ${data.items ? data.items.length : 0}\n\n*Drafting Purchase Order...*`
+                        text: `✅ **Document ready (${i + 1}/${attachedFiles.length})**: ${file.name}\n\n${ocrResult.message || 'Its content is available for questions and requested DocType actions.'}`
                     });
+                }
 
-                    const baseOcrPrompt = `Use tool process_ocr_po_and_create_order to create the PO. Vendor: ${data.vendor_name}, PO Number: ${data.po_number || ''}, Delivery Date: ${data.delivery_date || ''}. Items: ${JSON.stringify(data.items || [])}`;
-                    const finalPrompt = userPrompt.trim() 
-                        ? `${baseOcrPrompt}\n\nUser Instructions: ${userPrompt}` 
-                        : baseOcrPrompt;
-
+                // Uploading is ingestion only. Send the user's real prompt once
+                // after every file is in the same session; never manufacture a
+                // Purchase Order instruction from an attachment.
+                if (userPrompt.trim()) {
                     const chatRes = await fetch(`${API_BASE_URL}/api/chat`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ message: finalPrompt, session_id: activeId }),
+                        body: JSON.stringify({ message: userPrompt, session_id: activeId }),
                     });
+
+                    if (!chatRes.ok) {
+                        throw new Error(`Agent responded with status ${chatRes.status}`);
+                    }
 
                     const chatData = await chatRes.json();
                     appendMessage(activeId, { sender: 'bot', text: chatData.reply });

@@ -348,7 +348,7 @@ html[data-theme-mode="purple"] .desk-container {
 
     min-height: 100vh !important;
     /* overflow: visible !important; */
-    overflow: hidden !important;
+    overflow: visible !important;
 }
 
 /* ==========================================================
@@ -718,9 +718,10 @@ html[data-theme-mode="purple"] .standard-sidebar-item.router-link-active svg {
 html[data-theme-mode="purple"] .body-sidebar {
     position: relative;
     /* overflow: visible !important; */
-    overflow: hidden !important;
+   overflow: visible !important;
+
 }
-html[data-theme-mode="purple"] .dropdown-notifications {
+/* html[data-theme-mode="purple"] .dropdown-notifications {
     position: absolute !important;
     left: 100% !important;
     top: 0 !important;
@@ -730,7 +731,7 @@ html[data-theme-mode="purple"] .dropdown-notifications {
     overflow: visible !important;
 
     display: block;
-}
+} */
 
 html[data-theme-mode="purple"] .body-sidebar::after {
 
@@ -976,3 +977,4 @@ html[data-theme-mode="purple"] .modal .awesomplete > ul > li {
 
     white-space: normal !important;
 }
+
