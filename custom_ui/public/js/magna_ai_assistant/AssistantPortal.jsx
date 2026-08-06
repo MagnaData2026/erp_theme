@@ -5,7 +5,7 @@ import BentoWelcome from './BentoWelcome';
 import ChatArea from './ChatArea';
 
 // API Base configuration
-const API_BASE_URL = 'http://0.0.0.0:8005';
+const API_BASE_URL = 'https://ai.tjdem.online';
 
 const MicIcon = ({ isListening }) => (
     <svg 
