@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from './Sidebar';
 import BentoWelcome from './BentoWelcome';
-import ChatArea, { ToolActivityPanel, FormattedMarkdownText, ChartBlock, getCleanTextAndChart, API_BASE_URL } from './ChatArea';
+import ChatArea, { ToolActivityPanel, ChartBlock, FormattedMarkdownText, getCleanTextAndChart, API_BASE_URL } from './ChatArea';
 
 // API_BASE_URL now lives in ChatArea.jsx (top of the file) — edit it
 // there and it applies here too.
@@ -300,6 +300,32 @@ const VoiceParticles = ({ status, micLevel }) => {
     );
 };
 
+// Pulls out any Markdown pipe-table block(s) — `| col | col |` rows — from
+// a reply's text so Live Voice Mode's popped-up card can show a table the
+// same way ChatArea's chat bubbles do (via FormattedMarkdownText, which is
+// what actually knows how to turn those rows into an HTML <table> —
+// ChartBlock/getCleanTextAndChart only ever handles pie/line/bar chart
+// JSON, never Markdown tables). Returns one Markdown snippet per table
+// found, ready to hand straight to <FormattedMarkdownText text={...} />.
+function extractMarkdownTables(text) {
+    if (!text) return [];
+    const lines = String(text).split('\n');
+    const tables = [];
+    let current = null;
+    lines.forEach((line) => {
+        const trimmed = line.trim();
+        if (trimmed.startsWith('|') && trimmed.endsWith('|')) {
+            current = current || [];
+            current.push(line);
+        } else if (current) {
+            tables.push(current.join('\n'));
+            current = null;
+        }
+    });
+    if (current) tables.push(current.join('\n'));
+    return tables;
+}
+
 const FileTypeIcon = ({ fileName }) => {
     const isPdf = /\.pdf$/i.test(fileName || '');
     return (
@@ -406,6 +432,7 @@ export default function AssistantPortal({ isOpen, onClose }) {
     const [lastReplyText, setLastReplyText] = useState('');
     const [micLevel, setMicLevel] = useState(0); // 0–1, real mic amplitude while listening
     const [voiceTools, setVoiceTools] = useState([]); // tool_call/tool_result trace for the current voice turn
+    const [pinnedChart, setPinnedChart] = useState(null); // { chartData, tables } — popped-up chart and/or table, stays until a new one is created or the user closes it
 
     const voiceModeOpenRef = useRef(false);
     const voiceSocketRef = useRef(null);
@@ -904,6 +931,9 @@ export default function AssistantPortal({ isOpen, onClose }) {
             const reply = text || streamingReplyRef.current;
             if (reply) appendMessage(createVoiceChat(), { sender: 'bot', text: reply, voiceOrigin: true });
             setLastReplyText(reply);
+            const { cleanText, chartData } = getCleanTextAndChart(reply);
+            const tables = extractMarkdownTables(cleanText);
+            if (chartData || tables.length) setPinnedChart({ chartData, tables }); // pop it up — stays until a new chart/table arrives or the user closes it
             streamingReplyRef.current = '';
             setVoiceStatus('listening');
         } else if (type === 'error') {
@@ -977,6 +1007,7 @@ export default function AssistantPortal({ isOpen, onClose }) {
         setLiveTranscript('');
         setVoiceEvents([]);
         setVoiceTools([]);
+        setPinnedChart(null);
         // This is called directly from the assistant-button click, so browser
         // microphone and AudioContext permission prompts are gesture-safe.
         connectVoice();
@@ -988,6 +1019,7 @@ export default function AssistantPortal({ isOpen, onClose }) {
         setVoiceStatus('idle');
         setLiveTranscript('');
         setVoiceTools([]);
+        setPinnedChart(null);
         disconnectVoice();
         if (playbackCtxRef.current) playbackCtxRef.current.close().catch(() => {});
         playbackCtxRef.current = null;
@@ -1564,6 +1596,27 @@ export default function AssistantPortal({ isOpen, onClose }) {
                                     <CloseIcon />
                                 </motion.button>
 
+                                {/* Top-right tool trace — what the AI is/was using this turn */}
+                                <AnimatePresence>
+                                    {voiceTools.length > 0 && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: -6 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            exit={{ opacity: 0, y: -6 }}
+                                            style={{
+                                                position: 'absolute', top: '64px', right: '22px', zIndex: 2,
+                                                width: '250px', maxHeight: '46vh', overflowY: 'auto',
+                                                padding: '10px 11px', borderRadius: '14px',
+                                                border: '1px solid color-mix(in srgb, var(--primary-color, #6366f1) 30%, var(--border-color, rgba(148, 163, 184, 0.35)))',
+                                                backgroundColor: 'color-mix(in srgb, var(--control-bg, var(--card-bg, #f8fafc)) 100%, transparent)',
+                                                boxShadow: '0 16px 36px -12px rgba(0, 0, 0, 0.35)'
+                                            }}
+                                        >
+                                            <ToolActivityPanel tools={voiceTools} />
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+
                                 <div style={{
                                     display: 'inline-flex', alignItems: 'center', gap: '7px',
                                     marginBottom: '36px', padding: '5px 13px', borderRadius: '999px',
@@ -1658,51 +1711,57 @@ export default function AssistantPortal({ isOpen, onClose }) {
                                     </AnimatePresence>
                                 </div>
 
-                                {voiceStatus === 'speaking' ? (() => {
-                                    const { cleanText, chartData } = getCleanTextAndChart(lastReplyText);
-                                    return (
-                                        <div style={{
-                                            minHeight: '44px', width: '100%', maxWidth: chartData ? '560px' : '480px',
-                                            textAlign: chartData ? 'left' : 'center', padding: '0 28px',
-                                            fontSize: '13px', lineHeight: 1.5,
-                                            position: 'relative', zIndex: 1
-                                        }}>
-                                            <FormattedMarkdownText text={cleanText} />
-                                            <ChartBlock chartData={chartData} />
-                                        </div>
-                                    );
-                                })() : (
+                                {voiceStatus === 'error' && (
                                     <div style={{
-                                        minHeight: '44px', maxWidth: '480px', textAlign: 'center', padding: '0 28px',
-                                        fontSize: '13px', color: 'var(--text-muted, #64748b)', lineHeight: 1.5,
+                                        minHeight: '20px', maxWidth: '440px', textAlign: 'center', padding: '0 28px',
+                                        fontSize: '12.5px', color: '#ef4444', lineHeight: 1.5,
                                         position: 'relative', zIndex: 1
                                     }}>
-                                        {voiceStatus === 'listening' && (liveTranscript || 'Say something…')}
-                                        {voiceStatus === 'thinking' && 'Working on your request…'}
-                                        {voiceStatus === 'connecting' && 'Opening realtime voice connection…'}
-                                        {voiceStatus === 'idle' && (micPermission === 'granted' ? 'Microphone ready.' : 'Allow microphone access, then connect.')}
-                                        {voiceStatus === 'error' && voiceError}
+                                        {voiceError}
                                     </div>
                                 )}
 
-                                {voiceTools.length > 0 && (
-                                    <div style={{ marginTop: '18px', width: '100%', maxWidth: '360px', position: 'relative', zIndex: 1 }}>
-                                        <ToolActivityPanel tools={voiceTools} />
-                                    </div>
-                                )}
-
-                                {voiceEvents.filter((e) => !['tool_call', 'tool_result', 'token'].includes(e.type)).length > 0 && (
-                                    <div style={{
-                                        marginTop: '10px', maxWidth: '520px', maxHeight: '58px', overflowY: 'auto',
-                                        fontSize: '10.5px', color: 'var(--text-muted, #64748b)',
-                                        fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
-                                        position: 'relative', zIndex: 1, textAlign: 'center'
-                                    }}>
-                                        {voiceEvents.filter((e) => !['tool_call', 'tool_result', 'token'].includes(e.type)).map((event, index) => (
-                                            <div key={`${event.type}-${index}`}>{event.type}{event.detail ? `: ${event.detail}` : ''}</div>
-                                        ))}
-                                    </div>
-                                )}
+                                {/* Popped-up chart/table — appears on the left when a reply carries
+                                    one, and stays on screen (independent of listening/thinking/speaking
+                                    status) until a new chart/graph is created or the user taps close. */}
+                                <AnimatePresence>
+                                    {pinnedChart && (
+                                        <motion.div
+                                            initial={{ opacity: 0, x: -16, scale: 0.97 }}
+                                            animate={{ opacity: 1, x: 0, scale: 1 }}
+                                            exit={{ opacity: 0, x: -16, scale: 0.97 }}
+                                            style={{
+                                                position: 'absolute', top: '104px', bottom: '108px', left: '22px',
+                                                zIndex: 2, width: 'min(360px, calc(100% - 44px))',
+                                                overflowY: 'auto', textAlign: 'left',
+                                                padding: '18px 20px', borderRadius: '18px',
+                                                border: '1px solid color-mix(in srgb, var(--primary-color, #6366f1) 30%, var(--border-color, rgba(148, 163, 184, 0.35)))',
+                                                backgroundColor: 'color-mix(in srgb, var(--control-bg, var(--card-bg, #f8fafc)) 100%, transparent)',
+                                                boxShadow: '0 26px 60px -16px rgba(0, 0, 0, 0.4)'
+                                            }}
+                                        >
+                                            <button
+                                                type="button"
+                                                onClick={() => setPinnedChart(null)}
+                                                title="Close"
+                                                style={{
+                                                    position: 'absolute', top: '10px', right: '10px',
+                                                    border: 'none', background: 'transparent', color: 'var(--text-muted, #64748b)',
+                                                    width: '26px', height: '26px', borderRadius: '50%', cursor: 'pointer',
+                                                    display: 'flex', alignItems: 'center', justifyContent: 'center'
+                                                }}
+                                            >
+                                                <CloseIcon />
+                                            </button>
+                                            {pinnedChart.chartData && <ChartBlock chartData={pinnedChart.chartData} />}
+                                            {(pinnedChart.tables || []).map((tableMd, i) => (
+                                                <div key={i} style={{ marginTop: i === 0 && !pinnedChart.chartData ? 0 : '14px' }}>
+                                                    <FormattedMarkdownText text={tableMd} />
+                                                </div>
+                                            ))}
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
 
                                 <div style={{ position: 'absolute', bottom: '40px', display: 'flex', alignItems: 'center', gap: '16px', zIndex: 1 }}>
                                     <motion.button
