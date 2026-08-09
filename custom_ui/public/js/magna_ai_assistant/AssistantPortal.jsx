@@ -286,13 +286,25 @@ export default function AssistantPortal({ isOpen, onClose }) {
 
     // ---- Live Voice Mode (realtime seamless voice conversation) ----
     const [isVoiceModeOpen, setIsVoiceModeOpen] = useState(false);
-    const [voiceStatus, setVoiceStatus] = useState('idle'); // idle | listening | thinking | speaking
+    const [voiceStatus, setVoiceStatus] = useState('idle'); // idle | connecting | listening | thinking | speaking | error
+    const [voiceConnected, setVoiceConnected] = useState(false);
+    const [micPermission, setMicPermission] = useState('prompt'); // prompt | granted | denied
+    const [voiceError, setVoiceError] = useState('');
+    const [voiceEvents, setVoiceEvents] = useState([]);
     const [liveTranscript, setLiveTranscript] = useState('');
     const [lastReplyText, setLastReplyText] = useState('');
     const [micLevel, setMicLevel] = useState(0); // 0–1, real mic amplitude while listening
 
     const voiceModeOpenRef = useRef(false);
-    const voiceRecognitionRef = useRef(null);
+    const voiceSocketRef = useRef(null);
+    const voiceSessionIdRef = useRef(null);
+    const captureNodeRef = useRef(null);
+    const captureSourceRef = useRef(null);
+    const pcmPendingRef = useRef([]);
+    const playbackCtxRef = useRef(null);
+    const playbackCursorRef = useRef(0);
+    const streamingReplyRef = useRef('');
+    const voiceChatIdRef = useRef(null);
     const audioCtxRef = useRef(null);
     const analyserRef = useRef(null);
     const micStreamRef = useRef(null);
@@ -485,15 +497,80 @@ export default function AssistantPortal({ isOpen, onClose }) {
         }
     };
 
-    // ---- Live Voice Mode helpers ----
+    // ---- Realtime WebSocket voice helpers (PCM16 mono, 24 kHz) ----
+    const VOICE_SAMPLE_RATE = 24000;
+    const VOICE_CHUNK_SAMPLES = 960; // exactly 40 ms at 24 kHz
 
-    // Strips markdown/emoji noise so the TTS engine doesn't read out
-    // asterisks, hashes, or symbols out loud.
-    const cleanForSpeech = (text) => (text || '')
-        .replace(/\*\*/g, '')
-        .replace(/[`_#>~]/g, '')
-        .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, '')
-        .trim();
+    const addVoiceEvent = (type, detail = '') => {
+        setVoiceEvents((events) => [...events.slice(-5), { type, detail: String(detail || '') }]);
+    };
+
+    const createVoiceChat = () => {
+        if (voiceChatIdRef.current) return voiceChatIdRef.current;
+        const id = currentChatId || `voice-${Date.now()}`;
+        if (!currentChatId) {
+            setChatHistory((prev) => [{ id, title: 'Live voice session', messages: [] }, ...prev]);
+            setCurrentChatId(id);
+        }
+        voiceChatIdRef.current = id;
+        return id;
+    };
+
+    const resampleTo24k = (samples, sourceRate) => {
+        if (sourceRate === VOICE_SAMPLE_RATE) return samples;
+        const ratio = sourceRate / VOICE_SAMPLE_RATE;
+        const output = new Float32Array(Math.floor(samples.length / ratio));
+        for (let i = 0; i < output.length; i++) {
+            const position = i * ratio;
+            const left = Math.floor(position);
+            const mix = position - left;
+            output[i] = samples[left] * (1 - mix) + (samples[Math.min(left + 1, samples.length - 1)] || 0) * mix;
+        }
+        return output;
+    };
+
+    const sendPcm = (samples) => {
+        const socket = voiceSocketRef.current;
+        if (!socket || socket.readyState !== WebSocket.OPEN) return;
+        const pending = pcmPendingRef.current;
+        for (let i = 0; i < samples.length; i++) pending.push(samples[i]);
+        while (pending.length >= VOICE_CHUNK_SAMPLES) {
+            const buffer = new ArrayBuffer(VOICE_CHUNK_SAMPLES * 2);
+            const view = new DataView(buffer);
+            for (let i = 0; i < VOICE_CHUNK_SAMPLES; i++) {
+                const sample = Math.max(-1, Math.min(1, pending.shift()));
+                view.setInt16(i * 2, sample < 0 ? sample * 0x8000 : sample * 0x7fff, true);
+            }
+            socket.send(buffer);
+        }
+    };
+
+    const playPcm = async (payload) => {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!playbackCtxRef.current || playbackCtxRef.current.state === 'closed') {
+            playbackCtxRef.current = new AudioCtx({ sampleRate: VOICE_SAMPLE_RATE });
+            playbackCursorRef.current = 0;
+        }
+        const context = playbackCtxRef.current;
+        await context.resume();
+        const bytes = payload instanceof Blob ? await payload.arrayBuffer() : payload;
+        const pcm = new Int16Array(bytes);
+        const audioBuffer = context.createBuffer(1, pcm.length, VOICE_SAMPLE_RATE);
+        const channel = audioBuffer.getChannelData(0);
+        for (let i = 0; i < pcm.length; i++) channel[i] = pcm[i] / 32768;
+        const source = context.createBufferSource();
+        source.buffer = audioBuffer;
+        source.connect(context.destination);
+        const startAt = Math.max(context.currentTime + 0.015, playbackCursorRef.current);
+        source.start(startAt);
+        playbackCursorRef.current = startAt + audioBuffer.duration;
+        setVoiceStatus('speaking');
+        source.onended = () => {
+            if (voiceModeOpenRef.current && context.currentTime >= playbackCursorRef.current - 0.03) {
+                setVoiceStatus('listening');
+            }
+        };
+    };
 
     const stopMicAnalyser = () => {
         if (micRafRef.current) cancelAnimationFrame(micRafRef.current);
@@ -501,6 +578,15 @@ export default function AssistantPortal({ isOpen, onClose }) {
         if (micStreamRef.current) {
             micStreamRef.current.getTracks().forEach((t) => t.stop());
             micStreamRef.current = null;
+        }
+        if (captureNodeRef.current) {
+            captureNodeRef.current.disconnect();
+            captureNodeRef.current.onaudioprocess = null;
+            captureNodeRef.current = null;
+        }
+        if (captureSourceRef.current) {
+            captureSourceRef.current.disconnect();
+            captureSourceRef.current = null;
         }
         if (audioCtxRef.current) {
             audioCtxRef.current.close().catch(() => {});
@@ -510,10 +596,18 @@ export default function AssistantPortal({ isOpen, onClose }) {
         setMicLevel(0);
     };
 
-    const startMicAnalyser = () => {
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
-        navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
-            if (!voiceModeOpenRef.current) { stream.getTracks().forEach(t => t.stop()); return; }
+    const requestMicrophone = async () => {
+        if (!navigator.mediaDevices?.getUserMedia) {
+            setMicPermission('denied');
+            setVoiceError('Microphone capture is unavailable in this browser/context.');
+            return false;
+        }
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+                audio: { channelCount: 1, sampleRate: VOICE_SAMPLE_RATE, echoCancellation: true, noiseSuppression: true },
+            });
+            if (!voiceModeOpenRef.current) { stream.getTracks().forEach((track) => track.stop()); return false; }
+            stopMicAnalyser();
             micStreamRef.current = stream;
             const AudioCtx = window.AudioContext || window.webkitAudioContext;
             const audioCtx = new AudioCtx();
@@ -521,8 +615,23 @@ export default function AssistantPortal({ isOpen, onClose }) {
             const analyser = audioCtx.createAnalyser();
             analyser.fftSize = 256;
             source.connect(analyser);
+            // ScriptProcessor provides raw float microphone frames. They are
+            // resampled and packetized below; the zero-gain output keeps the
+            // node alive without feeding the microphone back to the speaker.
+            const processor = audioCtx.createScriptProcessor(2048, 1, 1);
+            const mute = audioCtx.createGain();
+            mute.gain.value = 0;
+            source.connect(processor);
+            processor.connect(mute);
+            mute.connect(audioCtx.destination);
+            processor.onaudioprocess = (event) => {
+                sendPcm(resampleTo24k(event.inputBuffer.getChannelData(0), audioCtx.sampleRate));
+            };
             audioCtxRef.current = audioCtx;
             analyserRef.current = analyser;
+            captureSourceRef.current = source;
+            captureNodeRef.current = processor;
+            setMicPermission('granted');
             const data = new Uint8Array(analyser.frequencyBinCount);
             const tick = () => {
                 if (!analyserRef.current) return;
@@ -532,123 +641,118 @@ export default function AssistantPortal({ isOpen, onClose }) {
                 micRafRef.current = requestAnimationFrame(tick);
             };
             tick();
-        }).catch(() => { /* mic denied — visuals fall back to a static orb */ });
+            return true;
+        } catch (error) {
+            setMicPermission('denied');
+            setVoiceError(error?.message || 'Microphone permission was denied.');
+            addVoiceEvent('error', 'Microphone permission denied');
+            return false;
+        }
     };
 
-    const speakReply = (text) => {
-        setLastReplyText(text);
-        if (!window.speechSynthesis) {
+    const handleVoiceEvent = (event) => {
+        const type = event.type;
+        const text = event.text ?? event.transcript ?? event.token ?? event.delta ?? event.message ?? event.response ?? '';
+        addVoiceEvent(type, text || event.name || event.tool_name || '');
+        if (type === 'partial_transcript') {
+            setLiveTranscript(text);
             setVoiceStatus('listening');
-            startListeningLoop();
-            return;
-        }
-        window.speechSynthesis.cancel();
-        const utter = new SpeechSynthesisUtterance(cleanForSpeech(text) || '...');
-        utter.rate = 1;
-        utter.pitch = 1;
-        utter.onstart = () => setVoiceStatus('speaking');
-        utter.onend = () => {
-            if (voiceModeOpenRef.current) startListeningLoop();
-            else setVoiceStatus('idle');
-        };
-        utter.onerror = () => {
-            if (voiceModeOpenRef.current) startListeningLoop();
-            else setVoiceStatus('idle');
-        };
-        window.speechSynthesis.speak(utter);
-    };
-
-    // Sends one voice turn to the same backend/session used by text chat,
-    // and returns the reply text so it can be spoken aloud.
-    const sendVoiceMessage = async (transcript) => {
-        let activeId = currentChatId;
-        if (!activeId) {
-            activeId = Date.now().toString();
-            const sessionTitle = transcript.substring(0, 30) + (transcript.length > 30 ? '...' : '');
-            setChatHistory((prev) => [{ id: activeId, title: sessionTitle, messages: [] }, ...prev]);
-            setCurrentChatId(activeId);
-        }
-
-        appendMessage(activeId, { sender: 'user', text: transcript });
-        setVoiceStatus('thinking');
-
-        try {
-            const response = await fetch(`${API_BASE_URL}/api/chat`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: transcript, session_id: activeId }),
-            });
-            if (!response.ok) throw new Error(`Agent responded with status ${response.status}`);
-            const data = await response.json();
-            const replyText = getReplyText(data) || 'I could not read the assistant response. Please try again.';
-            appendMessage(activeId, { sender: 'bot', text: replyText });
-            return replyText;
-        } catch (err) {
-            console.error('Voice Execution Error:', err);
-            const fallback = "Sorry, I ran into an issue processing that. Please try again.";
-            appendMessage(activeId, { sender: 'bot', text: `❌ ${fallback}` });
-            return fallback;
+        } else if (type === 'final_transcript') {
+            setLiveTranscript(text);
+            if (text) appendMessage(createVoiceChat(), { sender: 'user', text });
+            setVoiceStatus('thinking');
+        } else if (type === 'token') {
+            streamingReplyRef.current += text;
+            setLastReplyText(streamingReplyRef.current);
+            setVoiceStatus('thinking');
+        } else if (type === 'tool_call') {
+            setVoiceStatus('thinking');
+        } else if (type === 'tool_result') {
+            setVoiceStatus('thinking');
+        } else if (type === 'interrupted') {
+            playbackCursorRef.current = 0;
+            if (playbackCtxRef.current) playbackCtxRef.current.close().catch(() => {});
+            playbackCtxRef.current = null;
+            setVoiceStatus('listening');
+        } else if (type === 'done') {
+            const reply = text || streamingReplyRef.current;
+            if (reply) appendMessage(createVoiceChat(), { sender: 'bot', text: reply });
+            setLastReplyText(reply);
+            streamingReplyRef.current = '';
+            setVoiceStatus('listening');
+        } else if (type === 'error') {
+            setVoiceError(text || 'The voice server reported an error.');
+            setVoiceStatus('error');
         }
     };
 
-    const startListeningLoop = () => {
-        if (!voiceModeOpenRef.current) return;
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition) { setVoiceStatus('idle'); return; }
-
-        const recognition = new SpeechRecognition();
-        recognition.lang = recognitionLanguage();
-        recognition.interimResults = true;
-        recognition.continuous = false;
-        recognition.maxAlternatives = 5;
-        voiceRecognitionRef.current = recognition;
-
-        setVoiceStatus('listening');
-        setLiveTranscript('');
-        let finalTranscript = '';
-
-        recognition.onresult = (event) => {
-            let interim = '';
-            for (let i = event.resultIndex; i < event.results.length; i++) {
-                const t = getRecognizedText(event.results[i]);
-                if (event.results[i].isFinal) finalTranscript += `${t} `;
-                else interim += t;
-            }
-            setLiveTranscript((finalTranscript + interim).trim());
+    const connectVoice = async () => {
+        if (voiceSocketRef.current?.readyState === WebSocket.OPEN || voiceSocketRef.current?.readyState === WebSocket.CONNECTING) return;
+        setVoiceError('');
+        setVoiceStatus('connecting');
+        // Unlock speaker playback while this function still belongs to the
+        // user's click; otherwise some browsers block the first server chunk.
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!playbackCtxRef.current || playbackCtxRef.current.state === 'closed') {
+            playbackCtxRef.current = new AudioCtx({ sampleRate: VOICE_SAMPLE_RATE });
+            playbackCursorRef.current = 0;
+        }
+        playbackCtxRef.current.resume().catch(() => {});
+        if (!micStreamRef.current && !(await requestMicrophone())) return;
+        const sessionId = voiceSessionIdRef.current || (window.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`);
+        voiceSessionIdRef.current = sessionId;
+        createVoiceChat();
+        const socket = new WebSocket(`ws://localhost:8005/ws/voice?session_id=${encodeURIComponent(sessionId)}`);
+        socket.binaryType = 'arraybuffer';
+        voiceSocketRef.current = socket;
+        socket.onopen = () => {
+            setVoiceConnected(true);
+            setVoiceStatus('listening');
+            addVoiceEvent('connected', sessionId);
         };
-
-        recognition.onerror = (err) => {
-            console.error('Voice mode recognition error:', err);
-        };
-
-        recognition.onend = () => {
-            if (!voiceModeOpenRef.current) return;
-            const transcript = normalizeTranscript(finalTranscript);
-            if (transcript) {
-                sendVoiceMessage(transcript).then((reply) => {
-                    if (voiceModeOpenRef.current) speakReply(reply);
+        socket.onmessage = (message) => {
+            if (typeof message.data !== 'string') {
+                playPcm(message.data).catch((error) => {
+                    setVoiceError(`Audio playback failed: ${error.message}`);
+                    setVoiceStatus('error');
                 });
-            } else {
-                startListeningLoop();
+                return;
             }
+            try { handleVoiceEvent(JSON.parse(message.data)); }
+            catch (error) { addVoiceEvent('error', 'Invalid JSON event'); }
         };
+        socket.onerror = () => {
+            setVoiceError('Could not connect to the voice service at localhost:8005.');
+            setVoiceStatus('error');
+        };
+        socket.onclose = () => {
+            setVoiceConnected(false);
+            if (voiceSocketRef.current === socket) voiceSocketRef.current = null;
+            if (voiceModeOpenRef.current) setVoiceStatus('idle');
+            addVoiceEvent('disconnected');
+        };
+    };
 
-        try { recognition.start(); } catch (e) { /* already started — ignore */ }
+    const disconnectVoice = () => {
+        const socket = voiceSocketRef.current;
+        voiceSocketRef.current = null;
+        if (socket && socket.readyState < WebSocket.CLOSING) socket.close(1000, 'User disconnected');
+        setVoiceConnected(false);
+        setVoiceStatus('idle');
+        pcmPendingRef.current = [];
+        stopMicAnalyser();
     };
 
     const openVoiceMode = () => {
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition) {
-            alert("Voice intelligence is not supported or active in your current browser configuration.");
-            return;
-        }
         if (voiceModeOpenRef.current) return;
         voiceModeOpenRef.current = true;
         setIsVoiceModeOpen(true);
         setLastReplyText('');
         setLiveTranscript('');
-        startMicAnalyser();
-        startListeningLoop();
+        setVoiceEvents([]);
+        // This is called directly from the assistant-button click, so browser
+        // microphone and AudioContext permission prompts are gesture-safe.
+        connectVoice();
     };
 
     const closeVoiceMode = () => {
@@ -656,24 +760,20 @@ export default function AssistantPortal({ isOpen, onClose }) {
         setIsVoiceModeOpen(false);
         setVoiceStatus('idle');
         setLiveTranscript('');
-        if (voiceRecognitionRef.current) {
-            try { voiceRecognitionRef.current.onend = null; voiceRecognitionRef.current.stop(); } catch (e) {}
-            voiceRecognitionRef.current = null;
-        }
-        if (window.speechSynthesis) window.speechSynthesis.cancel();
-        stopMicAnalyser();
+        disconnectVoice();
+        if (playbackCtxRef.current) playbackCtxRef.current.close().catch(() => {});
+        playbackCtxRef.current = null;
+        voiceChatIdRef.current = null;
     };
 
-    // Tapping the orb mid-speech barges in (stop TTS, start listening);
-    // tapping it while listening ends the utterance early and sends it.
     const handleOrbTap = () => {
         if (voiceStatus === 'speaking') {
-            if (window.speechSynthesis) window.speechSynthesis.cancel();
-            startListeningLoop();
-        } else if (voiceStatus === 'listening') {
-            if (voiceRecognitionRef.current) {
-                try { voiceRecognitionRef.current.stop(); } catch (e) {}
-            }
+            if (playbackCtxRef.current) playbackCtxRef.current.close().catch(() => {});
+            playbackCtxRef.current = null;
+            playbackCursorRef.current = 0;
+            setVoiceStatus('listening');
+        } else if (!voiceConnected) {
+            connectVoice();
         }
     };
 
@@ -692,10 +792,12 @@ export default function AssistantPortal({ isOpen, onClose }) {
     const activeSessionLabel = activeChat ? activeChat.title : 'New session';
 
     const voiceStatusLabel = {
-        idle: 'Tap to talk',
+        idle: 'Tap Connect to start',
+        connecting: 'Connecting…',
         listening: 'Listening…',
         thinking: 'Thinking…',
         speaking: 'Speaking…',
+        error: 'Voice connection error',
     }[voiceStatus];
 
     // Animated File Badges Component
@@ -1293,9 +1395,50 @@ export default function AssistantPortal({ isOpen, onClose }) {
                                     {voiceStatus === 'listening' && (liveTranscript || 'Say something…')}
                                     {voiceStatus === 'thinking' && 'Working on your request…'}
                                     {voiceStatus === 'speaking' && lastReplyText}
+                                    {voiceStatus === 'connecting' && 'Opening realtime voice connection…'}
+                                    {voiceStatus === 'idle' && (micPermission === 'granted' ? 'Microphone ready.' : 'Allow microphone access, then connect.')}
+                                    {voiceStatus === 'error' && voiceError}
                                 </div>
 
+                                {voiceEvents.length > 0 && (
+                                    <div style={{
+                                        marginTop: '18px', maxWidth: '520px', maxHeight: '74px', overflowY: 'auto',
+                                        fontSize: '10.5px', color: 'var(--text-muted, #64748b)',
+                                        fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+                                        position: 'relative', zIndex: 1, textAlign: 'center'
+                                    }}>
+                                        {voiceEvents.map((event, index) => (
+                                            <div key={`${event.type}-${index}`}>{event.type}{event.detail ? `: ${event.detail}` : ''}</div>
+                                        ))}
+                                    </div>
+                                )}
+
                                 <div style={{ position: 'absolute', bottom: '40px', display: 'flex', alignItems: 'center', gap: '16px', zIndex: 1 }}>
+                                    <motion.button
+                                        whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
+                                        onClick={requestMicrophone}
+                                        disabled={micPermission === 'granted'}
+                                        style={{
+                                            border: '1px solid var(--border-color, #cbd5e1)', borderRadius: '999px',
+                                            cursor: micPermission === 'granted' ? 'default' : 'pointer', padding: '10px 17px',
+                                            fontSize: '12px', fontWeight: '650', color: 'var(--text-color, #0f172a)',
+                                            backgroundColor: 'var(--control-bg, var(--card-bg, #fff))',
+                                            opacity: micPermission === 'granted' ? 0.7 : 1
+                                        }}
+                                    >
+                                        Mic: {micPermission === 'granted' ? 'Allowed' : micPermission === 'denied' ? 'Retry permission' : 'Allow'}
+                                    </motion.button>
+                                    <motion.button
+                                        whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
+                                        onClick={voiceConnected ? disconnectVoice : connectVoice}
+                                        style={{
+                                            border: 'none', borderRadius: '999px', cursor: 'pointer', padding: '10px 20px',
+                                            fontSize: '12px', fontWeight: '700', color: '#fff',
+                                            backgroundColor: voiceConnected ? '#f59e0b' : 'var(--primary-color, #6366f1)'
+                                        }}
+                                    >
+                                        {voiceConnected ? 'Disconnect' : 'Connect'}
+                                    </motion.button>
                                     <motion.button
                                         className="magna-end-call-btn"
                                         whileHover={{ scale: 1.05 }}
@@ -1309,7 +1452,7 @@ export default function AssistantPortal({ isOpen, onClose }) {
                                             boxShadow: '0 10px 24px -8px rgba(239, 68, 68, 0.5)'
                                         }}
                                     >
-                                        <PhoneEndIcon /> End
+                                        <PhoneEndIcon /> Close
                                     </motion.button>
                                 </div>
                             </motion.div>
