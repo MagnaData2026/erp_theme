@@ -1,11 +1,93 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from './Sidebar';
 import BentoWelcome from './BentoWelcome';
 import ChatArea from './ChatArea';
 
 // API Base configuration
-const API_BASE_URL = 'https://ai.tjdem.online';
+const API_BASE_URL = 'http://0.0.0.0:8005';
+
+// Web Speech occasionally joins short words or drops a letter, especially
+// with Indian-English accents. Keep this deliberately conservative so ERP
+// names, item codes and customer names are never "corrected" unexpectedly.
+const normalizeTranscript = (value = '') => {
+    const phraseFixes = [
+        [/\bi\s*can\b/gi, 'I can'],
+        [/\bi\s*cannot\b/gi, 'I cannot'],
+        [/\bi\s*am\b/gi, 'I am'],
+        [/\bi\s*will\b/gi, 'I will'],
+        [/\bi\s*want\b/gi, 'I want'],
+        [/\bhllo\b/gi, 'hello'],
+        [/\bhelo\b/gi, 'hello'],
+        [/\bplese\b/gi, 'please'],
+        [/\bpleas\b/gi, 'please'],
+        [/\bshowme\b/gi, 'show me'],
+        [/\btellme\b/gi, 'tell me'],
+    ];
+
+    let text = String(value).replace(/\s+/g, ' ').trim();
+    phraseFixes.forEach(([pattern, replacement]) => { text = text.replace(pattern, replacement); });
+    text = text.replace(/\s+([,?.!])/g, '$1').trim();
+    return text ? text.charAt(0).toUpperCase() + text.slice(1) : '';
+};
+
+const recognitionLanguage = () => {
+    const browserLanguage = window.navigator?.language || '';
+    return /^en(?:-|$)/i.test(browserLanguage) ? browserLanguage : 'en-IN';
+};
+
+const normalizeAssistantReply = (value = '') => {
+    const typoFixes = [
+        [/\bhllo\b/gi, 'Hello'],
+        [/\bhelo\b/gi, 'Hello'],
+        [/\bplese\b/gi, 'please'],
+        [/\bpleas\b/gi, 'please'],
+        [/\bican\b/gi, 'I can'],
+        [/\bicannot\b/gi, 'I cannot'],
+        [/\biam\b/gi, 'I am'],
+        [/\biwill\b/gi, 'I will'],
+        [/\biwant\b/gi, 'I want'],
+        [/\bassistyou\b/gi, 'assist you'],
+        [/\bshowme\b/gi, 'show me'],
+        [/\btellme\b/gi, 'tell me'],
+    ];
+
+    // Never rewrite fenced JSON/chart/code payloads.
+    return String(value).split(/(```[\s\S]*?```)/g).map((part) => {
+        if (part.startsWith('```')) return part;
+        let cleaned = part;
+        typoFixes.forEach(([pattern, replacement]) => { cleaned = cleaned.replace(pattern, replacement); });
+        return cleaned.replace(/[ \t]{2,}/g, ' ');
+    }).join('').trim();
+};
+
+const getRecognizedText = (result) => {
+    const alternatives = Array.from(result || []);
+    if (!alternatives.length) return '';
+
+    // Prefer a clean alternative when its confidence is close to the first
+    // result. This makes maxAlternatives useful instead of blindly accepting
+    // a high-confidence but visibly broken token such as "hllo" or "ican".
+    const suspicious = /\b(?:hllo|helo|plese|pleas|ican|icannot|iam|iwill|iwant|showme|tellme)\b/i;
+    const best = alternatives.reduce((winner, alternative) => {
+        const confidence = Number.isFinite(alternative.confidence) ? alternative.confidence : 0;
+        const score = confidence - (suspicious.test(alternative.transcript || '') ? 0.25 : 0);
+        return !winner || score > winner.score ? { alternative, score } : winner;
+    }, null)?.alternative;
+
+    return normalizeTranscript(best?.transcript || alternatives[0]?.transcript || '');
+};
+
+// The API normally returns { reply: string }, but keeping this boundary
+// defensive prevents accidental [object Object] or raw response JSON in chat.
+const getReplyText = (payload) => {
+    const reply = payload?.reply ?? payload?.message ?? payload;
+    if (typeof reply === 'string') return normalizeAssistantReply(reply);
+    if (reply && typeof reply === 'object') {
+        return normalizeAssistantReply(reply.answer ?? reply.text ?? reply.content ?? '');
+    }
+    return '';
+};
 
 const MicIcon = ({ isListening }) => (
     <svg
@@ -52,8 +134,8 @@ const CloseIcon = () => (
 
 // Small hero mark — a stylised spark/orbit glyph rendered in the active
 // theme's primary color. No raster asset, no hardcoded brand palette.
-const SparkMarkIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none">
+const SparkMarkIcon = ({ size = 22 }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none">
         <path d="M12 3 L13.6 9.2 20 12 13.6 14.8 12 21 10.4 14.8 4 12 10.4 9.2 Z" fill="var(--primary-color, #6366f1)" />
         <circle cx="12" cy="12" r="10.25" stroke="color-mix(in srgb, var(--primary-color, #6366f1) 55%, transparent)" strokeWidth="1.1" strokeDasharray="1.5 4.5" strokeLinecap="round" />
     </svg>
@@ -64,6 +146,47 @@ const PaperPlaneIcon = () => (
         <path d="m22 2-7 20-4-9-9-4Z" />
         <path d="M22 2 11 13" />
     </svg>
+);
+
+// Trigger icon for realtime voice mode — a soundwave glyph, visually
+// distinct from the plain dictation mic.
+const AssistantWaveIcon = ({ active }) => (
+    <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="15" height="15" viewBox="0 0 24 24" fill="none"
+        stroke={active ? "var(--primary-color, #6366f1)" : "var(--text-color, #0f172a)"}
+        strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round"
+        style={{ display: 'block', transition: 'stroke 0.2s ease' }}
+    >
+        <path d="M5 15V9" />
+        <path d="M9 18V6" />
+        <path d="M13 21V3" />
+        <path d="M17 17V7" />
+        <path d="M21 13v-2" />
+    </svg>
+);
+
+const PhoneEndIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 17.92V21a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 3h3.08a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11z" />
+        <line x1="22" y1="2" x2="2" y2="22" />
+    </svg>
+);
+
+// Five-bar equalizer used while the assistant is speaking a reply — a
+// staggered height animation stands in for a real audio-amplitude trace
+// (the Web Speech Synthesis API does not expose one).
+const EqualizerBars = () => (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '3px', height: '30px' }}>
+        {[0, 1, 2, 3, 4].map((i) => (
+            <motion.span
+                key={i}
+                animate={{ height: ['22%', '95%', '40%', '75%', '22%'] }}
+                transition={{ duration: 1.1, repeat: Infinity, delay: i * 0.11, ease: 'easeInOut' }}
+                style={{ width: '3.5px', borderRadius: '3px', backgroundColor: '#ffffff', display: 'block' }}
+            />
+        ))}
+    </div>
 );
 
 const FileTypeIcon = ({ fileName }) => {
@@ -90,7 +213,8 @@ const FileTypeIcon = ({ fileName }) => {
 // restyles this entire shell automatically — nothing is hardcoded to one
 // palette, and nothing here uses backdrop-filter / translucent panels.
 const MAGNA_PREMIUM_STYLES = `
-.magna-shell input::placeholder { color: var(--text-muted, #94a3b8); opacity: 0.85; }
+.magna-shell input::placeholder,
+.magna-shell textarea::placeholder { color: var(--text-muted, #94a3b8); opacity: 0.85; }
 .magna-shell .magna-input-shell { transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease; }
 .magna-shell .magna-input-shell:focus-within {
     border-color: color-mix(in srgb, var(--primary-color, #6366f1) 55%, var(--border-color, #cbd5e1)) !important;
@@ -131,6 +255,9 @@ const MAGNA_PREMIUM_STYLES = `
     -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent;
     animation: magna-shimmer 1.6s linear infinite;
 }
+.magna-shell .magna-orb-trigger:hover { background-color: color-mix(in srgb, var(--primary-color, #6366f1) 12%, transparent) !important; }
+.magna-shell .magna-end-call-btn { transition: filter .15s ease, transform .12s ease; }
+.magna-shell .magna-end-call-btn:hover { filter: brightness(1.08); }
 `;
 
 export default function AssistantPortal({ isOpen, onClose }) {
@@ -155,9 +282,42 @@ export default function AssistantPortal({ isOpen, onClose }) {
     // Multi-File Management State
     const [selectedFiles, setSelectedFiles] = useState([]);
     const fileInputRef = useRef(null);
+    const messageInputRef = useRef(null);
+
+    // ---- Live Voice Mode (realtime seamless voice conversation) ----
+    const [isVoiceModeOpen, setIsVoiceModeOpen] = useState(false);
+    const [voiceStatus, setVoiceStatus] = useState('idle'); // idle | listening | thinking | speaking
+    const [liveTranscript, setLiveTranscript] = useState('');
+    const [lastReplyText, setLastReplyText] = useState('');
+    const [micLevel, setMicLevel] = useState(0); // 0–1, real mic amplitude while listening
+
+    const voiceModeOpenRef = useRef(false);
+    const voiceRecognitionRef = useRef(null);
+    const audioCtxRef = useRef(null);
+    const analyserRef = useRef(null);
+    const micStreamRef = useRef(null);
+    const micRafRef = useRef(null);
 
     const activeChat = chatHistory.find(c => c.id === currentChatId);
     const activeMessages = activeChat ? activeChat.messages : messages;
+
+    const resizeMessageInput = (element) => {
+        if (!element) return;
+        element.style.height = 'auto';
+        element.style.height = `${Math.min(element.scrollHeight, 140)}px`;
+        element.style.overflowY = element.scrollHeight > 140 ? 'auto' : 'hidden';
+    };
+
+    const handleMessageKeyDown = (event) => {
+        if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent?.isComposing) {
+            event.preventDefault();
+            handleSend();
+        }
+    };
+
+    useEffect(() => {
+        resizeMessageInput(messageInputRef.current);
+    }, [input, currentChatId]);
 
     const handleVoiceInput = () => {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -167,16 +327,16 @@ export default function AssistantPortal({ isOpen, onClose }) {
         }
 
         const recognition = new SpeechRecognition();
-        recognition.lang = 'en-US';
+        recognition.lang = recognitionLanguage();
         recognition.interimResults = false;
-        recognition.maxAlternatives = 1;
+        recognition.maxAlternatives = 5;
 
         if (!isListening) {
             setIsListening(true);
             recognition.start();
 
             recognition.onresult = (event) => {
-                const speechToText = event.results[0][0].transcript;
+                const speechToText = getRecognizedText(event.results[0]);
                 setInput((prev) => prev + (prev ? ' ' : '') + speechToText);
             };
 
@@ -283,7 +443,8 @@ export default function AssistantPortal({ isOpen, onClose }) {
                     }
 
                     const chatData = await chatRes.json();
-                    appendMessage(activeId, { sender: 'bot', text: chatData.reply });
+                    const replyText = getReplyText(chatData) || 'I could not read the assistant response. Please try again.';
+                    appendMessage(activeId, { sender: 'bot', text: replyText });
 
                     if (chatData.audio) {
                         const audio = new Audio(`data:audio/wav;base64,${chatData.audio}`);
@@ -304,7 +465,8 @@ export default function AssistantPortal({ isOpen, onClose }) {
                 }
 
                 const data = await response.json();
-                appendMessage(activeId, { sender: 'bot', text: data.reply });
+                const replyText = getReplyText(data) || 'I could not read the assistant response. Please try again.';
+                appendMessage(activeId, { sender: 'bot', text: replyText });
 
                 if (data.audio) {
                     const audio = new Audio(`data:audio/wav;base64,${data.audio}`);
@@ -323,9 +485,218 @@ export default function AssistantPortal({ isOpen, onClose }) {
         }
     };
 
+    // ---- Live Voice Mode helpers ----
+
+    // Strips markdown/emoji noise so the TTS engine doesn't read out
+    // asterisks, hashes, or symbols out loud.
+    const cleanForSpeech = (text) => (text || '')
+        .replace(/\*\*/g, '')
+        .replace(/[`_#>~]/g, '')
+        .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, '')
+        .trim();
+
+    const stopMicAnalyser = () => {
+        if (micRafRef.current) cancelAnimationFrame(micRafRef.current);
+        micRafRef.current = null;
+        if (micStreamRef.current) {
+            micStreamRef.current.getTracks().forEach((t) => t.stop());
+            micStreamRef.current = null;
+        }
+        if (audioCtxRef.current) {
+            audioCtxRef.current.close().catch(() => {});
+            audioCtxRef.current = null;
+        }
+        analyserRef.current = null;
+        setMicLevel(0);
+    };
+
+    const startMicAnalyser = () => {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
+        navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
+            if (!voiceModeOpenRef.current) { stream.getTracks().forEach(t => t.stop()); return; }
+            micStreamRef.current = stream;
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            const audioCtx = new AudioCtx();
+            const source = audioCtx.createMediaStreamSource(stream);
+            const analyser = audioCtx.createAnalyser();
+            analyser.fftSize = 256;
+            source.connect(analyser);
+            audioCtxRef.current = audioCtx;
+            analyserRef.current = analyser;
+            const data = new Uint8Array(analyser.frequencyBinCount);
+            const tick = () => {
+                if (!analyserRef.current) return;
+                analyserRef.current.getByteFrequencyData(data);
+                const avg = data.reduce((a, b) => a + b, 0) / data.length;
+                setMicLevel(Math.min(1, avg / 75));
+                micRafRef.current = requestAnimationFrame(tick);
+            };
+            tick();
+        }).catch(() => { /* mic denied — visuals fall back to a static orb */ });
+    };
+
+    const speakReply = (text) => {
+        setLastReplyText(text);
+        if (!window.speechSynthesis) {
+            setVoiceStatus('listening');
+            startListeningLoop();
+            return;
+        }
+        window.speechSynthesis.cancel();
+        const utter = new SpeechSynthesisUtterance(cleanForSpeech(text) || '...');
+        utter.rate = 1;
+        utter.pitch = 1;
+        utter.onstart = () => setVoiceStatus('speaking');
+        utter.onend = () => {
+            if (voiceModeOpenRef.current) startListeningLoop();
+            else setVoiceStatus('idle');
+        };
+        utter.onerror = () => {
+            if (voiceModeOpenRef.current) startListeningLoop();
+            else setVoiceStatus('idle');
+        };
+        window.speechSynthesis.speak(utter);
+    };
+
+    // Sends one voice turn to the same backend/session used by text chat,
+    // and returns the reply text so it can be spoken aloud.
+    const sendVoiceMessage = async (transcript) => {
+        let activeId = currentChatId;
+        if (!activeId) {
+            activeId = Date.now().toString();
+            const sessionTitle = transcript.substring(0, 30) + (transcript.length > 30 ? '...' : '');
+            setChatHistory((prev) => [{ id: activeId, title: sessionTitle, messages: [] }, ...prev]);
+            setCurrentChatId(activeId);
+        }
+
+        appendMessage(activeId, { sender: 'user', text: transcript });
+        setVoiceStatus('thinking');
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/chat`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: transcript, session_id: activeId }),
+            });
+            if (!response.ok) throw new Error(`Agent responded with status ${response.status}`);
+            const data = await response.json();
+            const replyText = getReplyText(data) || 'I could not read the assistant response. Please try again.';
+            appendMessage(activeId, { sender: 'bot', text: replyText });
+            return replyText;
+        } catch (err) {
+            console.error('Voice Execution Error:', err);
+            const fallback = "Sorry, I ran into an issue processing that. Please try again.";
+            appendMessage(activeId, { sender: 'bot', text: `❌ ${fallback}` });
+            return fallback;
+        }
+    };
+
+    const startListeningLoop = () => {
+        if (!voiceModeOpenRef.current) return;
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) { setVoiceStatus('idle'); return; }
+
+        const recognition = new SpeechRecognition();
+        recognition.lang = recognitionLanguage();
+        recognition.interimResults = true;
+        recognition.continuous = false;
+        recognition.maxAlternatives = 5;
+        voiceRecognitionRef.current = recognition;
+
+        setVoiceStatus('listening');
+        setLiveTranscript('');
+        let finalTranscript = '';
+
+        recognition.onresult = (event) => {
+            let interim = '';
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+                const t = getRecognizedText(event.results[i]);
+                if (event.results[i].isFinal) finalTranscript += `${t} `;
+                else interim += t;
+            }
+            setLiveTranscript((finalTranscript + interim).trim());
+        };
+
+        recognition.onerror = (err) => {
+            console.error('Voice mode recognition error:', err);
+        };
+
+        recognition.onend = () => {
+            if (!voiceModeOpenRef.current) return;
+            const transcript = normalizeTranscript(finalTranscript);
+            if (transcript) {
+                sendVoiceMessage(transcript).then((reply) => {
+                    if (voiceModeOpenRef.current) speakReply(reply);
+                });
+            } else {
+                startListeningLoop();
+            }
+        };
+
+        try { recognition.start(); } catch (e) { /* already started — ignore */ }
+    };
+
+    const openVoiceMode = () => {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            alert("Voice intelligence is not supported or active in your current browser configuration.");
+            return;
+        }
+        if (voiceModeOpenRef.current) return;
+        voiceModeOpenRef.current = true;
+        setIsVoiceModeOpen(true);
+        setLastReplyText('');
+        setLiveTranscript('');
+        startMicAnalyser();
+        startListeningLoop();
+    };
+
+    const closeVoiceMode = () => {
+        voiceModeOpenRef.current = false;
+        setIsVoiceModeOpen(false);
+        setVoiceStatus('idle');
+        setLiveTranscript('');
+        if (voiceRecognitionRef.current) {
+            try { voiceRecognitionRef.current.onend = null; voiceRecognitionRef.current.stop(); } catch (e) {}
+            voiceRecognitionRef.current = null;
+        }
+        if (window.speechSynthesis) window.speechSynthesis.cancel();
+        stopMicAnalyser();
+    };
+
+    // Tapping the orb mid-speech barges in (stop TTS, start listening);
+    // tapping it while listening ends the utterance early and sends it.
+    const handleOrbTap = () => {
+        if (voiceStatus === 'speaking') {
+            if (window.speechSynthesis) window.speechSynthesis.cancel();
+            startListeningLoop();
+        } else if (voiceStatus === 'listening') {
+            if (voiceRecognitionRef.current) {
+                try { voiceRecognitionRef.current.stop(); } catch (e) {}
+            }
+        }
+    };
+
+    useEffect(() => {
+        if (!isOpen && voiceModeOpenRef.current) closeVoiceMode();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isOpen]);
+
+    useEffect(() => {
+        return () => { if (voiceModeOpenRef.current) closeVoiceMode(); };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
     if (!isOpen) return null;
 
     const activeSessionLabel = activeChat ? activeChat.title : 'New session';
+
+    const voiceStatusLabel = {
+        idle: 'Tap to talk',
+        listening: 'Listening…',
+        thinking: 'Thinking…',
+        speaking: 'Speaking…',
+    }[voiceStatus];
 
     // Animated File Badges Component
     const RenderFileBadges = () => {
@@ -374,6 +745,25 @@ export default function AssistantPortal({ isOpen, onClose }) {
             </div>
         );
     };
+
+    // Reusable trigger button for Live Voice Mode — sits next to Mic.
+    const VoiceModeTrigger = ({ size = 28 }) => (
+        <motion.button
+            className="magna-icon-btn magna-orb-trigger"
+            whileHover={{ scale: 1.06 }}
+            whileTap={{ scale: 0.94 }}
+            onClick={openVoiceMode}
+            style={{
+                background: 'transparent', border: 'none', borderRadius: '8px',
+                width: `${size}px`, height: `${size}px`, cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                flexShrink: 0
+            }}
+            title="Live voice conversation"
+        >
+            <AssistantWaveIcon />
+        </motion.button>
+    );
 
     return (
         <AnimatePresence>
@@ -602,15 +992,22 @@ export default function AssistantPortal({ isOpen, onClose }) {
                                                     <UploadIcon isUploading={isUploading} count={selectedFiles.length} />
                                                 </motion.button>
 
-                                                <input
-                                                    type="text"
+                                                <textarea
+                                                    ref={messageInputRef}
+                                                    rows={1}
                                                     placeholder={selectedFiles.length > 0 ? `Add prompt for ${selectedFiles.length} file(s) or press Execute...` : "Ask Magna or attach PO documents..."}
                                                     value={input}
-                                                    onChange={(e) => setInput(e.target.value)}
-                                                    onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                                                    onChange={(e) => {
+                                                        setInput(e.target.value);
+                                                        resizeMessageInput(e.target);
+                                                    }}
+                                                    onKeyDown={handleMessageKeyDown}
                                                     style={{
                                                         flex: 1, background: 'none', border: 'none', outline: 'none',
-                                                        fontSize: '13.5px', color: 'var(--text-color, #0f172a)'
+                                                        minWidth: 0, minHeight: '28px', maxHeight: '140px', padding: '4px 0',
+                                                        resize: 'none', overflowY: 'hidden', boxSizing: 'border-box',
+                                                        fontFamily: 'inherit', fontSize: '13.5px', lineHeight: '20px',
+                                                        color: 'var(--text-color, #0f172a)', whiteSpace: 'pre-wrap', overflowWrap: 'anywhere'
                                                     }}
                                                 />
 
@@ -632,6 +1029,8 @@ export default function AssistantPortal({ isOpen, onClose }) {
                                                 >
                                                     <MicIcon isListening={isListening} />
                                                 </motion.button>
+
+                                                <VoiceModeTrigger />
 
                                                 <motion.button
                                                     className="magna-send-btn"
@@ -718,15 +1117,22 @@ export default function AssistantPortal({ isOpen, onClose }) {
                                                         <UploadIcon isUploading={isUploading} count={selectedFiles.length} />
                                                     </motion.button>
 
-                                                    <input
-                                                        type="text"
+                                                    <textarea
+                                                        ref={messageInputRef}
+                                                        rows={1}
                                                         placeholder={selectedFiles.length > 0 ? `Add instructions for attached ${selectedFiles.length} file(s)...` : "Reply or upload document..."}
                                                         value={input}
-                                                        onChange={(e) => setInput(e.target.value)}
-                                                        onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                                                        onChange={(e) => {
+                                                            setInput(e.target.value);
+                                                            resizeMessageInput(e.target);
+                                                        }}
+                                                        onKeyDown={handleMessageKeyDown}
                                                         style={{
                                                             flex: 1, background: 'none', border: 'none', outline: 'none',
-                                                            fontSize: '13px', color: 'var(--text-color, #0f172a)'
+                                                            minWidth: 0, minHeight: '28px', maxHeight: '140px', padding: '4px 0',
+                                                            resize: 'none', overflowY: 'hidden', boxSizing: 'border-box',
+                                                            fontFamily: 'inherit', fontSize: '13px', lineHeight: '20px',
+                                                            color: 'var(--text-color, #0f172a)', whiteSpace: 'pre-wrap', overflowWrap: 'anywhere'
                                                         }}
                                                     />
 
@@ -748,6 +1154,8 @@ export default function AssistantPortal({ isOpen, onClose }) {
                                                     >
                                                         <MicIcon isListening={isListening} />
                                                     </motion.button>
+
+                                                    <VoiceModeTrigger />
 
                                                     <motion.button
                                                         className="magna-send-btn"
@@ -777,6 +1185,136 @@ export default function AssistantPortal({ isOpen, onClose }) {
                             </AnimatePresence>
                         </div>
                     </div>
+
+                    {/* Live Voice Mode — realtime seamless voice conversation overlay */}
+                    <AnimatePresence>
+                        {isVoiceModeOpen && (
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                style={{
+                                    position: 'absolute', inset: 0, zIndex: 20,
+                                    backgroundColor: 'var(--card-bg, #ffffff)',
+                                    display: 'flex', flexDirection: 'column',
+                                    alignItems: 'center', justifyContent: 'center'
+                                }}
+                            >
+                                <div className="magna-hero-dotgrid" style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 0 }} />
+
+                                <motion.button
+                                    className="magna-close-btn"
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    onClick={closeVoiceMode}
+                                    style={{
+                                        position: 'absolute', top: '22px', right: '22px', zIndex: 2,
+                                        border: 'none', background: 'transparent', color: 'var(--text-muted, #64748b)',
+                                        width: '34px', height: '34px', borderRadius: '50%', cursor: 'pointer',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center'
+                                    }}
+                                >
+                                    <CloseIcon />
+                                </motion.button>
+
+                                <div style={{
+                                    display: 'inline-flex', alignItems: 'center', gap: '7px',
+                                    marginBottom: '36px', padding: '5px 13px', borderRadius: '999px',
+                                    border: '1px solid var(--border-color, rgba(148, 163, 184, 0.25))',
+                                    backgroundColor: 'color-mix(in srgb, var(--primary-color, #6366f1) 7%, transparent)',
+                                    position: 'relative', zIndex: 1
+                                }}>
+                                    <span className="magna-live-dot" style={{ width: '5px', height: '5px', borderRadius: '50%', backgroundColor: 'var(--primary-color, #6366f1)' }} />
+                                    <span style={{
+                                        fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', textTransform: 'uppercase',
+                                        color: 'var(--primary-color, #6366f1)', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace'
+                                    }}>
+                                        Live Voice Mode
+                                    </span>
+                                </div>
+
+                                {/* Orb */}
+                                <div style={{
+                                    position: 'relative', width: '220px', height: '220px',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    marginBottom: '32px', zIndex: 1
+                                }}>
+                                    {voiceStatus === 'listening' && [0, 1, 2].map((i) => (
+                                        <motion.div
+                                            key={i}
+                                            initial={{ scale: 1, opacity: 0.45 }}
+                                            animate={{ scale: [1, 1.7], opacity: [0.45, 0] }}
+                                            transition={{ duration: 2, repeat: Infinity, delay: i * 0.5, ease: 'easeOut' }}
+                                            style={{
+                                                position: 'absolute', width: '100%', height: '100%', borderRadius: '50%',
+                                                border: '1.5px solid var(--primary-color, #6366f1)'
+                                            }}
+                                        />
+                                    ))}
+
+                                    {voiceStatus === 'thinking' && (
+                                        <div className="magna-mark-ring" style={{ position: 'absolute', width: '88%', height: '88%', borderRadius: '50%', padding: '3px' }}>
+                                            <div style={{ width: '100%', height: '100%', borderRadius: '50%', backgroundColor: 'var(--card-bg, #ffffff)' }} />
+                                        </div>
+                                    )}
+
+                                    <motion.div
+                                        onClick={handleOrbTap}
+                                        animate={{
+                                            scale: voiceStatus === 'listening'
+                                                ? 1 + micLevel * 0.35
+                                                : voiceStatus === 'speaking'
+                                                    ? [1, 1.05, 1]
+                                                    : 1
+                                        }}
+                                        transition={voiceStatus === 'speaking'
+                                            ? { duration: 0.7, repeat: Infinity, ease: 'easeInOut' }
+                                            : { duration: 0.12 }}
+                                        style={{
+                                            width: '140px', height: '140px', borderRadius: '50%', cursor: 'pointer',
+                                            background: 'radial-gradient(circle at 32% 30%, color-mix(in srgb, var(--primary-color, #6366f1) 55%, white), var(--primary-color, #6366f1))',
+                                            boxShadow: '0 24px 55px -16px color-mix(in srgb, var(--primary-color, #6366f1) 60%, transparent)',
+                                            display: 'flex', alignItems: 'center', justifyContent: 'center'
+                                        }}
+                                    >
+                                        {voiceStatus === 'speaking' ? <EqualizerBars /> : <SparkMarkIcon size={40} />}
+                                    </motion.div>
+                                </div>
+
+                                <div style={{ fontSize: '13.5px', fontWeight: '700', color: 'var(--text-color, #0f172a)', marginBottom: '10px', position: 'relative', zIndex: 1 }}>
+                                    {voiceStatusLabel}
+                                </div>
+
+                                <div style={{
+                                    minHeight: '44px', maxWidth: '480px', textAlign: 'center', padding: '0 28px',
+                                    fontSize: '13px', color: 'var(--text-muted, #64748b)', lineHeight: 1.5,
+                                    position: 'relative', zIndex: 1
+                                }}>
+                                    {voiceStatus === 'listening' && (liveTranscript || 'Say something…')}
+                                    {voiceStatus === 'thinking' && 'Working on your request…'}
+                                    {voiceStatus === 'speaking' && lastReplyText}
+                                </div>
+
+                                <div style={{ position: 'absolute', bottom: '40px', display: 'flex', alignItems: 'center', gap: '16px', zIndex: 1 }}>
+                                    <motion.button
+                                        className="magna-end-call-btn"
+                                        whileHover={{ scale: 1.05 }}
+                                        whileTap={{ scale: 0.95 }}
+                                        onClick={closeVoiceMode}
+                                        style={{
+                                            display: 'flex', alignItems: 'center', gap: '8px',
+                                            border: 'none', borderRadius: '999px', cursor: 'pointer',
+                                            padding: '11px 22px', fontSize: '12.5px', fontWeight: '650',
+                                            backgroundColor: '#ef4444', color: '#ffffff',
+                                            boxShadow: '0 10px 24px -8px rgba(239, 68, 68, 0.5)'
+                                        }}
+                                    >
+                                        <PhoneEndIcon /> End
+                                    </motion.button>
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </motion.div>
             </motion.div>
         </AnimatePresence>
