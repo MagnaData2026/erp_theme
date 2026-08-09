@@ -873,7 +873,7 @@ html[data-theme-mode="purple"] .tab-pane {
    AWESOMPLETE / LINK FIELD DROPDOWN FIX (FINAL v2)
 ========================================================== */
 
-html[data-theme-mode="purple"] .awesomplete {
+/* html[data-theme-mode="purple"] .awesomplete {
     position: relative;
     z-index: 99999 !important;
 }
@@ -921,7 +921,7 @@ html[data-theme-mode="purple"] .awesomplete > ul > [role="option"]:hover,
 html[data-theme-mode="purple"] .awesomplete > ul > [role="option"][aria-selected="true"] {
     background: #F5EAFF !important;
     color: #9A4DF0 !important;
-}
+} */
 /* ==========================================================
    FIX: FILTER ROW STACKING CONTEXT (so dropdown wins over table)
 ========================================================== */
@@ -947,7 +947,7 @@ html[data-theme-mode="purple"] input[type="text"]:focus {
      FULL WIDTH, NO BOX 
 ========================================================== */
 
-html[data-theme-mode="purple"] .modal .awesomplete > ul,
+/* html[data-theme-mode="purple"] .modal .awesomplete > ul,
 html[data-theme-mode="purple"] .modal ul[role="listbox"] {
 
     border: none !important;
@@ -963,7 +963,7 @@ html[data-theme-mode="purple"] .modal ul[role="listbox"] {
 }
 
 /* This modal's dropdown uses <li>, not div[role=option] */
-html[data-theme-mode="purple"] .modal .awesomplete > ul > li {
+/* html[data-theme-mode="purple"] .modal .awesomplete > ul > li {
     display: block !important;
     width: 100% !important;
     box-sizing: border-box !important;
@@ -976,5 +976,123 @@ html[data-theme-mode="purple"] .modal .awesomplete > ul > li {
     border-radius: 0 !important;
 
     white-space: normal !important;
+} */ 
+
+/* ==========================================================
+   UNIFIED AWESOMPLETE + DROPDOWN-MENU FIX (list view, filters, assign)
+========================================================== */
+
+/* --- Any awesomplete anywhere (page, modal, filter row) --- */
+html[data-theme-mode="purple"] .awesomplete,
+html[data-theme-mode="sky"] .awesomplete {
+    position: relative !important;
+}
+
+html[data-theme-mode="purple"] .control-input-wrapper,
+html[data-theme-mode="sky"] .control-input-wrapper,
+html[data-theme-mode="purple"] .control-input,
+html[data-theme-mode="sky"] .control-input,
+html[data-theme-mode="purple"] .frappe-control,
+html[data-theme-mode="sky"] .frappe-control {
+    overflow: visible !important;
+}
+
+/* the dropdown panel itself - ONE unified card, no per-item box */
+html[data-theme-mode="purple"] .awesomplete > ul,
+html[data-theme-mode="sky"] .awesomplete > ul,
+html[data-theme-mode="purple"] ul[role="listbox"],
+html[data-theme-mode="sky"] ul[role="listbox"] {
+    position: absolute !important;
+    top: calc(100% + 4px) !important;
+    left: 0 !important;
+
+    /* min-width: 260px !important;
+    width: max-content !important;
+    max-width: 400px !important; */
+    min-width: 100% !important;
+    /* width: max-content !important; */
+    max-width: 420px !important;
+    max-height: 260px !important;
+    overflow-y: auto !important;
+
+    background: #ffffff !important;
+    opacity: 1 !important;
+
+    border: 1px solid #E6D2FF !important;
+    border-radius: 12px !important;
+    box-shadow: 0 12px 30px rgba(190, 120, 255, .20) !important;
+
+    padding: 6px !important;
+    margin: 0 !important;
+    z-index: 999999 !important;
+}
+
+/* items = flat rows inside the SAME card (no individual shadow/gap) */
+html[data-theme-mode="purple"] .awesomplete > ul > li,
+html[data-theme-mode="sky"] .awesomplete > ul > li,
+html[data-theme-mode="purple"] .awesomplete > ul > [role="option"],
+html[data-theme-mode="sky"] .awesomplete > ul > [role="option"] {
+    display: block !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+
+    background: transparent !important;
+    color: #2F2F38 !important;
+
+    padding: 8px 12px !important;
+    margin: 1px 0 !important;
+    border-radius: 8px !important;
+    box-shadow: none !important;
+
+    font-weight: 500 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+html[data-theme-mode="purple"] .awesomplete > ul > li:hover,
+html[data-theme-mode="purple"] .awesomplete > ul > li[aria-selected="true"],
+html[data-theme-mode="purple"] .awesomplete > ul > [role="option"]:hover,
+html[data-theme-mode="purple"] .awesomplete > ul > [role="option"][aria-selected="true"],
+html[data-theme-mode="sky"] .awesomplete > ul > li:hover,
+html[data-theme-mode="sky"] .awesomplete > ul > li[aria-selected="true"] {
+    background: #F5EAFF !important;
+    color: #9A4DF0 !important;
+}
+
+/* --- Modal-specific: allow dropdown to escape modal bounds --- */
+html[data-theme-mode="purple"] .modal-dialog,
+html[data-theme-mode="sky"] .modal-dialog,
+html[data-theme-mode="purple"] .modal-content,
+html[data-theme-mode="sky"] .modal-content,
+html[data-theme-mode="purple"] .modal-body,
+html[data-theme-mode="sky"] .modal-body,
+html[data-theme-mode="purple"] .form-layout,
+html[data-theme-mode="sky"] .form-layout {
+    overflow: visible !important;
+}
+
+/* --- List View top-right dropdowns: List View / Saved Filters / "..." menu --- */
+html[data-theme-mode="purple"] .dropdown-menu,
+html[data-theme-mode="sky"] .dropdown-menu {
+    background: #ffffff !important;
+    border: 1px solid #E6D2FF !important;
+    border-radius: 12px !important;
+    box-shadow: 0 12px 30px rgba(190, 120, 255, .20) !important;
+    padding: 6px !important;
+    z-index: 999999 !important;
+}
+
+html[data-theme-mode="purple"] .dropdown-menu .dropdown-item,
+html[data-theme-mode="sky"] .dropdown-menu .dropdown-item {
+    border-radius: 8px !important;
+    padding: 8px 12px !important;
+    color: #2F2F38 !important;
+}
+
+html[data-theme-mode="purple"] .dropdown-menu .dropdown-item:hover,
+html[data-theme-mode="sky"] .dropdown-menu .dropdown-item:hover {
+    background: #F5EAFF !important;
+    color: #9A4DF0 !important;
 }
 

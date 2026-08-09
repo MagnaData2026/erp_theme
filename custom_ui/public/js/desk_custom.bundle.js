@@ -76,3 +76,12 @@ frappe.router.on("change", () => {
     setTimeout(replaceBranding, 1000);
 });
 
+frappe.ui.form.on("System Settings", {
+    refresh(frm) {
+        setTimeout(() => {
+            frm.fields_dict.default_app.$input
+                .find('option[value="erpnext"]')
+                .text("MagnaERP");
+        }, 300);
+    }
+});
