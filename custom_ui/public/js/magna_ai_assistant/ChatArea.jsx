@@ -2,6 +2,23 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+// Same backend host AssistantPortal.jsx talks to. Duplicated locally
+// (rather than imported) since ChatArea has no access to AssistantPortal's
+// module-level constants.
+// ============================================================
+// BACKEND URL — change this one line for your setup.
+// (ChatArea and AssistantPortal both import API_BASE_URL from here, so
+// this is the only place it needs to be edited.)
+//
+// NOTE: "0.0.0.0" is a bind-all address the *server* listens on — it is
+// not a host a browser can actually connect to, and fetches to it fail
+// with "Failed to fetch". Use "localhost" if the backend runs on the
+// same machine as the browser, or the server's real IP/hostname if not.
+// ============================================================
+const API_BASE_URL = 'http://localhost:8005';
+// const API_BASE_URL = 'http://192.168.1.50:8005';   // e.g. backend on another machine on your LAN
+// const API_BASE_URL = 'https://api.yourdomain.com'; // e.g. deployed backend
+
 // Theme-adaptive categorical palette for chart series/slices. The first
 // color always follows the active theme's primary color via color-mix();
 // the rest are fixed accent hues used only to tell data series apart.
@@ -13,6 +30,79 @@ const CHART_PALETTE = [
     '#8b5cf6',
     '#0ea5e9'
 ];
+
+// ---------------------------------------------------------------------
+// Text-to-speech — reads assistant replies out loud using the backend's
+// OpenAI TTS voice (POST /api/tts, same `assistant.tts` instance that
+// Live Voice Mode uses — see server.py / Voice/ws_voice.py), so read-aloud
+// in the chat area sounds like the same voice as the realtime voice
+// assistant instead of the browser's own built-in speech voice.
+// ---------------------------------------------------------------------
+
+const supportsAudioPlayback = typeof window !== 'undefined' && typeof window.Audio !== 'undefined';
+
+// Strips Markdown syntax down to plain, speakable prose so the voice
+// doesn't read out "asterisk asterisk", pipe characters, hashes, etc.
+function stripMarkdownForSpeech(text) {
+    if (!text) return '';
+    return String(text)
+        .replace(/```[\s\S]*?```/g, ' ')                 // fenced code / chart blocks
+        .replace(/`([^`]+)`/g, '$1')                      // inline code
+        .replace(/!\[[^\]]*\]\([^)]*\)/g, '')             // images
+        .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')          // links -> link text
+        .replace(/^\s*\|.*\|\s*$/gm, '')                  // table rows
+        .replace(/^\s*#{1,6}\s*/gm, '')                   // headings
+        .replace(/^\s*[-*]\s+/gm, '')                     // bullet markers
+        .replace(/\*\*(.*?)\*\*/g, '$1')                  // bold
+        .replace(/\*(.*?)\*/g, '$1')                      // italics
+        .replace(/\n{2,}/g, '. ')
+        .replace(/\n/g, ' ')
+        .replace(/\s{2,}/g, ' ')
+        .trim();
+}
+
+// Calls the backend TTS endpoint and returns a playable data: URL. Reuses
+// the same OpenAI voice (TTS_VOICE, e.g. "alloy") that Live Voice Mode
+// speaks with, so both surfaces sound identical.
+async function fetchSpeechAudio(text) {
+    const response = await fetch(`${API_BASE_URL}/api/tts`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text }),
+    });
+    if (!response.ok) throw new Error(`TTS request failed with status ${response.status}`);
+    const data = await response.json();
+    if (!data.audio) throw new Error('No audio returned from TTS endpoint');
+    return `data:audio/mpeg;base64,${data.audio}`;
+}
+
+function SpeakerOnIcon({ size = 14 }) {
+    return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+            <path d="M15.5 8.5a5 5 0 0 1 0 7" />
+            <path d="M18.5 5.5a9 9 0 0 1 0 13" />
+        </svg>
+    );
+}
+
+function SpeakerOffIcon({ size = 14 }) {
+    return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+            <line x1="23" y1="9" x2="17" y2="15" />
+            <line x1="17" y1="9" x2="23" y2="15" />
+        </svg>
+    );
+}
+
+function StopIcon({ size = 14 }) {
+    return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
+            <rect x="6" y="6" width="12" height="12" rx="2" />
+        </svg>
+    );
+}
 
 function FormattedMarkdownText({ text }) {
     if (!text) return null;
@@ -427,6 +517,164 @@ function ChartBlock({ chartData }) {
     );
 }
 
+// ---------------------------------------------------------------------
+// Tool-call visibility — renders the same kind of "used a tool" trace
+// ChatGPT/Claude show while an agent is working, sourced straight from
+// the backend's token/tool_call/tool_result event stream (see
+// magma_voice.py's _ws_receiver for the reference event shape). Shared
+// between ChatArea's message bubbles and AssistantPortal's Live Voice
+// Mode overlay so both surfaces render tool activity identically.
+// ---------------------------------------------------------------------
+
+function humanizeToolName(name = '') {
+    const cleaned = String(name || '').replace(/^_+/, '').replace(/[_\-.]+/g, ' ').trim();
+    if (!cleaned) return 'Tool';
+    return cleaned.replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function ToolIcon({ name = '', size = 13 }) {
+    const n = String(name || '').toLowerCase();
+    const common = { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2.2, strokeLinecap: 'round', strokeLinejoin: 'round' };
+
+    if (/search|find|lookup|query|rag/.test(n)) return <svg {...common}><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg>;
+    if (/chart|report|analytic|graph|dashboard/.test(n)) return <svg {...common}><path d="M3 3v18h18" /><path d="M18 17V9" /><path d="M13 17V5" /><path d="M8 17v-3" /></svg>;
+    if (/mail|email|notify|send/.test(n)) return <svg {...common}><rect x="2" y="4" width="20" height="16" rx="2" /><path d="m22 6-10 7L2 6" /></svg>;
+    if (/calendar|schedule|event|meeting/.test(n)) return <svg {...common}><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" /></svg>;
+    if (/lead|customer|contact|crm|person|company|employee/.test(n)) return <svg {...common}><path d="M20 21a8 8 0 0 0-16 0" /><circle cx="12" cy="7" r="4" /></svg>;
+    if (/doc|file|pdf|upload|attach/.test(n)) return <svg {...common}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z" /><path d="M14 2v6h6" /></svg>;
+    if (/web|url|browse|http|internet/.test(n)) return <svg {...common}><circle cx="12" cy="12" r="10" /><path d="M2 12h20" /><path d="M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20Z" /></svg>;
+    if (/db|database|record|erp|order|invoice|stock|inventory|item|purchase/.test(n)) return <svg {...common}><ellipse cx="12" cy="5" rx="8" ry="3" /><path d="M4 5v14c0 1.66 3.58 3 8 3s8-1.34 8-3V5" /><path d="M4 12c0 1.66 3.58 3 8 3s8-1.34 8-3" /></svg>;
+    return <svg {...common}><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76Z" /></svg>;
+}
+
+function ToolStatusIndicator({ status }) {
+    if (status === 'running') {
+        return (
+            <motion.span
+                animate={{ rotate: 360 }}
+                transition={{ duration: 0.85, repeat: Infinity, ease: 'linear' }}
+                style={{
+                    width: '11px', height: '11px', borderRadius: '50%', flexShrink: 0, display: 'inline-block',
+                    border: '2px solid color-mix(in srgb, var(--primary-color, #6366f1) 22%, transparent)',
+                    borderTopColor: 'var(--primary-color, #6366f1)'
+                }}
+            />
+        );
+    }
+    return (
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+            <path d="M20 6 9 17l-5-5" />
+        </svg>
+    );
+}
+
+function ToolCallChip({ tool }) {
+    const [expanded, setExpanded] = useState(false);
+    const hasArgs = tool.args && typeof tool.args === 'object' && Object.keys(tool.args).length > 0;
+    const resultPreview = tool.result != null
+        ? (typeof tool.result === 'string' ? tool.result : JSON.stringify(tool.result))
+        : '';
+    const hasDetail = hasArgs || !!resultPreview;
+
+    return (
+        <div style={{
+            border: '1px solid var(--border-color, rgba(148, 163, 184, 0.18))',
+            borderRadius: '10px',
+            backgroundColor: 'var(--control-bg, var(--card-bg, #f8fafc))',
+            overflow: 'hidden'
+        }}>
+            <button
+                type="button"
+                onClick={() => hasDetail && setExpanded((v) => !v)}
+                style={{
+                    display: 'flex', alignItems: 'center', gap: '8px', width: '100%',
+                    padding: '7px 10px', background: 'transparent', border: 'none',
+                    cursor: hasDetail ? 'pointer' : 'default', textAlign: 'left'
+                }}
+            >
+                <span style={{
+                    width: '20px', height: '20px', borderRadius: '6px', flexShrink: 0,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    color: 'var(--primary-color, #6366f1)',
+                    backgroundColor: 'color-mix(in srgb, var(--primary-color, #6366f1) 12%, transparent)'
+                }}>
+                    <ToolIcon name={tool.name} />
+                </span>
+                <span style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-color, #0f172a)', flex: 1 }}>
+                    {tool.status === 'running' ? `Using ${humanizeToolName(tool.name)}…` : `Used ${humanizeToolName(tool.name)}`}
+                </span>
+                <ToolStatusIndicator status={tool.status} />
+                {hasDetail && (
+                    <motion.span animate={{ rotate: expanded ? 180 : 0 }} style={{ display: 'flex', color: 'var(--text-muted, #64748b)', flexShrink: 0 }}>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
+                    </motion.span>
+                )}
+            </button>
+            <AnimatePresence initial={false}>
+                {expanded && hasDetail && (
+                    <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        style={{ overflow: 'hidden' }}
+                    >
+                        <div style={{
+                            padding: '0 10px 10px 38px', fontSize: '11px',
+                            fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+                            color: 'var(--text-muted, #64748b)', whiteSpace: 'pre-wrap', wordBreak: 'break-word'
+                        }}>
+                            {hasArgs && (
+                                <div style={{ marginBottom: resultPreview ? '6px' : 0 }}>{JSON.stringify(tool.args)}</div>
+                            )}
+                            {resultPreview && (
+                                <div style={{ color: 'var(--text-color, #0f172a)' }}>
+                                    → {resultPreview.length > 400 ? `${resultPreview.slice(0, 400)}…` : resultPreview}
+                                </div>
+                            )}
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </div>
+    );
+}
+
+function ToolActivityPanel({ tools = [] }) {
+    if (!tools.length) return null;
+    const allDone = tools.every((t) => t.status === 'done');
+    return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '10px', width: '100%' }}>
+            <div style={{
+                fontSize: '9.5px', fontWeight: '700', letterSpacing: '0.06em', textTransform: 'uppercase',
+                color: 'var(--text-muted, #64748b)', padding: '0 2px'
+            }}>
+                {allDone ? `Used ${tools.length} tool${tools.length > 1 ? 's' : ''}` : 'Working…'}
+            </div>
+            {tools.map((tool, i) => <ToolCallChip key={`${tool.name}-${i}`} tool={tool} />)}
+        </div>
+    );
+}
+
+function LiveThinkingDots({ label = 'Magna AI is thinking' }) {
+    return (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span style={{ fontSize: '13px', fontWeight: '500', color: 'var(--text-color, #0f172a)' }}>{label}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                {[0, 1, 2].map((dot) => (
+                    <motion.span
+                        key={dot}
+                        animate={{ opacity: [0.3, 1, 0.3], scale: [0.8, 1.2, 0.8] }}
+                        transition={{ duration: 1.2, repeat: Infinity, delay: dot * 0.2 }}
+                        style={{ width: '5px', height: '5px', borderRadius: '50%', backgroundColor: 'var(--primary-color, #6366f1)', display: 'inline-block' }}
+                    />
+                ))}
+            </div>
+        </div>
+    );
+}
+
+export { ToolIcon, ToolStatusIndicator, ToolCallChip, ToolActivityPanel, LiveThinkingDots, humanizeToolName, FormattedMarkdownText, ChartBlock, getCleanTextAndChart, API_BASE_URL };
+
 // AI Thinking Indicator
 function ThinkingIndicator() {
     return (
@@ -506,9 +754,121 @@ export default function ChatArea({ messages = [], isThinking }) {
         scrollBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages, showThinking]);
 
+    // ---- Text-to-speech: which message (by index) is currently playing
+    // or loading, plus an "auto read new replies" toggle. Playback uses
+    // the backend's OpenAI TTS voice (see fetchSpeechAudio above) rather
+    // than the browser's own speech voice, so it matches Live Voice Mode. ----
+    const [speakingIndex, setSpeakingIndex] = useState(null);
+    const [loadingSpeechIndex, setLoadingSpeechIndex] = useState(null);
+    const [autoSpeak, setAutoSpeak] = useState(false);
+    const autoSpokenRef = useRef(new Set());
+    const currentAudioRef = useRef(null);
+    const speechRequestIdRef = useRef(0);
+
+    const stopSpeaking = () => {
+        speechRequestIdRef.current += 1; // invalidates any in-flight fetch/playback
+        if (currentAudioRef.current) {
+            currentAudioRef.current.pause();
+            currentAudioRef.current.currentTime = 0;
+            currentAudioRef.current = null;
+        }
+        setSpeakingIndex(null);
+        setLoadingSpeechIndex(null);
+    };
+
+    const speakMessage = async (index, rawText) => {
+        if (!supportsAudioPlayback) return;
+        const plainText = stripMarkdownForSpeech(rawText);
+        if (!plainText) return;
+
+        stopSpeaking();
+        const requestId = speechRequestIdRef.current;
+        setLoadingSpeechIndex(index);
+
+        try {
+            const audioSrc = await fetchSpeechAudio(plainText);
+            if (requestId !== speechRequestIdRef.current) return; // superseded/stopped while loading
+
+            const audio = new Audio(audioSrc);
+            currentAudioRef.current = audio;
+            audio.onended = () => {
+                if (currentAudioRef.current === audio) currentAudioRef.current = null;
+                setSpeakingIndex((current) => (current === index ? null : current));
+            };
+            audio.onerror = () => {
+                if (currentAudioRef.current === audio) currentAudioRef.current = null;
+                setSpeakingIndex((current) => (current === index ? null : current));
+                console.error('Text-to-speech playback failed for the received audio.');
+                alert('Could not play the reply audio (the audio data from the server looked invalid). Check the browser console/network tab for details.');
+            };
+            setLoadingSpeechIndex(null);
+            setSpeakingIndex(index);
+            audio.play().catch((playErr) => {
+                setSpeakingIndex((current) => (current === index ? null : current));
+                console.error('Audio playback was blocked or failed:', playErr);
+                alert(`Could not play the reply audio: ${playErr.message || playErr}`);
+            });
+        } catch (err) {
+            console.error('Text-to-speech failed:', err);
+            if (requestId === speechRequestIdRef.current) setLoadingSpeechIndex(null);
+            alert(`Could not read this reply aloud: ${err.message}. Check that the backend server is running the latest server.py (with the /api/tts route) and is reachable at ${API_BASE_URL}.`);
+        }
+    };
+
+    const toggleSpeak = (index, rawText) => {
+        if (speakingIndex === index || loadingSpeechIndex === index) {
+            stopSpeaking();
+        } else {
+            speakMessage(index, rawText);
+        }
+    };
+
+    // Stop any in-progress speech when the component unmounts (e.g. the
+    // user switches to a different chat) so it doesn't keep talking.
+    useEffect(() => {
+        return () => stopSpeaking();
+    }, []);
+
+    // When auto-read is on, speak each assistant reply once it finishes
+    // streaming in. Messages that came from Live Voice Mode (voiceOrigin)
+    // are skipped here — the realtime voice socket already spoke them out
+    // loud once; auto-reading them again here would play the reply twice.
+    useEffect(() => {
+        if (!autoSpeak || !supportsAudioPlayback) return;
+        const index = messages.length - 1;
+        const msg = messages[index];
+        if (!msg || msg.sender === 'user' || msg.streaming || msg.voiceOrigin) return;
+        const { cleanText } = getCleanTextAndChart(msg.text);
+        if (!cleanText || autoSpokenRef.current.has(index)) return;
+        autoSpokenRef.current.add(index);
+        speakMessage(index, cleanText);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [messages, autoSpeak]);
+
     return (
         <div style={{ flex: 1, overflowY: 'auto', padding: '32px 24px', backgroundColor: 'transparent' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', maxWidth: '800px', width: '100%', margin: '0 auto' }}>
+                {supportsAudioPlayback && (
+                    <div style={{ position: 'sticky', top: 0, zIndex: 5, display: 'flex', justifyContent: 'flex-end', pointerEvents: 'none' }}>
+                        <button
+                            onClick={() => { if (autoSpeak) stopSpeaking(); setAutoSpeak((v) => !v); }}
+                            title={autoSpeak ? 'Turn off auto read-aloud' : 'Automatically read new replies aloud'}
+                            style={{
+                                pointerEvents: 'auto',
+                                display: 'flex', alignItems: 'center', gap: '6px',
+                                padding: '6px 12px', borderRadius: '50px',
+                                backgroundColor: autoSpeak ? 'var(--primary-color, #6366f1)' : 'var(--control-bg, var(--card-bg, #f8fafc))',
+                                border: `1px solid ${autoSpeak ? 'var(--primary-color, #6366f1)' : 'var(--border-color, rgba(148, 163, 184, 0.25))'}`,
+                                color: autoSpeak ? '#fff' : 'var(--text-muted, #64748b)',
+                                fontSize: '11.5px', fontWeight: 600, cursor: 'pointer',
+                                boxShadow: '0 4px 12px -2px rgba(0, 0, 0, 0.08)'
+                            }}
+                        >
+                            {autoSpeak ? <SpeakerOnIcon size={13} /> : <SpeakerOffIcon size={13} />}
+                            {autoSpeak ? 'Reading aloud' : 'Read aloud'}
+                        </button>
+                    </div>
+                )}
                 <AnimatePresence initial={false}>
                     {messages.map((msg, index) => {
                         const isUser = msg.sender === 'user';
@@ -560,6 +920,26 @@ export default function ChatArea({ messages = [], isThinking }) {
                                         }}>
                                             {isUser ? 'Prompt' : 'Engine Response'}
                                         </span>
+                                        {!isUser && supportsAudioPlayback && cleanText && (
+                                            <button
+                                                onClick={() => toggleSpeak(index, cleanText)}
+                                                title={
+                                                    speakingIndex === index ? 'Stop reading'
+                                                        : loadingSpeechIndex === index ? 'Loading audio…'
+                                                        : 'Read this reply aloud'
+                                                }
+                                                style={{
+                                                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                                                    width: '20px', height: '20px', borderRadius: '50%', padding: 0,
+                                                    border: 'none', cursor: loadingSpeechIndex === index ? 'wait' : 'pointer',
+                                                    opacity: loadingSpeechIndex === index ? 0.5 : 1,
+                                                    backgroundColor: speakingIndex === index ? 'var(--primary-color, #6366f1)' : 'transparent',
+                                                    color: speakingIndex === index ? '#fff' : 'var(--text-muted, #64748b)'
+                                                }}
+                                            >
+                                                {speakingIndex === index ? <StopIcon size={11} /> : <SpeakerOnIcon size={12} />}
+                                            </button>
+                                        )}
                                     </div>
 
                                     {/* Message Bubble — solid, theme-adaptive, no blur */}
@@ -584,7 +964,12 @@ export default function ChatArea({ messages = [], isThinking }) {
                                             color: 'var(--text-color, #0f172a)',
                                             letterSpacing: '-0.1px'
                                         }}>
-                                            {!isUser && isLast ? (
+                                            {!isUser && msg.tools && msg.tools.length > 0 && (
+                                                <ToolActivityPanel tools={msg.tools} />
+                                            )}
+                                            {!isUser && msg.streaming && !cleanText && (!msg.tools || msg.tools.length === 0) ? (
+                                                <LiveThinkingDots />
+                                            ) : !isUser && isLast && !msg.streamed ? (
                                                 <StreamingText text={cleanText} />
                                             ) : (
                                                 <FormattedMarkdownText text={cleanText} />

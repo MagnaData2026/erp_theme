@@ -2,10 +2,10 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from './Sidebar';
 import BentoWelcome from './BentoWelcome';
-import ChatArea from './ChatArea';
+import ChatArea, { ToolActivityPanel, FormattedMarkdownText, ChartBlock, getCleanTextAndChart, API_BASE_URL } from './ChatArea';
 
-// API Base configuration
-const API_BASE_URL = 'http://0.0.0.0:8005';
+// API_BASE_URL now lives in ChatArea.jsx (top of the file) — edit it
+// there and it applies here too.
 
 // Web Speech occasionally joins short words or drops a letter, especially
 // with Indian-English accents. Keep this deliberately conservative so ERP
@@ -189,6 +189,117 @@ const EqualizerBars = () => (
     </div>
 );
 
+// Ambient particle field for Live Voice Mode — a lightweight canvas
+// "neural network" drift that speeds up and glows brighter with mic
+// level / speaking activity. Colors are read from the active theme's
+// --primary-color at runtime (via a hidden color-probe element) so it
+// re-themes automatically with every theme switch, and it never blocks
+// pointer events on the orb/buttons above it.
+const VoiceParticles = ({ status, micLevel }) => {
+    const canvasRef = useRef(null);
+    const probeRef = useRef(null);
+    const statusRef = useRef(status);
+    const levelRef = useRef(micLevel);
+
+    useEffect(() => { statusRef.current = status; }, [status]);
+    useEffect(() => { levelRef.current = micLevel; }, [micLevel]);
+
+    useEffect(() => {
+        const canvas = canvasRef.current;
+        const probe = probeRef.current;
+        if (!canvas || !probe) return undefined;
+        const ctx = canvas.getContext('2d');
+        let width = 0, height = 0, dpr = 1, raf = null, alive = true;
+
+        const resize = () => {
+            const rect = canvas.parentElement.getBoundingClientRect();
+            dpr = window.devicePixelRatio || 1;
+            width = rect.width;
+            height = rect.height;
+            canvas.width = Math.max(1, Math.round(width * dpr));
+            canvas.height = Math.max(1, Math.round(height * dpr));
+            canvas.style.width = `${width}px`;
+            canvas.style.height = `${height}px`;
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        };
+        resize();
+        window.addEventListener('resize', resize);
+
+        const particles = Array.from({ length: 44 }, () => ({
+            x: Math.random(),
+            y: Math.random(),
+            r: 0.6 + Math.random() * 1.5,
+            vx: (Math.random() - 0.5) * 0.00055,
+            vy: (Math.random() - 0.5) * 0.00055,
+            phase: Math.random() * Math.PI * 2,
+            baseOpacity: 0.15 + Math.random() * 0.3,
+        }));
+
+        const tick = () => {
+            if (!alive) return;
+            const computed = getComputedStyle(probe).color;
+            const rgb = /^rgba?\(/.test(computed) ? computed.replace(/rgba?\(|\)/g, '') : '99, 102, 241';
+            const st = statusRef.current;
+            const level = levelRef.current || 0;
+            const activity = st === 'listening' ? 0.4 + level * 0.9
+                : st === 'speaking' ? 0.85
+                    : st === 'thinking' ? 0.55
+                        : st === 'connecting' ? 0.3
+                            : 0.15;
+
+            ctx.clearRect(0, 0, width, height);
+
+            particles.forEach((p) => {
+                p.phase += 0.012 + activity * 0.02;
+                p.x += p.vx * (1 + activity * 3);
+                p.y += p.vy * (1 + activity * 3);
+                if (p.x < 0) p.x += 1; if (p.x > 1) p.x -= 1;
+                if (p.y < 0) p.y += 1; if (p.y > 1) p.y -= 1;
+                const px = p.x * width;
+                const py = p.y * height + Math.sin(p.phase) * 3 * activity;
+                const opacity = Math.min(1, p.baseOpacity * (0.6 + activity * 0.9));
+                ctx.beginPath();
+                ctx.arc(px, py, p.r * (1 + activity * 0.5), 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(${rgb}, ${opacity})`;
+                ctx.fill();
+            });
+
+            for (let i = 0; i < particles.length; i++) {
+                for (let j = i + 1; j < particles.length; j++) {
+                    const a = particles[i], b = particles[j];
+                    const dx = (a.x - b.x) * width, dy = (a.y - b.y) * height;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    const maxDist = 68;
+                    if (dist < maxDist) {
+                        ctx.beginPath();
+                        ctx.moveTo(a.x * width, a.y * height);
+                        ctx.lineTo(b.x * width, b.y * height);
+                        ctx.strokeStyle = `rgba(${rgb}, ${(1 - dist / maxDist) * 0.09 * (0.4 + activity)})`;
+                        ctx.lineWidth = 1;
+                        ctx.stroke();
+                    }
+                }
+            }
+
+            raf = requestAnimationFrame(tick);
+        };
+        tick();
+
+        return () => {
+            alive = false;
+            window.removeEventListener('resize', resize);
+            if (raf) cancelAnimationFrame(raf);
+        };
+    }, []);
+
+    return (
+        <>
+            <span ref={probeRef} aria-hidden="true" style={{ color: 'var(--primary-color, #6366f1)', position: 'absolute', width: 0, height: 0, opacity: 0, pointerEvents: 'none' }} />
+            <canvas ref={canvasRef} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }} />
+        </>
+    );
+};
+
 const FileTypeIcon = ({ fileName }) => {
     const isPdf = /\.pdf$/i.test(fileName || '');
     return (
@@ -294,10 +405,13 @@ export default function AssistantPortal({ isOpen, onClose }) {
     const [liveTranscript, setLiveTranscript] = useState('');
     const [lastReplyText, setLastReplyText] = useState('');
     const [micLevel, setMicLevel] = useState(0); // 0–1, real mic amplitude while listening
+    const [voiceTools, setVoiceTools] = useState([]); // tool_call/tool_result trace for the current voice turn
 
     const voiceModeOpenRef = useRef(false);
     const voiceSocketRef = useRef(null);
     const voiceSessionIdRef = useRef(null);
+    const voiceStatusRef = useRef('idle');
+    const bargeInStreakRef = useRef(0);
     const captureNodeRef = useRef(null);
     const captureSourceRef = useRef(null);
     const pcmPendingRef = useRef([]);
@@ -373,6 +487,108 @@ export default function AssistantPortal({ isOpen, onClose }) {
         });
     };
 
+    // Mutates the trailing bot placeholder in place — used while a
+    // /api/chat/stream turn is landing token/tool_call/tool_result events,
+    // so the bubble fills in live instead of popping in once at the end.
+    const updateLastBotMessage = (chatId, updater) => {
+        setChatHistory((prev) => {
+            const idx = prev.findIndex((c) => c.id === chatId);
+            if (idx === -1) return prev;
+            const msgs = prev[idx].messages;
+            const lastIdx = msgs.length - 1;
+            if (lastIdx < 0 || msgs[lastIdx].sender !== 'bot') return prev;
+            const nextMsgs = [...msgs];
+            nextMsgs[lastIdx] = updater(nextMsgs[lastIdx]);
+            const next = [...prev];
+            next[idx] = { ...next[idx], messages: nextMsgs };
+            return next;
+        });
+    };
+
+    // Streams a turn from /api/chat/stream (SSE: token / tool_call /
+    // tool_result / done / error — same event shape magma_voice.py's
+    // _ws_receiver renders for the CLI) and grows a single bot bubble live,
+    // showing each tool the agent reaches for exactly as it's called.
+    const streamAssistantTurn = async (chatId, userPrompt) => {
+        appendMessage(chatId, { sender: 'bot', text: '', tools: [], streaming: true, streamed: true });
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/chat/stream`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: userPrompt, session_id: chatId }),
+            });
+
+            if (!response.ok || !response.body) {
+                throw new Error(`Agent responded with status ${response.status}`);
+            }
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = '';
+
+            while (true) {
+                const { value, done } = await reader.read();
+                if (done) break;
+                buffer += decoder.decode(value, { stream: true });
+
+                const parts = buffer.split('\n\n');
+                buffer = parts.pop() || '';
+
+                for (const part of parts) {
+                    const line = part.trim();
+                    if (!line.startsWith('data:')) continue;
+                    const payload = line.slice(5).trim();
+                    if (!payload || payload === '[DONE]') continue;
+
+                    let event;
+                    try { event = JSON.parse(payload); } catch { continue; }
+
+                    if (event.type === 'token') {
+                        updateLastBotMessage(chatId, (msg) => ({ ...msg, text: (msg.text || '') + (event.text || '') }));
+                    } else if (event.type === 'tool_call') {
+                        updateLastBotMessage(chatId, (msg) => ({
+                            ...msg,
+                            tools: [...(msg.tools || []), { name: event.name, args: event.args || {}, status: 'running', result: null }],
+                        }));
+                    } else if (event.type === 'tool_result') {
+                        updateLastBotMessage(chatId, (msg) => {
+                            const tools = [...(msg.tools || [])];
+                            for (let i = tools.length - 1; i >= 0; i--) {
+                                if (tools[i].name === event.name && tools[i].status === 'running') {
+                                    tools[i] = { ...tools[i], status: 'done', result: event.result };
+                                    break;
+                                }
+                            }
+                            return { ...msg, tools };
+                        });
+                    } else if (event.type === 'done') {
+                        updateLastBotMessage(chatId, (msg) => ({
+                            ...msg,
+                            text: msg.text || (event.text ?? event.content ?? ''),
+                            streaming: false,
+                        }));
+                    } else if (event.type === 'error') {
+                        updateLastBotMessage(chatId, (msg) => ({
+                            ...msg,
+                            text: msg.text || `❌ ${event.message || 'The assistant reported an error.'}`,
+                            streaming: false,
+                        }));
+                    }
+                }
+            }
+
+            updateLastBotMessage(chatId, (msg) => ({ ...msg, streaming: false }));
+        } catch (err) {
+            console.error('Streaming Execution Error:', err);
+            updateLastBotMessage(chatId, (msg) => ({
+                ...msg,
+                text: msg.text || '❌ Request processing encountered an issue. Please verify backend state.',
+                streaming: false,
+            }));
+        }
+    };
+
     const handleFileSelect = (event) => {
         const newFiles = Array.from(event.target.files || []);
         if (newFiles.length === 0) return;
@@ -444,46 +660,11 @@ export default function AssistantPortal({ isOpen, onClose }) {
                 // after every file is in the same session; never manufacture a
                 // Purchase Order instruction from an attachment.
                 if (userPrompt.trim()) {
-                    const chatRes = await fetch(`${API_BASE_URL}/api/chat`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ message: userPrompt, session_id: activeId }),
-                    });
-
-                    if (!chatRes.ok) {
-                        throw new Error(`Agent responded with status ${chatRes.status}`);
-                    }
-
-                    const chatData = await chatRes.json();
-                    const replyText = getReplyText(chatData) || 'I could not read the assistant response. Please try again.';
-                    appendMessage(activeId, { sender: 'bot', text: replyText });
-
-                    if (chatData.audio) {
-                        const audio = new Audio(`data:audio/wav;base64,${chatData.audio}`);
-                        audio.play().catch(() => {});
-                    }
+                    await streamAssistantTurn(activeId, userPrompt);
                 }
             } else {
                 appendMessage(activeId, { sender: 'user', text: userPrompt });
-
-                const response = await fetch(`${API_BASE_URL}/api/chat`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: userPrompt, session_id: activeId }),
-                });
-
-                if (!response.ok) {
-                    throw new Error(`Agent responded with status ${response.status}`);
-                }
-
-                const data = await response.json();
-                const replyText = getReplyText(data) || 'I could not read the assistant response. Please try again.';
-                appendMessage(activeId, { sender: 'bot', text: replyText });
-
-                if (data.audio) {
-                    const audio = new Audio(`data:audio/wav;base64,${data.audio}`);
-                    audio.play().catch(() => {});
-                }
+                await streamAssistantTurn(activeId, userPrompt);
             }
         } catch (err) {
             console.error('Execution Error:', err);
@@ -572,6 +753,24 @@ export default function AssistantPortal({ isOpen, onClose }) {
         };
     };
 
+    // Stops whatever the assistant is currently saying — used on manual tap,
+    // a server-sent 'interrupted' event, client-side barge-in detection, and
+    // every "this session is going away" exit path below (closing the
+    // portal, switching chats, unmounting). Closing the AudioContext outright
+    // (rather than just clearing a queue) guarantees every already-scheduled
+    // chunk is silenced immediately, not just future ones.
+    const interruptSpeech = () => {
+        if (playbackCtxRef.current) {
+            playbackCtxRef.current.close().catch(() => {});
+        }
+        playbackCtxRef.current = null;
+        playbackCursorRef.current = 0;
+        streamingReplyRef.current = '';
+        if (voiceModeOpenRef.current && voiceSocketRef.current?.readyState === WebSocket.OPEN) {
+            setVoiceStatus('listening');
+        }
+    };
+
     const stopMicAnalyser = () => {
         if (micRafRef.current) cancelAnimationFrame(micRafRef.current);
         micRafRef.current = null;
@@ -632,12 +831,30 @@ export default function AssistantPortal({ isOpen, onClose }) {
             captureSourceRef.current = source;
             captureNodeRef.current = processor;
             setMicPermission('granted');
+            const BARGE_IN_LEVEL = 0.35;
+            const BARGE_IN_FRAMES = 5; // ~5 animation frames of sustained loud input, not a click/pop
             const data = new Uint8Array(analyser.frequencyBinCount);
             const tick = () => {
                 if (!analyserRef.current) return;
                 analyserRef.current.getByteFrequencyData(data);
                 const avg = data.reduce((a, b) => a + b, 0) / data.length;
-                setMicLevel(Math.min(1, avg / 75));
+                const level = Math.min(1, avg / 75);
+                setMicLevel(level);
+
+                // Client-side barge-in: don't wait for a server 'interrupted'
+                // event — if the assistant is speaking and the mic just
+                // picked up sustained loud input, cut its audio immediately.
+                if (voiceStatusRef.current === 'speaking' && level > BARGE_IN_LEVEL) {
+                    bargeInStreakRef.current += 1;
+                    if (bargeInStreakRef.current >= BARGE_IN_FRAMES) {
+                        bargeInStreakRef.current = 0;
+                        interruptSpeech();
+                        addVoiceEvent('interrupted', 'barge-in');
+                    }
+                } else {
+                    bargeInStreakRef.current = 0;
+                }
+
                 micRafRef.current = requestAnimationFrame(tick);
             };
             tick();
@@ -659,24 +876,33 @@ export default function AssistantPortal({ isOpen, onClose }) {
             setVoiceStatus('listening');
         } else if (type === 'final_transcript') {
             setLiveTranscript(text);
-            if (text) appendMessage(createVoiceChat(), { sender: 'user', text });
+            if (text) appendMessage(createVoiceChat(), { sender: 'user', text, voiceOrigin: true });
+            setVoiceTools([]); // new turn — clear the previous turn's tool trace
             setVoiceStatus('thinking');
         } else if (type === 'token') {
             streamingReplyRef.current += text;
             setLastReplyText(streamingReplyRef.current);
             setVoiceStatus('thinking');
         } else if (type === 'tool_call') {
+            setVoiceTools((prev) => [...prev, { name: event.name || event.tool_name, args: event.args || {}, status: 'running', result: null }]);
             setVoiceStatus('thinking');
         } else if (type === 'tool_result') {
+            setVoiceTools((prev) => {
+                const next = [...prev];
+                for (let i = next.length - 1; i >= 0; i--) {
+                    if (next[i].name === (event.name || event.tool_name) && next[i].status === 'running') {
+                        next[i] = { ...next[i], status: 'done', result: event.result };
+                        break;
+                    }
+                }
+                return next;
+            });
             setVoiceStatus('thinking');
         } else if (type === 'interrupted') {
-            playbackCursorRef.current = 0;
-            if (playbackCtxRef.current) playbackCtxRef.current.close().catch(() => {});
-            playbackCtxRef.current = null;
-            setVoiceStatus('listening');
+            interruptSpeech();
         } else if (type === 'done') {
             const reply = text || streamingReplyRef.current;
-            if (reply) appendMessage(createVoiceChat(), { sender: 'bot', text: reply });
+            if (reply) appendMessage(createVoiceChat(), { sender: 'bot', text: reply, voiceOrigin: true });
             setLastReplyText(reply);
             streamingReplyRef.current = '';
             setVoiceStatus('listening');
@@ -750,6 +976,7 @@ export default function AssistantPortal({ isOpen, onClose }) {
         setLastReplyText('');
         setLiveTranscript('');
         setVoiceEvents([]);
+        setVoiceTools([]);
         // This is called directly from the assistant-button click, so browser
         // microphone and AudioContext permission prompts are gesture-safe.
         connectVoice();
@@ -760,6 +987,7 @@ export default function AssistantPortal({ isOpen, onClose }) {
         setIsVoiceModeOpen(false);
         setVoiceStatus('idle');
         setLiveTranscript('');
+        setVoiceTools([]);
         disconnectVoice();
         if (playbackCtxRef.current) playbackCtxRef.current.close().catch(() => {});
         playbackCtxRef.current = null;
@@ -768,19 +996,31 @@ export default function AssistantPortal({ isOpen, onClose }) {
 
     const handleOrbTap = () => {
         if (voiceStatus === 'speaking') {
-            if (playbackCtxRef.current) playbackCtxRef.current.close().catch(() => {});
-            playbackCtxRef.current = null;
-            playbackCursorRef.current = 0;
-            setVoiceStatus('listening');
+            interruptSpeech();
+            addVoiceEvent('interrupted', 'manual');
         } else if (!voiceConnected) {
             connectVoice();
         }
     };
 
     useEffect(() => {
+        voiceStatusRef.current = voiceStatus;
+    }, [voiceStatus]);
+
+    useEffect(() => {
         if (!isOpen && voiceModeOpenRef.current) closeVoiceMode();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isOpen]);
+
+    // Switching chats (new chat, picking a different session) should never
+    // leave the assistant talking over the thread you just left.
+    useEffect(() => {
+        if (voiceModeOpenRef.current) {
+            interruptSpeech();
+            addVoiceEvent('interrupted', 'switched chat');
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentChatId]);
 
     useEffect(() => {
         return () => { if (voiceModeOpenRef.current) closeVoiceMode(); };
@@ -1187,7 +1427,11 @@ export default function AssistantPortal({ isOpen, onClose }) {
                                     </motion.div>
                                 ) : (
                                     <motion.div key="chat" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-                                        <ChatArea messages={activeMessages} isThinking={isSending} />
+                                        {/* isThinking is intentionally left unset here: ChatArea auto-detects
+                                            the waiting state from the last message, and once the streaming
+                                            bot placeholder lands (see streamAssistantTurn) that bubble shows
+                                            its own live thinking-dots/tool-activity state instead. */}
+                                        <ChatArea messages={activeMessages} />
 
                                         {/* Active Chat Input Bar */}
                                         <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border-color, rgba(148, 163, 184, 0.15))' }}>
@@ -1303,6 +1547,7 @@ export default function AssistantPortal({ isOpen, onClose }) {
                                 }}
                             >
                                 <div className="magna-hero-dotgrid" style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 0 }} />
+                                <VoiceParticles status={voiceStatus} micLevel={micLevel} />
 
                                 <motion.button
                                     className="magna-close-btn"
@@ -1362,6 +1607,7 @@ export default function AssistantPortal({ isOpen, onClose }) {
 
                                     <motion.div
                                         onClick={handleOrbTap}
+                                        title={voiceStatus === 'speaking' ? 'Tap to interrupt' : undefined}
                                         animate={{
                                             scale: voiceStatus === 'listening'
                                                 ? 1 + micLevel * 0.35
@@ -1383,31 +1629,76 @@ export default function AssistantPortal({ isOpen, onClose }) {
                                     </motion.div>
                                 </div>
 
-                                <div style={{ fontSize: '13.5px', fontWeight: '700', color: 'var(--text-color, #0f172a)', marginBottom: '10px', position: 'relative', zIndex: 1 }}>
+                                <div style={{ fontSize: '13.5px', fontWeight: '700', color: 'var(--text-color, #0f172a)', marginBottom: '10px', position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', gap: '10px' }}>
                                     {voiceStatusLabel}
+                                    <AnimatePresence>
+                                        {voiceStatus === 'speaking' && (
+                                            <motion.button
+                                                key="interrupt-pill"
+                                                initial={{ opacity: 0, scale: 0.9 }}
+                                                animate={{ opacity: 1, scale: 1 }}
+                                                exit={{ opacity: 0, scale: 0.9 }}
+                                                whileHover={{ scale: 1.05 }}
+                                                whileTap={{ scale: 0.95 }}
+                                                onClick={() => { interruptSpeech(); addVoiceEvent('interrupted', 'manual'); }}
+                                                title="Stop the assistant and start talking"
+                                                style={{
+                                                    display: 'flex', alignItems: 'center', gap: '5px',
+                                                    border: '1px solid color-mix(in srgb, var(--primary-color, #6366f1) 30%, transparent)',
+                                                    borderRadius: '999px', cursor: 'pointer', padding: '3px 11px 3px 9px',
+                                                    fontSize: '10px', fontWeight: '700', letterSpacing: '0.03em',
+                                                    color: 'var(--primary-color, #6366f1)',
+                                                    backgroundColor: 'color-mix(in srgb, var(--primary-color, #6366f1) 10%, transparent)'
+                                                }}
+                                            >
+                                                <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="2" /></svg>
+                                                Interrupt
+                                            </motion.button>
+                                        )}
+                                    </AnimatePresence>
                                 </div>
 
-                                <div style={{
-                                    minHeight: '44px', maxWidth: '480px', textAlign: 'center', padding: '0 28px',
-                                    fontSize: '13px', color: 'var(--text-muted, #64748b)', lineHeight: 1.5,
-                                    position: 'relative', zIndex: 1
-                                }}>
-                                    {voiceStatus === 'listening' && (liveTranscript || 'Say something…')}
-                                    {voiceStatus === 'thinking' && 'Working on your request…'}
-                                    {voiceStatus === 'speaking' && lastReplyText}
-                                    {voiceStatus === 'connecting' && 'Opening realtime voice connection…'}
-                                    {voiceStatus === 'idle' && (micPermission === 'granted' ? 'Microphone ready.' : 'Allow microphone access, then connect.')}
-                                    {voiceStatus === 'error' && voiceError}
-                                </div>
-
-                                {voiceEvents.length > 0 && (
+                                {voiceStatus === 'speaking' ? (() => {
+                                    const { cleanText, chartData } = getCleanTextAndChart(lastReplyText);
+                                    return (
+                                        <div style={{
+                                            minHeight: '44px', width: '100%', maxWidth: chartData ? '560px' : '480px',
+                                            textAlign: chartData ? 'left' : 'center', padding: '0 28px',
+                                            fontSize: '13px', lineHeight: 1.5,
+                                            position: 'relative', zIndex: 1
+                                        }}>
+                                            <FormattedMarkdownText text={cleanText} />
+                                            <ChartBlock chartData={chartData} />
+                                        </div>
+                                    );
+                                })() : (
                                     <div style={{
-                                        marginTop: '18px', maxWidth: '520px', maxHeight: '74px', overflowY: 'auto',
+                                        minHeight: '44px', maxWidth: '480px', textAlign: 'center', padding: '0 28px',
+                                        fontSize: '13px', color: 'var(--text-muted, #64748b)', lineHeight: 1.5,
+                                        position: 'relative', zIndex: 1
+                                    }}>
+                                        {voiceStatus === 'listening' && (liveTranscript || 'Say something…')}
+                                        {voiceStatus === 'thinking' && 'Working on your request…'}
+                                        {voiceStatus === 'connecting' && 'Opening realtime voice connection…'}
+                                        {voiceStatus === 'idle' && (micPermission === 'granted' ? 'Microphone ready.' : 'Allow microphone access, then connect.')}
+                                        {voiceStatus === 'error' && voiceError}
+                                    </div>
+                                )}
+
+                                {voiceTools.length > 0 && (
+                                    <div style={{ marginTop: '18px', width: '100%', maxWidth: '360px', position: 'relative', zIndex: 1 }}>
+                                        <ToolActivityPanel tools={voiceTools} />
+                                    </div>
+                                )}
+
+                                {voiceEvents.filter((e) => !['tool_call', 'tool_result', 'token'].includes(e.type)).length > 0 && (
+                                    <div style={{
+                                        marginTop: '10px', maxWidth: '520px', maxHeight: '58px', overflowY: 'auto',
                                         fontSize: '10.5px', color: 'var(--text-muted, #64748b)',
                                         fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
                                         position: 'relative', zIndex: 1, textAlign: 'center'
                                     }}>
-                                        {voiceEvents.map((event, index) => (
+                                        {voiceEvents.filter((e) => !['tool_call', 'tool_result', 'token'].includes(e.type)).map((event, index) => (
                                             <div key={`${event.type}-${index}`}>{event.type}{event.detail ? `: ${event.detail}` : ''}</div>
                                         ))}
                                     </div>
