@@ -360,7 +360,7 @@
             min-height: 48px !important;
             aspect-ratio: 1 / 1 !important;
             
-            margin: 0 0 8px 0 !important;
+            margin: 8px 0 8px 0 !important;
             border-radius: 50% !important;
             overflow: hidden !important;
             
