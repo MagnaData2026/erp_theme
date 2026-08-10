@@ -721,17 +721,6 @@ html[data-theme-mode="purple"] .body-sidebar {
    overflow: visible !important;
 
 }
-/* html[data-theme-mode="purple"] .dropdown-notifications {
-    position: absolute !important;
-    left: 100% !important;
-    top: 0 !important;
-
-    z-index: 999999 !important;
-
-    overflow: visible !important;
-
-    display: block;
-} */
 
 html[data-theme-mode="purple"] .body-sidebar::after {
 
@@ -869,35 +858,6 @@ html[data-theme-mode="purple"] .tab-content,
 html[data-theme-mode="purple"] .tab-pane {
     background-color: #f4ecff !important;
 }
-/* ==========================================================
-   AWESOMPLETE / LINK FIELD DROPDOWN FIX (FINAL v2)
-========================================================== */
-
-html[data-theme-mode="purple"] .awesomplete {
-    position: relative;
-    z-index: 99999 !important;
-}
-
-html[data-theme-mode="purple"] .awesomplete > ul,
-html[data-theme-mode="purple"] ul[role="listbox"] {
-
-    background: #FFFFFF !important;
-    opacity: 1 !important;
-
-    border: 1px solid #E6D2FF !important;
-    border-radius: 12px !important;
-
-    box-shadow: 0 12px 30px rgba(190, 120, 255, .20) !important;
-
-    z-index: 999999 !important;
-
-    padding: 4px !important;
-
-   
-    min-width: 300px !important;
-    width: max-content !important;
-    max-width: 400px !important;
-}
 
 /* Each option: full width of the (now wider) ul, no wrapping */
 html[data-theme-mode="purple"] .awesomplete > ul > [role="option"] {
@@ -921,7 +881,7 @@ html[data-theme-mode="purple"] .awesomplete > ul > [role="option"]:hover,
 html[data-theme-mode="purple"] .awesomplete > ul > [role="option"][aria-selected="true"] {
     background: #F5EAFF !important;
     color: #9A4DF0 !important;
-}
+} */
 /* ==========================================================
    FIX: FILTER ROW STACKING CONTEXT (so dropdown wins over table)
 ========================================================== */
@@ -943,38 +903,2007 @@ html[data-theme-mode="purple"] input[type="text"]:focus {
     border-color: #C97AF7 !important;
     box-shadow: 0 0 0 3px rgba(201, 122, 247, .25) !important;
 }
+
 /* ==========================================================
-     FULL WIDTH, NO BOX 
-========================================================== */
+   PURPLE + SKY
+   LIST VIEW FILTER DROPDOWN - FINAL FIX
+   ========================================================== */
+
+/* Filter area must stay above the list/table */
+html[data-theme-mode="purple"] .page-form,
+html[data-theme-mode="sky"] .page-form,
+html[data-theme-mode="purple"] .standard-filter-section,
+html[data-theme-mode="sky"] .standard-filter-section,
+html[data-theme-mode="purple"] .list-view-filters,
+html[data-theme-mode="sky"] .list-view-filters {
+    position: relative !important;
+    z-index: 10000 !important;
+    overflow: visible !important;
+}
+
+
+/* Filter controls should never clip dropdown */
+html[data-theme-mode="purple"] .page-form *,
+html[data-theme-mode="sky"] .page-form *,
+html[data-theme-mode="purple"] .standard-filter-section *,
+html[data-theme-mode="sky"] .standard-filter-section * {
+    overflow: visible !important;
+}
+
+
+/* Awesomplete wrapper */
+html[data-theme-mode="purple"] .awesomplete,
+html[data-theme-mode="sky"] .awesomplete {
+    position: relative !important;
+    z-index: 99999 !important;
+    overflow: visible !important;
+}
+
+
+/* ==========================================================
+   DROPDOWN PANEL
+   ========================================================== */
+
+html[data-theme-mode="purple"] .awesomplete > ul,
+html[data-theme-mode="sky"] .awesomplete > ul,
+html[data-theme-mode="purple"] ul[role="listbox"],
+html[data-theme-mode="sky"] ul[role="listbox"] {
+
+    position: absolute !important;
+
+    top: calc(100% + 4px) !important;
+    left: 0 !important;
+
+    min-width: 100% !important;
+    width: max-content !important;
+    max-width: 420px !important;
+
+    max-height: 260px !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+
+    background: #ffffff !important;
+    opacity: 1 !important;
+
+    border: 1px solid #E6D2FF !important;
+    border-radius: 12px !important;
+
+    box-shadow:
+        0 12px 30px rgba(190, 120, 255, .25) !important;
+
+    padding: 6px !important;
+    margin: 0 !important;
+
+    /* IMPORTANT */
+    z-index: 2147483647 !important;
+}
+
+
+/* ==========================================================
+   DROPDOWN ITEMS
+   ========================================================== */
+
+html[data-theme-mode="purple"] .awesomplete > ul > li,
+html[data-theme-mode="sky"] .awesomplete > ul > li,
+html[data-theme-mode="purple"] .awesomplete > ul > [role="option"],
+html[data-theme-mode="sky"] .awesomplete > ul > [role="option"] {
+
+    display: block !important;
+
+    width: 100% !important;
+    box-sizing: border-box !important;
+
+    background: #ffffff !important;
+    color: #2F2F38 !important;
+
+    padding: 8px 12px !important;
+    margin: 1px 0 !important;
+
+    border-radius: 8px !important;
+
+    box-shadow: none !important;
+
+    font-weight: 500 !important;
+
+    white-space: nowrap !important;
+
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+
+    cursor: pointer !important;
+}
+
+
+/* Hover / selected */
+html[data-theme-mode="purple"] .awesomplete > ul > li:hover,
+html[data-theme-mode="purple"] .awesomplete > ul > li[aria-selected="true"],
+html[data-theme-mode="purple"] .awesomplete > ul > [role="option"]:hover,
+html[data-theme-mode="purple"] .awesomplete > ul > [role="option"][aria-selected="true"] {
+
+    background: #F5EAFF !important;
+    color: #9A4DF0 !important;
+}
+
+
+/* Sky hover */
+html[data-theme-mode="sky"] .awesomplete > ul > li:hover,
+html[data-theme-mode="sky"] .awesomplete > ul > li[aria-selected="true"],
+html[data-theme-mode="sky"] .awesomplete > ul > [role="option"]:hover,
+html[data-theme-mode="sky"] .awesomplete > ul > [role="option"][aria-selected="true"] {
+
+    background: #EAF5FF !important;
+    color: #3B82F6 !important;
+}
+
+
+/* ==========================================================
+   IMPORTANT:
+   LIST TABLE MUST STAY BELOW FILTER DROPDOWN
+   ========================================================== */
+
+html[data-theme-mode="purple"] .list-view-container,
+html[data-theme-mode="sky"] .list-view-container,
+html[data-theme-mode="purple"] .list-view-main,
+html[data-theme-mode="sky"] .list-view-main,
+html[data-theme-mode="purple"] .result,
+html[data-theme-mode="sky"] .result {
+
+    position: relative !important;
+    z-index: 1 !important;
+}
+
+
+/* List rows/table should never create higher stacking layer */
+html[data-theme-mode="purple"] .list-row-container,
+html[data-theme-mode="sky"] .list-row-container,
+html[data-theme-mode="purple"] .list-row-head,
+html[data-theme-mode="sky"] .list-row-head {
+
+    position: relative !important;
+    z-index: 1 !important;
+}
+
+
+/* ==========================================================
+   LIST VIEW FILTER ROW
+   ========================================================== */
+
+html[data-theme-mode="purple"] .list-view-filters,
+html[data-theme-mode="sky"] .list-view-filters {
+
+    position: relative !important;
+
+    z-index: 100000 !important;
+
+    overflow: visible !important;
+}
+
+
+/* Every filter field */
+html[data-theme-mode="purple"] .list-view-filters .frappe-control,
+html[data-theme-mode="sky"] .list-view-filters .frappe-control,
+html[data-theme-mode="purple"] .list-view-filters .control-input-wrapper,
+html[data-theme-mode="sky"] .list-view-filters .control-input-wrapper {
+
+    position: relative !important;
+
+    z-index: 100001 !important;
+
+    overflow: visible !important;
+}
+
+
+/* ==========================================================
+   GENERAL DROPDOWN MENU
+   ========================================================== */
+
+html[data-theme-mode="purple"] .dropdown-menu,
+html[data-theme-mode="sky"] .dropdown-menu {
+
+    position: absolute !important;
+
+    z-index: 2147483647 !important;
+
+    background: #ffffff !important;
+
+    border: 1px solid #E6D2FF !important;
+
+    border-radius: 12px !important;
+
+    box-shadow:
+        0 12px 30px rgba(190, 120, 255, .25) !important;
+
+    padding: 6px !important;
+}
+
+
+/* ==========================================================
+   DO NOT CLIP DROPDOWNS
+   ========================================================== */
+
+html[data-theme-mode="purple"] .layout-main-section,
+html[data-theme-mode="sky"] .layout-main-section,
+html[data-theme-mode="purple"] .page-container,
+html[data-theme-mode="sky"] .page-container,
+html[data-theme-mode="purple"] .page-body,
+html[data-theme-mode="sky"] .page-body {
+
+    overflow: visible !important;
+}
+
+
+/* ----------------------------------------------------------
+   1. GENERAL AWESOMPLETE
+   ---------------------------------------------------------- */
+
+html[data-theme-mode="purple"] .awesomplete,
+html[data-theme-mode="sky"] .awesomplete {
+    position: relative !important;
+    z-index: 1000 !important;
+}
+
+
+/* ----------------------------------------------------------
+   2. GENERAL DROPDOWN
+   ---------------------------------------------------------- */
+
+html[data-theme-mode="purple"] .awesomplete > ul,
+html[data-theme-mode="sky"] .awesomplete > ul,
+html[data-theme-mode="purple"] ul[role="listbox"],
+html[data-theme-mode="sky"] ul[role="listbox"] {
+
+    background: #ffffff !important;
+
+    opacity: 1 !important;
+
+    border: 1px solid #E6D2FF !important;
+
+    border-radius: 10px !important;
+
+    box-shadow:
+        0 10px 25px rgba(120, 70, 180, 0.20) !important;
+
+    padding: 5px !important;
+
+    margin: 0 !important;
+
+    max-height: 260px !important;
+
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+
+    z-index: 2147483647 !important;
+}
+
+
+/* ----------------------------------------------------------
+   3. NORMAL LINK FIELD DROPDOWNS
+   ---------------------------------------------------------- */
+
+html[data-theme-mode="purple"] .control-input-wrapper,
+html[data-theme-mode="sky"] .control-input-wrapper {
+
+    position: relative !important;
+
+    overflow: visible !important;
+}
+
+
+/* ----------------------------------------------------------
+   4. LIST VIEW FILTERS
+   IMPORTANT: Keep ABOVE TABLE
+   ---------------------------------------------------------- */
+
+html[data-theme-mode="purple"] .page-form,
+html[data-theme-mode="sky"] .page-form,
+html[data-theme-mode="purple"] .standard-filter-section,
+html[data-theme-mode="sky"] .standard-filter-section {
+
+    position: relative !important;
+
+    z-index: 10000 !important;
+
+    overflow: visible !important;
+}
+
+
+/* Filter controls */
+
+html[data-theme-mode="purple"] .page-form .frappe-control,
+html[data-theme-mode="sky"] .page-form .frappe-control,
+html[data-theme-mode="purple"] .standard-filter-section .frappe-control,
+html[data-theme-mode="sky"] .standard-filter-section .frappe-control {
+
+    position: relative !important;
+
+    z-index: 10001 !important;
+
+    overflow: visible !important;
+}
+
+
+/* ----------------------------------------------------------
+   5. LIST VIEW DROPDOWN
+   ---------------------------------------------------------- */
+
+html[data-theme-mode="purple"] .page-form .awesomplete > ul,
+html[data-theme-mode="sky"] .page-form .awesomplete > ul,
+html[data-theme-mode="purple"] .standard-filter-section .awesomplete > ul,
+html[data-theme-mode="sky"] .standard-filter-section .awesomplete > ul {
+
+    position: absolute !important;
+
+    top: calc(100% + 4px) !important;
+
+    left: 0 !important;
+
+    min-width: 100% !important;
+
+    width: max-content !important;
+
+    max-width: 420px !important;
+
+    max-height: 260px !important;
+
+    overflow-y: auto !important;
+
+    background: #ffffff !important;
+
+    border: 1px solid #E6D2FF !important;
+
+    border-radius: 10px !important;
+
+    box-shadow:
+        0 12px 30px rgba(190, 120, 255, 0.25) !important;
+
+    z-index: 2147483647 !important;
+}
+
+
+/* ----------------------------------------------------------
+   6. LIST VIEW / TABLE BELOW DROPDOWN
+   ---------------------------------------------------------- */
+
+html[data-theme-mode="purple"] .list-view-container,
+html[data-theme-mode="sky"] .list-view-container,
+html[data-theme-mode="purple"] .list-row-container,
+html[data-theme-mode="sky"] .list-row-container,
+html[data-theme-mode="purple"] .list-row-head,
+html[data-theme-mode="sky"] .list-row-head {
+
+    position: relative !important;
+
+    z-index: 1 !important;
+}
+
+
+/* ----------------------------------------------------------
+   7. DROPDOWN ITEMS
+   ---------------------------------------------------------- */
+
+html[data-theme-mode="purple"] .awesomplete > ul > li,
+html[data-theme-mode="sky"] .awesomplete > ul > li {
+
+    display: block !important;
+
+    width: 100% !important;
+
+    box-sizing: border-box !important;
+
+    background: #ffffff !important;
+
+    color: #2F2F38 !important;
+
+    padding: 8px 12px !important;
+
+    margin: 1px 0 !important;
+
+    border-radius: 7px !important;
+
+    box-shadow: none !important;
+
+    white-space: normal !important;
+
+    cursor: pointer !important;
+}
+
+
+/* ----------------------------------------------------------
+   8. PURPLE HOVER
+   ---------------------------------------------------------- */
+
+html[data-theme-mode="purple"] .awesomplete > ul > li:hover,
+html[data-theme-mode="purple"] .awesomplete > ul > li[aria-selected="true"] {
+
+    background: #F5EAFF !important;
+
+    color: #9A4DF0 !important;
+}
+
+
+/* ----------------------------------------------------------
+   9. SKY HOVER
+   ---------------------------------------------------------- */
+
+html[data-theme-mode="sky"] .awesomplete > ul > li:hover,
+html[data-theme-mode="sky"] .awesomplete > ul > li[aria-selected="true"] {
+
+    background: #EAF5FF !important;
+
+    color: #3B82F6 !important;
+}
+
+
+/* ----------------------------------------------------------
+   10. MODAL DROPDOWNS
+   Assign To / User / Link fields
+   ---------------------------------------------------------- */
+
+html[data-theme-mode="purple"] .modal,
+html[data-theme-mode="sky"] .modal {
+
+    z-index: 1050 !important;
+}
+
+
+html[data-theme-mode="purple"] .modal-dialog,
+html[data-theme-mode="sky"] .modal-dialog {
+
+    position: relative !important;
+
+    z-index: 1051 !important;
+
+    overflow: visible !important;
+}
+
+
+html[data-theme-mode="purple"] .modal-content,
+html[data-theme-mode="sky"] .modal-content {
+
+    overflow: visible !important;
+}
+
+
+html[data-theme-mode="purple"] .modal-body,
+html[data-theme-mode="sky"] .modal-body {
+
+    overflow: visible !important;
+}
+
+
+/* Modal Awesomplete */
+html[data-theme-mode="purple"] .modal .awesomplete,
+html[data-theme-mode="sky"] .modal .awesomplete {
+
+    position: relative !important;
+
+    z-index: 99999 !important;
+
+    overflow: visible !important;
+}
+
+
+/* Modal dropdown itself */
 
 html[data-theme-mode="purple"] .modal .awesomplete > ul,
-html[data-theme-mode="purple"] .modal ul[role="listbox"] {
+html[data-theme-mode="sky"] .modal .awesomplete > ul {
 
-    border: none !important;
-    border-radius: 0 !important;
+    position: absolute !important;
+
+    top: calc(100% + 4px) !important;
+
+    left: 0 !important;
+
+    width: 100% !important;
+
+    min-width: 100% !important;
+
+    max-width: 100% !important;
+
+    max-height: 260px !important;
+
+    overflow-y: auto !important;
+
+    overflow-x: hidden !important;
+
+    background: #ffffff !important;
+
+    border: 1px solid #E6D2FF !important;
+
+    border-radius: 10px !important;
+
+    box-shadow:
+        0 12px 30px rgba(120, 70, 180, 0.25) !important;
+
+    z-index: 2147483647 !important;
+
+    padding: 5px !important;
+}
+
+
+/* ----------------------------------------------------------
+   11. MODAL DROPDOWN ITEMS
+   ---------------------------------------------------------- */
+
+html[data-theme-mode="purple"] .modal .awesomplete > ul > li,
+html[data-theme-mode="sky"] .modal .awesomplete > ul > li {
+
+    display: block !important;
+
+    width: 100% !important;
+
+    box-sizing: border-box !important;
+
+    padding: 8px 12px !important;
+
+    margin: 1px 0 !important;
+
+    background: #ffffff !important;
+
+    color: #2F2F38 !important;
+
+    border-radius: 7px !important;
+
+    white-space: normal !important;
+
+    overflow: visible !important;
+}
+
+
+/* Purple modal hover */
+
+html[data-theme-mode="purple"] .modal .awesomplete > ul > li:hover,
+html[data-theme-mode="purple"] .modal .awesomplete > ul > li[aria-selected="true"] {
+
+    background: #F5EAFF !important;
+
+    color: #9A4DF0 !important;
+}
+
+
+/* Sky modal hover */
+
+html[data-theme-mode="sky"] .modal .awesomplete > ul > li:hover,
+html[data-theme-mode="sky"] .modal .awesomplete > ul > li[aria-selected="true"] {
+
+    background: #EAF5FF !important;
+
+    color: #3B82F6 !important;
+}
+
+
+/* ----------------------------------------------------------
+   12. DROPDOWN MENU
+   List View / Saved Filters / More
+   ---------------------------------------------------------- */
+
+html[data-theme-mode="purple"] .dropdown-menu,
+html[data-theme-mode="sky"] .dropdown-menu {
+
+    z-index: 2147483647 !important;
+
+    background: #ffffff !important;
+
+    border: 1px solid #E6D2FF !important;
+
+    border-radius: 10px !important;
+
+    box-shadow:
+        0 12px 30px rgba(190, 120, 255, 0.20) !important;
+
+    padding: 5px !important;
+}
+
+
+/* ----------------------------------------------------------
+   13. DO NOT LET MAIN PAGE CLIP DROPDOWNS
+   ---------------------------------------------------------- */
+
+html[data-theme-mode="purple"] .page-container,
+html[data-theme-mode="sky"] .page-container,
+html[data-theme-mode="purple"] .page-body,
+html[data-theme-mode="sky"] .page-body {
+
+    overflow: visible !important;
+}
+
+/* ==========================================================
+   1. COMMON AWESOMPLETE
+   ========================================================== */
+
+html[data-theme-mode="purple"] .awesomplete,
+html[data-theme-mode="sky"] .awesomplete {
+    position: relative !important;
+}
+
+
+/* Dropdown itself */
+html[data-theme-mode="purple"] .awesomplete > ul,
+html[data-theme-mode="sky"] .awesomplete > ul,
+html[data-theme-mode="purple"] ul[role="listbox"],
+html[data-theme-mode="sky"] ul[role="listbox"] {
+    position: absolute !important;
+
+    top: calc(100% + 4px) !important;
+    left: 0 !important;
+
+    min-width: 100% !important;
+    max-width: 420px !important;
+
+    max-height: 260px !important;
+
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+
+    background: #ffffff !important;
+    opacity: 1 !important;
+
+    border: 1px solid #E6D2FF !important;
+    border-radius: 10px !important;
+
+    box-shadow: 0 12px 30px rgba(150, 80, 220, .22) !important;
+
+    padding: 6px !important;
+    margin: 0 !important;
+
+    z-index: 2147483647 !important;
+}
+
+
+/* Awesomplete items */
+html[data-theme-mode="purple"] .awesomplete > ul > li,
+html[data-theme-mode="sky"] .awesomplete > ul > li,
+html[data-theme-mode="purple"] .awesomplete > ul > [role="option"],
+html[data-theme-mode="sky"] .awesomplete > ul > [role="option"] {
+    display: block !important;
+
+    width: 100% !important;
+    box-sizing: border-box !important;
+
+    background: transparent !important;
+
+    color: #2F2F38 !important;
+
+    padding: 8px 12px !important;
+    margin: 1px 0 !important;
+
+    border-radius: 7px !important;
+
     box-shadow: none !important;
+
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+
+/* Purple hover */
+html[data-theme-mode="purple"] .awesomplete > ul > li:hover,
+html[data-theme-mode="purple"] .awesomplete > ul > li[aria-selected="true"],
+html[data-theme-mode="purple"] .awesomplete > ul > [role="option"]:hover,
+html[data-theme-mode="purple"] .awesomplete > ul > [role="option"][aria-selected="true"] {
+    background: #F5EAFF !important;
+    color: #9A4DF0 !important;
+}
+
+
+/* Sky hover */
+html[data-theme-mode="sky"] .awesomplete > ul > li:hover,
+html[data-theme-mode="sky"] .awesomplete > ul > li[aria-selected="true"],
+html[data-theme-mode="sky"] .awesomplete > ul > [role="option"]:hover,
+html[data-theme-mode="sky"] .awesomplete > ul > [role="option"][aria-selected="true"] {
+    background: #EAF5FF !important;
+    color: #3B82F6 !important;
+}
+
+
+/* ==========================================================
+   2. LIST VIEW HEADER
+   List View / Saved Filters / More
+   ========================================================== */
+
+html[data-theme-mode="purple"] .page-head,
+html[data-theme-mode="sky"] .page-head {
+    position: relative !important;
+    z-index: 1000 !important;
+
+    overflow: visible !important;
+}
+
+
+html[data-theme-mode="purple"] .page-head-content,
+html[data-theme-mode="sky"] .page-head-content {
+    position: relative !important;
+    z-index: 1001 !important;
+
+    overflow: visible !important;
+}
+
+
+/* List View dropdown menu */
+html[data-theme-mode="purple"] .page-head .dropdown-menu,
+html[data-theme-mode="sky"] .page-head .dropdown-menu {
+    position: absolute !important;
+
+    z-index: 2147483647 !important;
+
+    background: #ffffff !important;
+
+    border: 1px solid #E6D2FF !important;
+    border-radius: 10px !important;
+
+    box-shadow: 0 12px 30px rgba(150, 80, 220, .22) !important;
+
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+
+/* Dropdown items */
+html[data-theme-mode="purple"] .page-head .dropdown-menu .dropdown-item,
+html[data-theme-mode="sky"] .page-head .dropdown-menu .dropdown-item {
+    background: #ffffff !important;
+
+    color: #2F2F38 !important;
+
+    border-radius: 7px !important;
+
+    padding: 8px 12px !important;
+}
+
+
+/* Purple dropdown hover */
+html[data-theme-mode="purple"] .page-head .dropdown-menu .dropdown-item:hover {
+    background: #F5EAFF !important;
+    color: #9A4DF0 !important;
+}
+
+
+/* Sky dropdown hover */
+html[data-theme-mode="sky"] .page-head .dropdown-menu .dropdown-item:hover {
+    background: #EAF5FF !important;
+    color: #3B82F6 !important;
+}
+
+
+/* ==========================================================
+   3. LIST FILTER AREA
+   Department / Designation / Territory etc.
+   ========================================================== */
+
+html[data-theme-mode="purple"] .page-form,
+html[data-theme-mode="sky"] .page-form,
+html[data-theme-mode="purple"] .list-filters,
+html[data-theme-mode="sky"] .list-filters {
+    position: relative !important;
+
+    z-index: 900 !important;
+
+    overflow: visible !important;
+}
+
+
+/* Filter Awesomplete must stay above list table */
+html[data-theme-mode="purple"] .page-form .awesomplete,
+html[data-theme-mode="sky"] .page-form .awesomplete,
+html[data-theme-mode="purple"] .list-filters .awesomplete,
+html[data-theme-mode="sky"] .list-filters .awesomplete {
+    position: relative !important;
+
+    z-index: 2147483647 !important;
+}
+
+
+/* Filter dropdown */
+html[data-theme-mode="purple"] .page-form .awesomplete > ul,
+html[data-theme-mode="sky"] .page-form .awesomplete > ul,
+html[data-theme-mode="purple"] .list-filters .awesomplete > ul,
+html[data-theme-mode="sky"] .list-filters .awesomplete > ul {
+    z-index: 2147483647 !important;
+}
+
+
+/* ==========================================================
+   4. LIST TABLE MUST STAY BELOW DROPDOWNS
+   ========================================================== */
+
+html[data-theme-mode="purple"] .result-container,
+html[data-theme-mode="sky"] .result-container {
+    position: relative !important;
+    z-index: 1 !important;
+}
+
+
+/* List rows below dropdown */
+html[data-theme-mode="purple"] .list-row,
+html[data-theme-mode="sky"] .list-row {
+    position: relative !important;
+    z-index: 1 !important;
+}
+
+
+/* ==========================================================
+   5. MODAL DROPDOWNS
+   Assign To / User / User Group / Priority etc.
+   ========================================================== */
+
+html[data-theme-mode="purple"] .modal-dialog,
+html[data-theme-mode="sky"] .modal-dialog,
+html[data-theme-mode="purple"] .modal-content,
+html[data-theme-mode="sky"] .modal-content,
+html[data-theme-mode="purple"] .modal-body,
+html[data-theme-mode="sky"] .modal-body {
+    overflow: visible !important;
+}
+
+
+/* Modal Awesomplete */
+html[data-theme-mode="purple"] .modal .awesomplete,
+html[data-theme-mode="sky"] .modal .awesomplete {
+    position: relative !important;
+
+    z-index: 99999 !important;
+}
+
+
+/* Modal dropdown */
+html[data-theme-mode="purple"] .modal .awesomplete > ul,
+html[data-theme-mode="sky"] .modal .awesomplete > ul {
+    position: absolute !important;
+
+    top: calc(100% + 4px) !important;
+    left: 0 !important;
+
+    width: 100% !important;
+    min-width: 100% !important;
+
+    max-width: 420px !important;
+    max-height: 260px !important;
+
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+
+    background: #ffffff !important;
+
+    border: 1px solid #E6D2FF !important;
+    border-radius: 10px !important;
+
+    box-shadow: 0 12px 30px rgba(150, 80, 220, .25) !important;
+
+    z-index: 2147483647 !important;
+}
+
+
+/* ==========================================================
+   6. GENERAL DROPDOWN MENU
+   ========================================================== */
+
+html[data-theme-mode="purple"] .dropdown-menu,
+html[data-theme-mode="sky"] .dropdown-menu {
+    z-index: 2147483647 !important;
+
+    background: #ffffff !important;
+
+    border: 1px solid #E6D2FF !important;
+    border-radius: 10px !important;
+
+    box-shadow: 0 12px 30px rgba(150, 80, 220, .22) !important;
+}
+
+
+html[data-theme-mode="purple"] .dropdown-menu .dropdown-item,
+html[data-theme-mode="sky"] .dropdown-menu .dropdown-item {
+    background: #ffffff !important;
+
+    color: #2F2F38 !important;
+
+    border-radius: 7px !important;
+}
+
+
+/* ==========================================================
+   7. IMPORTANT Z-INDEX FOR FORM CONTROLS
+   DO NOT CHANGE OVERFLOW HERE
+   ========================================================== */
+
+html[data-theme-mode="purple"] .form-control:focus,
+html[data-theme-mode="sky"] .form-control:focus {
+    position: relative !important;
+    z-index: 2 !important;
+}
+/* ==========================================================
+   PURPLE THEME
+   ADD TO TODO / ASSIGN TO DROPDOWN - FINAL FIX
+   ========================================================== */
+
+
+/* Modal itself */
+html[data-theme-mode="purple"] .modal {
+    position: fixed !important;
+    z-index: 1050 !important;
+}
+
+
+/* Modal dialog */
+html[data-theme-mode="purple"] .modal .modal-dialog {
+    position: relative !important;
+    z-index: 1051 !important;
+}
+
+
+/* Modal containers must NOT clip dropdown */
+html[data-theme-mode="purple"] .modal .modal-content,
+html[data-theme-mode="purple"] .modal .modal-body,
+html[data-theme-mode="purple"] .modal .form-layout,
+html[data-theme-mode="purple"] .modal .form-page {
+    overflow: visible !important;
+}
+
+
+/* ==========================================================
+   ASSIGN TO FIELD
+   ========================================================== */
+
+html[data-theme-mode="purple"] .modal .table-multiselect {
+    position: relative !important;
+    overflow: visible !important;
+    z-index: 100 !important;
+}
+
+
+/* Awesomplete wrapper */
+html[data-theme-mode="purple"] .modal .table-multiselect .awesomplete {
+    position: relative !important;
+    display: block !important;
+    width: 100% !important;
+    overflow: visible !important;
+    z-index: 10000 !important;
+}
+
+
+/* ==========================================================
+   ASSIGN TO DROPDOWN
+   ========================================================== */
+
+html[data-theme-mode="purple"] .modal .table-multiselect .awesomplete > ul {
+    position: absolute !important;
+
+    top: calc(100% + 4px) !important;
+    left: 0 !important;
+    right: auto !important;
 
     width: 100% !important;
     min-width: 100% !important;
     max-width: 100% !important;
 
-    padding: 0 !important;
+    max-height: 220px !important;
+
+    margin: 0 !important;
+    padding: 5px !important;
+
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+
     background: #FFFFFF !important;
+
+    border: 1px solid #DDB8F8 !important;
+    border-radius: 9px !important;
+
+    box-shadow:
+        0 8px 24px rgba(130, 70, 180, .22) !important;
+
+    opacity: 1 !important;
+    visibility: visible !important;
+
+    z-index: 2147483647 !important;
 }
 
-/* This modal's dropdown uses <li>, not div[role=option] */
-html[data-theme-mode="purple"] .modal .awesomplete > ul > li {
+
+/* ==========================================================
+   ASSIGN TO OPTIONS
+   ========================================================== */
+
+html[data-theme-mode="purple"] .modal .table-multiselect .awesomplete > ul > li {
     display: block !important;
+
     width: 100% !important;
     box-sizing: border-box !important;
+
+    margin: 1px 0 !important;
+    padding: 8px 12px !important;
 
     background: #FFFFFF !important;
     color: #2F2F38 !important;
 
-    padding: 10px 16px !important;
-    margin: 0 !important;
-    border-radius: 0 !important;
+    border-radius: 7px !important;
 
     white-space: normal !important;
+    overflow: visible !important;
+
+    cursor: pointer !important;
 }
 
+
+/* Hover */
+html[data-theme-mode="purple"] .modal .table-multiselect .awesomplete > ul > li:hover {
+    background: #F5EAFF !important;
+    color: #9A4DF0 !important;
+}
+
+
+/* Selected */
+html[data-theme-mode="purple"] .modal .table-multiselect .awesomplete > ul > li[aria-selected="true"] {
+    background: #F1E2FF !important;
+    color: #8B3DFF !important;
+}
+
+
+/* ==========================================================
+   INPUT INSIDE ASSIGN TO
+   ========================================================== */
+
+html[data-theme-mode="purple"] .modal .table-multiselect .awesomplete input {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    background: #FFFFFF !important;
+}
+
+
+/* ==========================================================
+   IMPORTANT:
+   Don't allow next form fields to create a higher layer
+   ========================================================== */
+
+html[data-theme-mode="purple"] .modal .form-group {
+    position: relative !important;
+    z-index: 1 !important;
+}
+
+
+/* Assign To field stays above other fields */
+html[data-theme-mode="purple"] .modal .form-group:has(.table-multiselect) {
+    z-index: 10000 !important;
+}
+/* ==========================================================
+   SEARCH / COMMAND PALETTE - PURPLE THEME
+   ORIGINAL FRAPPE LAYOUT
+   THEME COLORS ONLY
+   ========================================================== */
+
+/* Search result container - keep original Frappe structure */
+html[data-theme-mode="purple"] .modal-body.ui-front
+.awesomplete > ul {
+    position: static !important;
+
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    max-height: none !important;
+
+    margin: 4px 0 0 0 !important;
+    padding: 0 !important;
+
+    overflow: visible !important;
+
+    background: transparent !important;
+
+    border: none !important;
+    border-radius: 0 !important;
+
+    box-shadow: none !important;
+
+    z-index: auto !important;
+}
+
+
+/* Search result rows */
+html[data-theme-mode="purple"] .modal-body.ui-front
+.awesomplete > ul > li {
+    position: relative !important;
+
+    display: block !important;
+
+    width: 100% !important;
+    box-sizing: border-box !important;
+
+    margin: 0 !important;
+    padding: 8px 12px !important;
+
+    background: transparent !important;
+
+    border: none !important;
+    border-radius: 0 !important;
+
+    box-shadow: none !important;
+
+    white-space: normal !important;
+    overflow: visible !important;
+
+    color: #2F2F38 !important;
+
+    top: auto !important;
+    transform: none !important;
+}
+
+
+/* Purple hover / selected row */
+html[data-theme-mode="purple"] .modal-body.ui-front
+.awesomplete > ul > li:hover,
+html[data-theme-mode="purple"] .modal-body.ui-front
+.awesomplete > ul > li[aria-selected="true"] {
+    background: #F5EAFF !important;
+    color: #9A4DF0 !important;
+}
+
+
+/* Purple search input focus */
+html[data-theme-mode="purple"] .modal-body.ui-front
+input:focus {
+    border-color: #C97AF7 !important;
+
+    box-shadow:
+        0 0 0 2px rgba(201, 122, 247, .15) !important;
+}
+/* ==========================================================
+   PURPLE FORM PAGE HEADER / SCROLL FIX
+   Keep header compact and fixed while page content scrolls
+   ========================================================== */
+
+/* Remove unnecessary gap below the page header */
+html[data-theme-mode="purple"] .page-head {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 1000 !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+
+    min-height: 42px !important;
+    height: 42px !important;
+
+    overflow: visible !important;
+}
+/* Keep header content compact */
+html[data-theme-mode="purple"] .page-head-content {
+    position: relative !important;
+
+    margin: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+
+    min-height: 42px !important;
+    height: 42px !important;
+    overflow: visible !important;
+}
+
+/* Remove unwanted spacing around form page */
+html[data-theme-mode="purple"] .form-page {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+}
+
+/* Main form content should start immediately below header */
+html[data-theme-mode="purple"] .form-layout {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+}
+
+/* Keep dropdowns visible */
+html[data-theme-mode="purple"] .page-head,
+html[data-theme-mode="purple"] .page-head-content,
+html[data-theme-mode="purple"] .form-layout {
+    overflow: visible !important;
+}
+/* ==========================================================
+   FIX - CRM FORM TABS OVERLAPPING FORM CONTENT
+   Purple Theme
+   ========================================================== */
+
+/* Main page must allow sticky element to work */
+html[data-theme-mode="purple"] .layout-main,
+html[data-theme-mode="purple"] .layout-main-section,
+html[data-theme-mode="purple"] .page-body,
+html[data-theme-mode="purple"] .page-wrapper,
+html[data-theme-mode="purple"] .page-content {
+    overflow: visible !important;
+}
+
+
+/* Form page */
+html[data-theme-mode="purple"] .form-page {
+    position: relative !important;
+    overflow: visible !important;
+}
+
+
+/* ==========================================================
+   ACTUAL Frappe tabs element
+   <div class="form-tabs-list form-tabs-sticky-down">
+   ========================================================== */
+
+html[data-theme-mode="purple"] .form-tabs-list.form-tabs-sticky-down {
+    position: sticky !important;
+
+    top: 42px !important;
+
+    z-index: 9999 !important;
+
+    width: 100% !important;
+
+    background: #FFFFFF !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+
+    border-bottom: 1px solid #E5E5E5 !important;
+
+    box-sizing: border-box !important;
+}
+
+
+/* Tabs UL */
+html[data-theme-mode="purple"] .form-tabs-list.form-tabs-sticky-down #form-tabs {
+    position: relative !important;
+
+    z-index: 10000 !important;
+
+    min-height: 41px !important;
+    height: 41px !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+
+    background: #FFFFFF !important;
+
+    display: flex !important;
+
+    overflow: hidden !important;
+}
+
+
+/* Individual tab */
+html[data-theme-mode="purple"] .form-tabs-list.form-tabs-sticky-down #form-tabs .nav-link {
+    position: relative !important;
+
+    z-index: 10001 !important;
+
+    height: 41px !important;
+
+    padding: 10px 15px !important;
+
+    background: #FFFFFF !important;
+
+    color: #55515F !important;
+
+    box-sizing: border-box !important;
+
+    white-space: nowrap !important;
+}
+
+
+/* Active tab */
+html[data-theme-mode="purple"] .form-tabs-list.form-tabs-sticky-down #form-tabs .nav-link.active {
+    background: #FFFFFF !important;
+
+    color: #2F2F38 !important;
+
+    border-bottom: 2px solid #9A4DF0 !important;
+}
+
+
+/* ==========================================================
+   FORM CONTENT
+   Must remain BELOW sticky tabs
+   ========================================================== */
+
+html[data-theme-mode="purple"] .form-tab-content {
+    position: relative !important;
+
+    z-index: 1 !important;
+
+    background: transparent !important;
+}
+
+
+/* Sections below tabs */
+html[data-theme-mode="purple"] .form-tab-content .form-section,
+html[data-theme-mode="purple"] .form-tab-content .form-column,
+html[data-theme-mode="purple"] .form-tab-content .section-body {
+    position: relative !important;
+
+    z-index: 1 !important;
+}
+
+
+/* ==========================================================
+   IMPORTANT:
+   Do NOT create another stacking layer above tabs
+   ========================================================== */
+
+html[data-theme-mode="purple"] .form-page .form-layout {
+    position: relative !important;
+
+    z-index: 1 !important;
+
+    overflow: visible !important;
+}
+
+
+/* Keep header above everything */
+html[data-theme-mode="purple"] .page-head {
+    position: sticky !important;
+
+    top: 0 !important;
+
+    z-index: 10000 !important;
+
+    background: #FFFFFF !important;
+}
+/* ==========================================================
+   THEME SWITCHER MODAL - KEEP ABOVE FIXED PAGE HEADER
+   ========================================================== */
+
+/* Theme switcher backdrop */
+html[data-theme-mode="purple"] .modal-backdrop,
+html[data-theme-mode="sky"] .modal-backdrop {
+    z-index: 19999 !important;
+}
+
+
+/* Theme switcher modal */
+html[data-theme-mode="purple"] .modal,
+html[data-theme-mode="sky"] .modal {
+    z-index: 20000 !important;
+}
+
+
+/* Modal dialog */
+html[data-theme-mode="purple"] .modal-dialog,
+html[data-theme-mode="sky"] .modal-dialog {
+    position: relative !important;
+    z-index: 20001 !important;
+}
+
+
+/* Modal content must stay above page header */
+html[data-theme-mode="purple"] .modal-content,
+html[data-theme-mode="sky"] .modal-content {
+    position: relative !important;
+    z-index: 20002 !important;
+}
+/* ==========================================================
+   PURPLE THEME
+   FORM PAGE - STABLE ROUNDED BOX + INTERNAL SCROLL
+   Same structure as Sky Theme
+   ========================================================== */
+
+
+/* ----------------------------------------------------------
+   OUTER FORM CARD
+   ---------------------------------------------------------- */
+
+html[data-theme-mode="purple"] .layout-main-section:has(.form-page) {
+    background: #F8F0FF !important;
+
+    border: 1px solid #E2D1FF !important;
+    border-radius: 18px !important;
+
+    box-shadow: 0 4px 18px rgba(150, 90, 220, 0.10) !important;
+
+    margin: 8px 0 20px 0 !important;
+    padding: 0 !important;
+
+    box-sizing: border-box !important;
+
+    /*
+     * IMPORTANT:
+     * Outer card itself must NOT scroll
+     */
+    overflow: hidden !important;
+
+    /*
+     * Keep the card inside the available screen
+     */
+    height: calc(100vh - 115px) !important;
+    min-height: 500px !important;
+}
+
+
+/* ----------------------------------------------------------
+   FORM PAGE
+   ---------------------------------------------------------- */
+
+html[data-theme-mode="purple"] .layout-main-section:has(.form-page)
+.form-page {
+
+    height: 100% !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+
+    background: transparent !important;
+
+    border-radius: 18px !important;
+
+    overflow: hidden !important;
+
+    box-sizing: border-box !important;
+}
+
+
+/* ----------------------------------------------------------
+   FORM LAYOUT
+   ---------------------------------------------------------- */
+
+html[data-theme-mode="purple"] .layout-main-section:has(.form-page)
+.form-layout {
+
+    height: 100% !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+
+    background: transparent !important;
+
+    overflow: hidden !important;
+
+    box-sizing: border-box !important;
+}
+
+
+/* ----------------------------------------------------------
+   TABS - FIXED AT TOP OF PURPLE CARD
+   ---------------------------------------------------------- */
+
+html[data-theme-mode="purple"] .layout-main-section:has(.form-page)
+.form-tabs-list {
+
+    position: sticky !important;
+
+    top: 0 !important;
+
+    z-index: 20 !important;
+
+    height: 48px !important;
+    min-height: 48px !important;
+
+    margin: 0 !important;
+
+    padding: 0 !important;
+
+    background: #FFFFFF !important;
+
+    border-bottom: 1px solid #DCC4FF !important;
+
+    border-radius: 16px 16px 0 0 !important;
+
+    overflow: hidden !important;
+
+    box-sizing: border-box !important;
+}
+
+
+/* ----------------------------------------------------------
+   TAB LIST
+   ---------------------------------------------------------- */
+
+html[data-theme-mode="purple"] .layout-main-section:has(.form-page)
+.form-tabs-list .form-tabs {
+
+    height: 48px !important;
+    min-height: 48px !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+
+    background: #FFFFFF !important;
+
+    overflow: hidden !important;
+
+    box-sizing: border-box !important;
+}
+
+
+
+/* ==========================================================
+   PURPLE THEME
+   FORM PAGE - FIXED TABS + SCROLLABLE CONTENT
+   ========================================================== */
+
+
+/* OUTER PURPLE BOX */
+html[data-theme-mode="purple"] .layout-main-section:has(.form-page) {
+    /* height: calc(100vh - 115px) !important; */
+    min-height: 0 !important;
+
+    margin: 8px 0 20px 0 !important;
+    padding: 0 !important;
+
+    background: #F8F0FF !important;
+
+    border: 1px solid #E2D1FF !important;
+    border-radius: 18px !important;
+
+    box-sizing: border-box !important;
+
+    overflow: hidden !important;
+
+    position: relative !important;
+}
+
+
+/* FORM PAGE = FLEX CONTAINER */
+html[data-theme-mode="purple"]
+.layout-main-section:has(.form-page) .form-page {
+
+    display: flex !important;
+    flex-direction: column !important;
+
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+
+    background: transparent !important;
+
+    border-radius: 18px !important;
+
+    overflow: hidden !important;
+
+    box-sizing: border-box !important;
+}
+
+
+/* FORM LAYOUT */
+html[data-theme-mode="purple"]
+.layout-main-section:has(.form-page) .form-layout {
+
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+
+    display: flex !important;
+    flex-direction: column !important;
+
+    overflow: hidden !important;
+
+    box-sizing: border-box !important;
+}
+
+
+/* ==========================================================
+   DETAILS / ACTIVITIES / NOTES / CONNECTIONS
+   FIXED TOP
+   ========================================================== */
+
+html[data-theme-mode="purple"]
+.layout-main-section:has(.form-page) .form-tabs-list {
+
+    flex: 0 0 48px !important;
+
+    width: 100% !important;
+    height: 48px !important;
+    min-height: 48px !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+
+    background: #FFFFFF !important;
+
+    border-bottom: 1px solid #DCC4FF !important;
+
+    border-radius: 16px 16px 0 0 !important;
+
+    position: relative !important;
+    z-index: 50 !important;
+
+    overflow: hidden !important;
+
+    box-sizing: border-box !important;
+}
+
+
+/* TAB UL */
+html[data-theme-mode="purple"]
+.layout-main-section:has(.form-page) .form-tabs-list .form-tabs {
+
+    width: 100% !important;
+    height: 48px !important;
+    min-height: 48px !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+
+    background: #FFFFFF !important;
+
+    display: flex !important;
+    align-items: center !important;
+
+    overflow: hidden !important;
+
+    box-sizing: border-box !important;
+}
+
+
+/* ==========================================================
+   ACTUAL SCROLL AREA
+   ========================================================== */
+
+/* ==========================================================
+   PURPLE - FORM CONTENT SCROLL
+   ========================================================== */
+
+html[data-theme-mode="purple"]
+.layout-main-section:has(.form-page) .form-tab-content {
+
+    display: block !important;
+
+    width: 100% !important;
+
+    /* height: calc(100vh - 171px) !important;
+    max-height: calc(100vh - 171px) !important; */
+
+    min-height: 0 !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+
+    background: transparent !important;
+
+    /* overflow-y: auto !important; */
+    overflow-x: hidden !important;
+
+    position: relative !important;
+
+    box-sizing: border-box !important;
+
+    overscroll-behavior: contain !important;
+}
+/* ==========================================================
+   PURPLE - FIXED TABS
+   ========================================================== */
+
+html[data-theme-mode="purple"]
+.layout-main-section:has(.form-page) .form-tabs-list {
+
+    position: sticky !important;
+
+    top: 0 !important;
+
+    z-index: 100 !important;
+
+    height: 48px !important;
+    min-height: 48px !important;
+
+    background: #FFFFFF !important;
+
+    border-bottom: 1px solid #DCC4FF !important;
+
+    border-radius: 16px 16px 0 0 !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+
+    overflow: hidden !important;
+}
+
+
+/* ==========================================================
+   TAB PANE
+   ========================================================== */
+
+html[data-theme-mode="purple"]
+.layout-main-section:has(.form-page) .form-tab-content .tab-pane {
+
+    width: 100% !important;
+
+    margin: 0 !important;
+
+    padding: 0 !important;
+
+    background: transparent !important;
+
+    box-sizing: border-box !important;
+}
+
+
+/* ==========================================================
+   FORM SECTIONS
+   ========================================================== */
+
+html[data-theme-mode="purple"]
+.layout-main-section:has(.form-page) .form-tab-content .form-section {
+
+    width: 100% !important;
+
+    margin: 0 !important;
+
+    background: transparent !important;
+
+    border-bottom: 1px solid #E2D1FF !important;
+
+    box-sizing: border-box !important;
+}
+
+
+/* ==========================================================
+   ACTIVE TAB
+   ========================================================== */
+
+html[data-theme-mode="purple"]
+.layout-main-section:has(.form-page) .form-tabs-list .nav-link.active {
+
+    color: #8B45D9 !important;
+
+    background: #FFFFFF !important;
+
+    border-bottom: 2px solid #9A4DF0 !important;
+}
+
+
+/* TAB HOVER */
+html[data-theme-mode="purple"]
+.layout-main-section:has(.form-page) .form-tabs-list .nav-link:hover {
+
+    color: #9A4DF0 !important;
+
+    background: #F8F0FF !important;
+}
+
+
+/* ==========================================================
+   PREVENT OUTER PAGE FROM SCROLLING
+   ========================================================== */
+
+html[data-theme-mode="purple"]
+.layout-main-section-wrapper:has(.form-page) {
+
+    overflow: hidden !important;
+}
+
+
+/* ==========================================================
+   KEEP OUTER CARD STABLE
+   ========================================================== */
+
+html[data-theme-mode="purple"]
+.layout-main-section:has(.form-page),
+html[data-theme-mode="purple"]
+.layout-main-section:has(.form-page) * {
+
+    box-sizing: border-box;
+}
+/* ==========================================================
+   PURPLE THEME
+   FORM + COMMENTS / ACTIVITY
+   REMOVE FORCED EMPTY HEIGHT
+   KEEP FRAPPE DEFAULT FLOW
+   ========================================================== */
+
+
+/* ----------------------------------------------------------
+   DO NOT FORCE FORM CARD TO FULL SCREEN
+   ---------------------------------------------------------- */
+
+html[data-theme-mode="purple"] .layout-main-section:has(.form-page) {
+
+    height: auto !important;
+    min-height: 0 !important;
+
+    margin: 0 !important;
+
+    overflow: visible !important;
+
+    box-sizing: border-box !important;
+}
+
+
+/* ----------------------------------------------------------
+   FORM PAGE
+   KEEP NATURAL FRAPPE HEIGHT
+   ---------------------------------------------------------- */
+
+html[data-theme-mode="purple"]
+.layout-main-section:has(.form-page) .form-page {
+
+    height: auto !important;
+    min-height: 0 !important;
+
+    display: block !important;
+
+    overflow: visible !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+
+    box-sizing: border-box !important;
+}
+
+
+/* ----------------------------------------------------------
+   FORM LAYOUT
+   ---------------------------------------------------------- */
+
+html[data-theme-mode="purple"]
+.layout-main-section:has(.form-page) .form-layout {
+
+    height: auto !important;
+    min-height: 0 !important;
+
+    display: block !important;
+
+    overflow: visible !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+
+    box-sizing: border-box !important;
+}
+
+
+/* ----------------------------------------------------------
+   FORM TAB CONTENT
+   DO NOT CREATE A SEPARATE HUGE SCROLL AREA
+   ---------------------------------------------------------- */
+
+html[data-theme-mode="purple"]
+.layout-main-section:has(.form-page) .form-tab-content {
+
+    height: auto !important;
+    max-height: none !important;
+    min-height: 0 !important;
+
+    overflow: visible !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+
+    box-sizing: border-box !important;
+}
+
+
+/* ----------------------------------------------------------
+   TAB PANE
+   ---------------------------------------------------------- */
+
+html[data-theme-mode="purple"]
+.layout-main-section:has(.form-page)
+.form-tab-content .tab-pane {
+
+    height: auto !important;
+    min-height: 0 !important;
+
+    overflow: visible !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+
+    box-sizing: border-box !important;
+}
+
+
+/* ----------------------------------------------------------
+   REMOVE FORCED HEIGHT FROM FORM SECTIONS
+   ---------------------------------------------------------- */
+
+html[data-theme-mode="purple"]
+.layout-main-section:has(.form-page)
+.form-section {
+
+    height: auto !important;
+    min-height: 0 !important;
+
+    overflow: visible !important;
+
+    box-sizing: border-box !important;
+}
+
+
+/* ----------------------------------------------------------
+   COMMENTS / ACTIVITY
+   KEEP IN NORMAL FRAPPE FLOW
+   ---------------------------------------------------------- */
+
+html[data-theme-mode="purple"]
+.layout-main-section:has(.form-page)
+.form-footer,
+html[data-theme-mode="purple"]
+.layout-main-section:has(.form-page)
+.form-footer-wrapper,
+html[data-theme-mode="purple"]
+.layout-main-section:has(.form-page)
+.comments-section,
+html[data-theme-mode="purple"]
+.layout-main-section:has(.form-page)
+.form-comments {
+
+    height: auto !important;
+    min-height: 0 !important;
+
+    overflow: visible !important;
+
+    box-sizing: border-box !important;
+}
+
+
+/* ----------------------------------------------------------
+   COMMENTS / ACTIVITY AREA
+   PURPLE THEME COLORS ONLY
+   ---------------------------------------------------------- */
+
+html[data-theme-mode="purple"]
+.layout-main-section:has(.form-page)
+.comments-section,
+html[data-theme-mode="purple"]
+.layout-main-section:has(.form-page)
+.form-comments {
+
+    background: transparent !important;
+
+    border-color: #E2D1FF !important;
+}
+
+
+/* ----------------------------------------------------------
+   REMOVE THE LARGE EMPTY PURPLE AREA
+   ---------------------------------------------------------- */
+
+html[data-theme-mode="purple"]
+.layout-main-section:has(.form-page)
+.form-page::after {
+
+    display: none !important;
+    content: none !important;
+}
+
+
+/* ----------------------------------------------------------
+   OUTER WRAPPER
+   DO NOT FORCE PAGE HEIGHT
+   ---------------------------------------------------------- */
+
+html[data-theme-mode="purple"]
+.layout-main-section-wrapper:has(.form-page) {
+
+    height: auto !important;
+    min-height: 0 !important;
+
+    overflow: visible !important;
+}
+/* ==========================================================
+   PURPLE THEME
+   SHIPPING ACCOUNT DROPDOWN - OVERLAP FIX
+   ========================================================== */
+
+html[data-theme-mode="purple"] .form-page .form-group {
+    position: relative !important;
+    z-index: 1 !important;
+}
+
+html[data-theme-mode="purple"] .form-page .form-group:has(.awesomplete input:focus) {
+    z-index: 10000 !important;
+}
+
+html[data-theme-mode="purple"] .form-page .form-group .awesomplete {
+    position: relative !important;
+    z-index: 999999 !important;
+}
+
+html[data-theme-mode="purple"] .form-page .form-group .awesomplete > ul {
+    position: absolute !important;
+
+    top: calc(100% + 4px) !important;
+    left: 0 !important;
+
+    width: 100% !important;
+    min-width: 100% !important;
+
+    z-index: 2147483647 !important;
+
+    background: #ffffff !important;
+}
