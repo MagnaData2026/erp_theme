@@ -1465,3 +1465,93 @@ html[data-theme-mode="sky"]
     margin: 0 !important;
     padding: 0 !important;
 }
+/* ==========================================================
+   SKY THEME - FORM CONTENT VISIBILITY FIX
+   Do NOT hide form-page for no-tab forms
+   ========================================================== */
+
+html[data-theme-mode="sky"]
+.form-page:not(:has(.form-tabs-list .nav-link)) {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+
+    background: rgba(255, 255, 255, 0.75) !important;
+
+    border: 1px solid rgba(207, 226, 251, 0.8) !important;
+    border-radius: 22px !important;
+
+    box-shadow: var(--shadow-sm) !important;
+
+    overflow: visible !important;
+
+    display: block !important;
+}
+
+
+/* Keep actual form content visible */
+html[data-theme-mode="sky"]
+.form-page:not(:has(.form-tabs-list .nav-link)) .form-dashboard {
+    display: block !important;
+
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+
+    background: transparent !important;
+
+    border: 0 !important;
+    box-shadow: none !important;
+}
+
+
+/* Keep form layout visible */
+html[data-theme-mode="sky"]
+.form-layout:has(.form-page:not(:has(.form-tabs-list .nav-link))) {
+    height: auto !important;
+    min-height: 0 !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+
+    overflow: visible !important;
+}
+/* ==========================================================
+   SKY THEME
+   SHIPPING ACCOUNT DROPDOWN - OVERLAP FIX
+   ========================================================== */
+
+html[data-theme-mode="sky"] .form-page .form-group {
+    position: relative !important;
+    z-index: 1 !important;
+}
+
+/* ONLY ACTIVE DROPDOWN FIELD goes above other fields */
+html[data-theme-mode="sky"] .form-page .form-group:has(.awesomplete input:focus) {
+    z-index: 10000 !important;
+}
+
+html[data-theme-mode="sky"] .form-page .form-group .awesomplete {
+    position: relative !important;
+    z-index: 999999 !important;
+}
+
+html[data-theme-mode="sky"] .form-page .form-group .awesomplete > ul {
+    position: absolute !important;
+
+    top: calc(100% + 4px) !important;
+    left: 0 !important;
+
+    width: 100% !important;
+    min-width: 100% !important;
+
+    z-index: 2147483647 !important;
+
+    background: #ffffff !important;
+}
