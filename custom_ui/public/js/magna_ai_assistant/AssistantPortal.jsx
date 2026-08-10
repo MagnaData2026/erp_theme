@@ -395,6 +395,43 @@ const MAGNA_PREMIUM_STYLES = `
 .magna-shell .magna-orb-trigger:hover { background-color: color-mix(in srgb, var(--primary-color, #6366f1) 12%, transparent) !important; }
 .magna-shell .magna-end-call-btn { transition: filter .15s ease, transform .12s ease; }
 .magna-shell .magna-end-call-btn:hover { filter: brightness(1.08); }
+.magna-shell .magna-voice-conversation {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--text-muted, #64748b) 28%, transparent) transparent;
+}
+.magna-shell .magna-voice-conversation::-webkit-scrollbar { width: 5px; }
+.magna-shell .magna-voice-conversation::-webkit-scrollbar-thumb {
+    background: color-mix(in srgb, var(--text-muted, #64748b) 28%, transparent);
+    border-radius: 999px;
+}
+.magna-shell .magna-voice-controls {
+    position: absolute !important;
+    top: calc(64px + 55vh + 116px);
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: min(620px, calc(100% - 24px));
+    height: 48px;
+    margin-top: 0 !important;
+    pointer-events: none;
+}
+.magna-shell .magna-voice-controls button { position: absolute; pointer-events: auto; }
+.magna-shell .magna-voice-controls button:nth-child(1) { right: calc(50% + 76px); }
+.magna-shell .magna-voice-controls button:nth-child(2) { left: calc(50% + 76px); }
+.magna-shell .magna-voice-controls button:nth-child(3) { left: calc(50% + 174px); }
+@media (max-width: 720px) {
+    .magna-shell .magna-voice-stage { padding: 54px 14px 92px !important; }
+    .magna-shell .magna-voice-conversation { width: 100% !important; height: 48vh !important; max-height: 48vh !important; }
+    .magna-shell .magna-voice-controls {
+        top: calc(54px + 48vh + 102px);
+        width: calc(100% - 16px) !important;
+    }
+    .magna-shell .magna-voice-controls button:nth-child(1) { right: calc(50% + 60px); }
+    .magna-shell .magna-voice-controls button:nth-child(2) { left: calc(50% + 60px); }
+    .magna-shell .magna-voice-controls button:nth-child(3) { left: calc(50% + 144px); }
+    .magna-shell .magna-voice-controls button { padding: 9px 12px !important; }
+    .magna-shell .magna-voice-orb-wrap { width: 112px !important; height: 112px !important; }
+    .magna-shell .magna-voice-orb { width: 78px !important; height: 78px !important; }
+}
 `;
 
 export default function AssistantPortal({ isOpen, onClose }) {
@@ -430,6 +467,7 @@ export default function AssistantPortal({ isOpen, onClose }) {
     const [voiceEvents, setVoiceEvents] = useState([]);
     const [liveTranscript, setLiveTranscript] = useState('');
     const [lastReplyText, setLastReplyText] = useState('');
+    const [voiceDisplayMessages, setVoiceDisplayMessages] = useState([]);
     const [micLevel, setMicLevel] = useState(0); // 0–1, real mic amplitude while listening
     const [voiceTools, setVoiceTools] = useState([]); // tool_call/tool_result trace for the current voice turn
     const [pinnedChart, setPinnedChart] = useState(null); // { chartData, tables } — popped-up chart and/or table, stays until a new one is created or the user closes it
@@ -450,6 +488,7 @@ export default function AssistantPortal({ isOpen, onClose }) {
     const analyserRef = useRef(null);
     const micStreamRef = useRef(null);
     const micRafRef = useRef(null);
+    const voiceConversationEndRef = useRef(null);
 
     const activeChat = chatHistory.find(c => c.id === currentChatId);
     const activeMessages = activeChat ? activeChat.messages : messages;
@@ -903,7 +942,13 @@ export default function AssistantPortal({ isOpen, onClose }) {
             setVoiceStatus('listening');
         } else if (type === 'final_transcript') {
             setLiveTranscript(text);
-            if (text) appendMessage(createVoiceChat(), { sender: 'user', text, voiceOrigin: true });
+            setLastReplyText('');
+            streamingReplyRef.current = '';
+            if (text) {
+                const userMessage = { sender: 'user', text, voiceOrigin: true };
+                setVoiceDisplayMessages((prev) => [...prev, userMessage]);
+                appendMessage(createVoiceChat(), userMessage);
+            }
             setVoiceTools([]); // new turn — clear the previous turn's tool trace
             setVoiceStatus('thinking');
         } else if (type === 'token') {
@@ -929,7 +974,11 @@ export default function AssistantPortal({ isOpen, onClose }) {
             interruptSpeech();
         } else if (type === 'done') {
             const reply = text || streamingReplyRef.current;
-            if (reply) appendMessage(createVoiceChat(), { sender: 'bot', text: reply, voiceOrigin: true });
+            if (reply) {
+                const botMessage = { sender: 'bot', text: reply, voiceOrigin: true };
+                setVoiceDisplayMessages((prev) => [...prev, botMessage]);
+                appendMessage(createVoiceChat(), botMessage);
+            }
             setLastReplyText(reply);
             const { cleanText, chartData } = getCleanTextAndChart(reply);
             const tables = extractMarkdownTables(cleanText);
@@ -1005,6 +1054,7 @@ export default function AssistantPortal({ isOpen, onClose }) {
         setIsVoiceModeOpen(true);
         setLastReplyText('');
         setLiveTranscript('');
+        setVoiceDisplayMessages(activeMessages.map((message) => ({ ...message })));
         setVoiceEvents([]);
         setVoiceTools([]);
         setPinnedChart(null);
@@ -1038,6 +1088,13 @@ export default function AssistantPortal({ isOpen, onClose }) {
     useEffect(() => {
         voiceStatusRef.current = voiceStatus;
     }, [voiceStatus]);
+
+    // Keep the newest spoken/streamed line visible without moving the orb or
+    // controls. This also follows token-by-token assistant replies.
+    useEffect(() => {
+        if (!isVoiceModeOpen) return;
+        voiceConversationEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, [isVoiceModeOpen, voiceDisplayMessages.length, liveTranscript, lastReplyText]);
 
     useEffect(() => {
         if (!isOpen && voiceModeOpenRef.current) closeVoiceMode();
@@ -1220,7 +1277,7 @@ export default function AssistantPortal({ isOpen, onClose }) {
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', lineHeight: 1 }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
                                         <span style={{ fontSize: '13.5px', fontWeight: '750', color: 'var(--text-color, #0f172a)', letterSpacing: '-0.2px' }}>
-                                            Magna Engine Shell
+                                            Magna Assistant 
                                         </span>
                                         <span style={{
                                             fontSize: '8.5px', fontWeight: '750', letterSpacing: '0.04em',
@@ -1235,7 +1292,7 @@ export default function AssistantPortal({ isOpen, onClose }) {
                                         fontSize: '9px', fontWeight: '600', letterSpacing: '0.09em', textTransform: 'uppercase',
                                         color: 'var(--text-muted, #64748b)', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace'
                                     }}>
-                                        Autonomous Engine
+                                        Autonomous Agent
                                     </span>
                                 </div>
                             </div>
@@ -1315,7 +1372,7 @@ export default function AssistantPortal({ isOpen, onClose }) {
                                                     fontSize: '10px', fontWeight: '700', letterSpacing: '0.1em', textTransform: 'uppercase',
                                                     color: 'var(--primary-color, #6366f1)', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace'
                                                 }}>
-                                                    Magna Autonomous Engine
+                                                    Magna Autonomous Agent
                                                 </span>
                                             </div>
 
@@ -1454,7 +1511,7 @@ export default function AssistantPortal({ isOpen, onClose }) {
                                             letterSpacing: '0.03em', color: 'var(--text-muted, #94a3b8)',
                                             opacity: 0.7, position: 'relative', zIndex: 1
                                         }}>
-                                            Powered by Magna Autonomous Engine
+                                            Powered by MagnaERP
                                         </div>
                                     </motion.div>
                                 ) : (
@@ -1568,6 +1625,7 @@ export default function AssistantPortal({ isOpen, onClose }) {
                     <AnimatePresence>
                         {isVoiceModeOpen && (
                             <motion.div
+                                className="magna-voice-stage"
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
                                 exit={{ opacity: 0 }}
@@ -1575,7 +1633,8 @@ export default function AssistantPortal({ isOpen, onClose }) {
                                     position: 'absolute', inset: 0, zIndex: 20,
                                     backgroundColor: 'var(--card-bg, #ffffff)',
                                     display: 'flex', flexDirection: 'column',
-                                    alignItems: 'center', justifyContent: 'center'
+                                    alignItems: 'center', justifyContent: 'flex-start',
+                                    padding: '64px 24px 104px', overflow: 'hidden'
                                 }}
                             >
                                 <div className="magna-hero-dotgrid" style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 0 }} />
@@ -1617,9 +1676,77 @@ export default function AssistantPortal({ isOpen, onClose }) {
                                     )}
                                 </AnimatePresence>
 
+                                {/* Persistent text transcript. Final turns stay in the
+                                    active chat; the current user/AI line streams live. */}
+                                <div
+                                    className="magna-voice-conversation"
+                                    aria-live="polite"
+                                    aria-label="Live voice conversation"
+                                    style={{
+                                        width: 'min(800px, calc(100% - 48px))', height: '55vh', maxHeight: '55vh',
+                                        overflowY: 'auto', padding: '10px 12px 18px', zIndex: 1,
+                                        display: 'flex', flexDirection: 'column', gap: '18px',
+                                        maskImage: 'linear-gradient(to bottom, transparent 0, black 18px, black 100%)'
+                                    }}
+                                >
+                                    {voiceDisplayMessages.map((message, index) => (
+                                        <div
+                                            key={`${message.sender}-${index}`}
+                                            style={{
+                                                alignSelf: message.sender === 'user' ? 'flex-end' : 'flex-start',
+                                                maxWidth: message.sender === 'user' ? '78%' : '88%',
+                                                padding: message.sender === 'user' ? '10px 16px' : '2px 4px',
+                                                borderRadius: message.sender === 'user' ? '22px' : '0',
+                                                backgroundColor: message.sender === 'user'
+                                                    ? 'color-mix(in srgb, var(--text-muted, #64748b) 10%, var(--card-bg, #fff))'
+                                                    : 'transparent',
+                                                color: 'var(--text-color, #0f172a)', fontSize: '14px',
+                                                lineHeight: 1.65, textAlign: 'left'
+                                            }}
+                                        >
+                                            {message.sender === 'bot'
+                                                ? <FormattedMarkdownText text={message.text || ''} />
+                                                : message.text}
+                                        </div>
+                                    ))}
+
+                                    {liveTranscript && voiceDisplayMessages[voiceDisplayMessages.length - 1]?.text !== liveTranscript && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }}
+                                            style={{
+                                                alignSelf: 'flex-end', maxWidth: '78%', padding: '10px 16px',
+                                                borderRadius: '22px', fontSize: '14px', lineHeight: 1.55,
+                                                color: 'var(--text-color, #0f172a)',
+                                                backgroundColor: 'color-mix(in srgb, var(--text-muted, #64748b) 10%, var(--card-bg, #fff))'
+                                            }}
+                                        >
+                                            {liveTranscript}
+                                        </motion.div>
+                                    )}
+
+                                    {lastReplyText && voiceDisplayMessages[voiceDisplayMessages.length - 1]?.text !== lastReplyText && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }}
+                                            style={{
+                                                alignSelf: 'flex-start', maxWidth: '88%', padding: '2px 4px',
+                                                color: 'var(--text-color, #0f172a)', fontSize: '14px',
+                                                lineHeight: 1.65, textAlign: 'left'
+                                            }}
+                                        >
+                                            <FormattedMarkdownText text={lastReplyText} />
+                                        </motion.div>
+                                    )}
+                                    {!voiceDisplayMessages.length && !liveTranscript && !lastReplyText && (
+                                        <div style={{ color: 'var(--text-muted, #64748b)', fontSize: '13px', textAlign: 'center' }}>
+                                            Start speaking. Your words and the assistant's response will appear here.
+                                        </div>
+                                    )}
+                                    <div ref={voiceConversationEndRef} />
+                                </div>
+
                                 <div style={{
                                     display: 'inline-flex', alignItems: 'center', gap: '7px',
-                                    marginBottom: '36px', padding: '5px 13px', borderRadius: '999px',
+                                    margin: '8px 0 10px', padding: '5px 13px', borderRadius: '999px',
                                     border: '1px solid var(--border-color, rgba(148, 163, 184, 0.25))',
                                     backgroundColor: 'color-mix(in srgb, var(--primary-color, #6366f1) 7%, transparent)',
                                     position: 'relative', zIndex: 1
@@ -1634,10 +1761,10 @@ export default function AssistantPortal({ isOpen, onClose }) {
                                 </div>
 
                                 {/* Orb */}
-                                <div style={{
-                                    position: 'relative', width: '220px', height: '220px',
+                                <div className="magna-voice-orb-wrap" style={{
+                                    position: 'relative', width: '140px', height: '140px',
                                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                    marginBottom: '32px', zIndex: 1
+                                    marginBottom: '8px', zIndex: 1, flexShrink: 0
                                 }}>
                                     {voiceStatus === 'listening' && [0, 1, 2].map((i) => (
                                         <motion.div
@@ -1659,6 +1786,7 @@ export default function AssistantPortal({ isOpen, onClose }) {
                                     )}
 
                                     <motion.div
+                                        className="magna-voice-orb"
                                         onClick={handleOrbTap}
                                         title={voiceStatus === 'speaking' ? 'Tap to interrupt' : undefined}
                                         animate={{
@@ -1672,7 +1800,7 @@ export default function AssistantPortal({ isOpen, onClose }) {
                                             ? { duration: 0.7, repeat: Infinity, ease: 'easeInOut' }
                                             : { duration: 0.12 }}
                                         style={{
-                                            width: '140px', height: '140px', borderRadius: '50%', cursor: 'pointer',
+                                            width: '96px', height: '96px', borderRadius: '50%', cursor: 'pointer',
                                             background: 'radial-gradient(circle at 32% 30%, color-mix(in srgb, var(--primary-color, #6366f1) 55%, white), var(--primary-color, #6366f1))',
                                             boxShadow: '0 24px 55px -16px color-mix(in srgb, var(--primary-color, #6366f1) 60%, transparent)',
                                             display: 'flex', alignItems: 'center', justifyContent: 'center'
@@ -1763,7 +1891,11 @@ export default function AssistantPortal({ isOpen, onClose }) {
                                     )}
                                 </AnimatePresence>
 
-                                <div style={{ position: 'absolute', bottom: '40px', display: 'flex', alignItems: 'center', gap: '16px', zIndex: 1 }}>
+                                <div className="magna-voice-controls" style={{
+                                    position: 'relative', display: 'flex', alignItems: 'center',
+                                    justifyContent: 'center', gap: '12px', zIndex: 3,
+                                    marginTop: '12px', flexShrink: 0
+                                }}>
                                     <motion.button
                                         whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
                                         onClick={requestMicrophone}
