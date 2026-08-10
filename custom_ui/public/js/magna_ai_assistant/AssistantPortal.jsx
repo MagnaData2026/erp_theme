@@ -31,10 +31,11 @@ const normalizeTranscript = (value = '') => {
     return text ? text.charAt(0).toUpperCase() + text.slice(1) : '';
 };
 
-const recognitionLanguage = () => {
-    const browserLanguage = window.navigator?.language || '';
-    return /^en(?:-|$)/i.test(browserLanguage) ? browserLanguage : 'en-IN';
-};
+// This assistant is English-first. Do not inherit a device/browser locale
+// such as hi-IN because speech engines may then transliterate perfectly valid
+// English words into another script. en-IN keeps Indian-English pronunciation
+// support while still explicitly constraining recognition to English.
+const SPEECH_RECOGNITION_LANGUAGE = 'en-IN';
 
 const normalizeAssistantReply = (value = '') => {
     const typoFixes = [
@@ -87,6 +88,13 @@ const getReplyText = (payload) => {
         return normalizeAssistantReply(reply.answer ?? reply.text ?? reply.content ?? '');
     }
     return '';
+};
+
+// Keep chart payloads out of the voice transcript just as ChatArea does.
+// The extracted visualization is rendered separately in the pinned panel.
+const VoiceReplyText = ({ text }) => {
+    const { cleanText } = getCleanTextAndChart(text);
+    return cleanText ? <FormattedMarkdownText text={cleanText} /> : null;
 };
 
 const MicIcon = ({ isListening }) => (
@@ -409,25 +417,31 @@ const MAGNA_PREMIUM_STYLES = `
     top: calc(64px + 55vh + 116px);
     left: 50%;
     transform: translate(-50%, -50%);
-    width: min(620px, calc(100% - 24px));
+    width: min(720px, calc(100% - 24px));
     height: 48px;
     margin-top: 0 !important;
+    display: grid !important;
+    grid-template-columns: minmax(112px, 1fr) 140px auto auto;
+    align-items: center;
+    gap: 14px !important;
     pointer-events: none;
 }
-.magna-shell .magna-voice-controls button { position: absolute; pointer-events: auto; }
-.magna-shell .magna-voice-controls button:nth-child(1) { right: calc(50% + 76px); }
-.magna-shell .magna-voice-controls button:nth-child(2) { left: calc(50% + 76px); }
-.magna-shell .magna-voice-controls button:nth-child(3) { left: calc(50% + 174px); }
+.magna-shell .magna-voice-controls button { position: static; pointer-events: auto; white-space: nowrap; }
+.magna-shell .magna-voice-controls button:nth-child(1) { grid-column: 1; justify-self: end; }
+.magna-shell .magna-voice-controls button:nth-child(2) { grid-column: 3; justify-self: start; }
+.magna-shell .magna-voice-controls button:nth-child(3) { grid-column: 4; justify-self: start; }
 @media (max-width: 720px) {
     .magna-shell .magna-voice-stage { padding: 54px 14px 92px !important; }
     .magna-shell .magna-voice-conversation { width: 100% !important; height: 48vh !important; max-height: 48vh !important; }
     .magna-shell .magna-voice-controls {
         top: calc(54px + 48vh + 102px);
         width: calc(100% - 16px) !important;
+        grid-template-columns: 1fr auto auto !important;
+        gap: 8px !important;
     }
-    .magna-shell .magna-voice-controls button:nth-child(1) { right: calc(50% + 60px); }
-    .magna-shell .magna-voice-controls button:nth-child(2) { left: calc(50% + 60px); }
-    .magna-shell .magna-voice-controls button:nth-child(3) { left: calc(50% + 144px); }
+    .magna-shell .magna-voice-controls button:nth-child(1) { grid-column: 1; }
+    .magna-shell .magna-voice-controls button:nth-child(2) { grid-column: 2; }
+    .magna-shell .magna-voice-controls button:nth-child(3) { grid-column: 3; }
     .magna-shell .magna-voice-controls button { padding: 9px 12px !important; }
     .magna-shell .magna-voice-orb-wrap { width: 112px !important; height: 112px !important; }
     .magna-shell .magna-voice-orb { width: 78px !important; height: 78px !important; }
@@ -519,7 +533,7 @@ export default function AssistantPortal({ isOpen, onClose }) {
         }
 
         const recognition = new SpeechRecognition();
-        recognition.lang = recognitionLanguage();
+        recognition.lang = SPEECH_RECOGNITION_LANGUAGE;
         recognition.interimResults = false;
         recognition.maxAlternatives = 5;
 
@@ -1007,7 +1021,12 @@ export default function AssistantPortal({ isOpen, onClose }) {
         const sessionId = voiceSessionIdRef.current || (window.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`);
         voiceSessionIdRef.current = sessionId;
         createVoiceChat();
-        const socket = new WebSocket(`ws://localhost:8005/ws/voice?session_id=${encodeURIComponent(sessionId)}`);
+        const voiceParams = new URLSearchParams({
+            session_id: sessionId,
+            language: 'en',
+            locale: SPEECH_RECOGNITION_LANGUAGE,
+        });
+        const socket = new WebSocket(`ws://localhost:8005/ws/voice?${voiceParams.toString()}`);
         socket.binaryType = 'arraybuffer';
         voiceSocketRef.current = socket;
         socket.onopen = () => {
@@ -1705,7 +1724,7 @@ export default function AssistantPortal({ isOpen, onClose }) {
                                             }}
                                         >
                                             {message.sender === 'bot'
-                                                ? <FormattedMarkdownText text={message.text || ''} />
+                                                ? <VoiceReplyText text={message.text || ''} />
                                                 : message.text}
                                         </div>
                                     ))}
@@ -1733,7 +1752,7 @@ export default function AssistantPortal({ isOpen, onClose }) {
                                                 lineHeight: 1.65, textAlign: 'left'
                                             }}
                                         >
-                                            <FormattedMarkdownText text={lastReplyText} />
+                                            <VoiceReplyText text={lastReplyText} />
                                         </motion.div>
                                     )}
                                     {!voiceDisplayMessages.length && !liveTranscript && !lastReplyText && (
