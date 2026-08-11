@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from './Sidebar';
 import BentoWelcome from './BentoWelcome';
-import ChatArea, { ToolActivityPanel, ChartBlock, FormattedMarkdownText, getCleanTextAndChart, API_BASE_URL } from './ChatArea';
+import ChatArea, { ToolActivityPanel, ChartBlock, FormattedMarkdownText, EmbeddedBase64Image, getCleanTextAndChart, API_BASE_URL } from './ChatArea';
 
 // API_BASE_URL now lives in ChatArea.jsx (top of the file) — edit it
 // there and it applies here too.
@@ -93,9 +93,22 @@ const getReplyText = (payload) => {
 // Keep chart payloads out of the voice transcript just as ChatArea does.
 // The extracted visualization is rendered separately in the pinned panel.
 const VoiceReplyText = ({ text }) => {
-    const { cleanText } = getCleanTextAndChart(text);
+    const { cleanText } = getCleanTextAndChart(removeVoiceImagePayload(text));
     return cleanText ? <FormattedMarkdownText text={cleanText} /> : null;
 };
+
+const getVoiceImagePayload = (value) => {
+    const source = typeof value === 'string' ? value : JSON.stringify(value ?? '');
+    return source.match(/data:image\/(?:png|jpe?g|webp|gif);base64,[A-Za-z0-9+/=]+/i)?.[0] || null;
+};
+
+// Voice models sometimes emit `{data:image...}` or a split Markdown image,
+// not only the canonical `![alt](data:image...)`. Never expose that payload.
+const removeVoiceImagePayload = (value) => String(value || '')
+    .replace(/!\[[^\]]*\]\s*[({]\s*data:image\/(?:png|jpe?g|webp|gif);base64,[A-Za-z0-9+/=]+\s*[)}]?/gi, '')
+    .replace(/[({]?\s*data:image\/(?:png|jpe?g|webp|gif);base64,[A-Za-z0-9+/=]+\s*[)}]?/gi, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
 
 const MicIcon = ({ isListening }) => (
     <svg
@@ -502,6 +515,7 @@ export default function AssistantPortal({ isOpen, onClose }) {
     const analyserRef = useRef(null);
     const micStreamRef = useRef(null);
     const micRafRef = useRef(null);
+    const micNoiseGateRef = useRef({ noiseFloor: 0.006, open: false, hangover: 0, calibrationFrames: 12 });
     const voiceConversationEndRef = useRef(null);
 
     const activeChat = chatHistory.find(c => c.id === currentChatId);
@@ -592,11 +606,21 @@ export default function AssistantPortal({ isOpen, onClose }) {
     const streamAssistantTurn = async (chatId, userPrompt) => {
         appendMessage(chatId, { sender: 'bot', text: '', tools: [], streaming: true, streamed: true });
 
+        const controller = new AbortController();
+        let inactivityTimer;
+        let completed = false;
+        const resetInactivityTimer = () => {
+            clearTimeout(inactivityTimer);
+            inactivityTimer = setTimeout(() => controller.abort('The assistant stream timed out.'), 120000);
+        };
+        resetInactivityTimer();
+
         try {
             const response = await fetch(`${API_BASE_URL}/api/chat/stream`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ message: userPrompt, session_id: chatId }),
+                signal: controller.signal,
             });
 
             if (!response.ok || !response.body) {
@@ -607,19 +631,24 @@ export default function AssistantPortal({ isOpen, onClose }) {
             const decoder = new TextDecoder();
             let buffer = '';
 
-            while (true) {
+            streamLoop: while (true) {
                 const { value, done } = await reader.read();
                 if (done) break;
+                resetInactivityTimer();
                 buffer += decoder.decode(value, { stream: true });
 
-                const parts = buffer.split('\n\n');
+                const parts = buffer.split(/\r?\n\r?\n/);
                 buffer = parts.pop() || '';
 
                 for (const part of parts) {
                     const line = part.trim();
                     if (!line.startsWith('data:')) continue;
                     const payload = line.slice(5).trim();
-                    if (!payload || payload === '[DONE]') continue;
+                    if (!payload) continue;
+                    if (payload === '[DONE]') {
+                        completed = true;
+                        break streamLoop;
+                    }
 
                     let event;
                     try { event = JSON.parse(payload); } catch { continue; }
@@ -648,24 +677,33 @@ export default function AssistantPortal({ isOpen, onClose }) {
                             text: msg.text || (event.text ?? event.content ?? ''),
                             streaming: false,
                         }));
+                        completed = true;
+                        break streamLoop;
                     } else if (event.type === 'error') {
                         updateLastBotMessage(chatId, (msg) => ({
                             ...msg,
                             text: msg.text || `❌ ${event.message || 'The assistant reported an error.'}`,
                             streaming: false,
                         }));
+                        completed = true;
+                        break streamLoop;
                     }
                 }
             }
 
+            if (completed) await reader.cancel().catch(() => {});
             updateLastBotMessage(chatId, (msg) => ({ ...msg, streaming: false }));
         } catch (err) {
             console.error('Streaming Execution Error:', err);
             updateLastBotMessage(chatId, (msg) => ({
                 ...msg,
-                text: msg.text || '❌ Request processing encountered an issue. Please verify backend state.',
+                text: msg.text || (err?.name === 'AbortError'
+                    ? '❌ The assistant took too long to respond. You can send another query now.'
+                    : '❌ Request processing encountered an issue. Please verify backend state.'),
                 streaming: false,
             }));
+        } finally {
+            clearTimeout(inactivityTimer);
         }
     };
 
@@ -806,6 +844,44 @@ export default function AssistantPortal({ isOpen, onClose }) {
         }
     };
 
+    // Browser noiseSuppression is only a best-effort constraint and is ignored
+    // by some devices. Keep sending silence (so server-side VAD timing remains
+    // correct), but prevent steady fan/room noise from becoming speech audio.
+    const suppressBackgroundNoise = (samples) => {
+        const state = micNoiseGateRef.current;
+        let energy = 0;
+        for (let i = 0; i < samples.length; i++) energy += samples[i] * samples[i];
+        const rms = Math.sqrt(energy / Math.max(1, samples.length));
+
+        // Capture begins before the WebSocket opens, so use those otherwise
+        // discarded first frames to establish this microphone's room level.
+        if (state.calibrationFrames > 0) {
+            state.noiseFloor = (state.noiseFloor * 0.7) + (Math.min(rms, 0.04) * 0.3);
+            state.calibrationFrames -= 1;
+            return new Float32Array(samples.length);
+        }
+
+        const openThreshold = Math.min(0.04, Math.max(0.012, state.noiseFloor * 2.5));
+        if (!state.open) {
+            // Learn only likely background frames, never loud speech.
+            if (rms < Math.max(0.04, openThreshold * 1.4)) {
+                state.noiseFloor = (state.noiseFloor * 0.96) + (rms * 0.04);
+            }
+            if (rms >= openThreshold) {
+                state.open = true;
+                state.hangover = 8; // ~340 ms at a typical 48 kHz/2048 frame
+            }
+        } else if (rms >= Math.max(0.008, state.noiseFloor * 1.5)) {
+            state.hangover = 8;
+        } else if (state.hangover > 0) {
+            state.hangover -= 1;
+        } else {
+            state.open = false;
+        }
+
+        return state.open ? samples : new Float32Array(samples.length);
+    };
+
     const playPcm = async (payload) => {
         const AudioCtx = window.AudioContext || window.webkitAudioContext;
         if (!playbackCtxRef.current || playbackCtxRef.current.state === 'closed') {
@@ -872,6 +948,7 @@ export default function AssistantPortal({ isOpen, onClose }) {
             audioCtxRef.current = null;
         }
         analyserRef.current = null;
+        micNoiseGateRef.current = { noiseFloor: 0.006, open: false, hangover: 0, calibrationFrames: 12 };
         setMicLevel(0);
     };
 
@@ -883,7 +960,15 @@ export default function AssistantPortal({ isOpen, onClose }) {
         }
         try {
             const stream = await navigator.mediaDevices.getUserMedia({
-                audio: { channelCount: 1, sampleRate: VOICE_SAMPLE_RATE, echoCancellation: true, noiseSuppression: true },
+                audio: {
+                    channelCount: 1,
+                    sampleRate: VOICE_SAMPLE_RATE,
+                    echoCancellation: true,
+                    noiseSuppression: true,
+                    autoGainControl: true,
+                    // Chromium uses this when the selected microphone supports it.
+                    voiceIsolation: true,
+                },
             });
             if (!voiceModeOpenRef.current) { stream.getTracks().forEach((track) => track.stop()); return false; }
             stopMicAnalyser();
@@ -891,20 +976,26 @@ export default function AssistantPortal({ isOpen, onClose }) {
             const AudioCtx = window.AudioContext || window.webkitAudioContext;
             const audioCtx = new AudioCtx();
             const source = audioCtx.createMediaStreamSource(stream);
+            const highPass = audioCtx.createBiquadFilter();
+            highPass.type = 'highpass';
+            highPass.frequency.value = 90;
+            highPass.Q.value = 0.7;
             const analyser = audioCtx.createAnalyser();
             analyser.fftSize = 256;
-            source.connect(analyser);
+            source.connect(highPass);
+            highPass.connect(analyser);
             // ScriptProcessor provides raw float microphone frames. They are
             // resampled and packetized below; the zero-gain output keeps the
             // node alive without feeding the microphone back to the speaker.
             const processor = audioCtx.createScriptProcessor(2048, 1, 1);
             const mute = audioCtx.createGain();
             mute.gain.value = 0;
-            source.connect(processor);
+            highPass.connect(processor);
             processor.connect(mute);
             mute.connect(audioCtx.destination);
             processor.onaudioprocess = (event) => {
-                sendPcm(resampleTo24k(event.inputBuffer.getChannelData(0), audioCtx.sampleRate));
+                const clean = suppressBackgroundNoise(event.inputBuffer.getChannelData(0));
+                sendPcm(resampleTo24k(clean, audioCtx.sampleRate));
             };
             audioCtxRef.current = audioCtx;
             analyserRef.current = analyser;
@@ -952,14 +1043,15 @@ export default function AssistantPortal({ isOpen, onClose }) {
         const text = event.text ?? event.transcript ?? event.token ?? event.delta ?? event.message ?? event.response ?? '';
         addVoiceEvent(type, text || event.name || event.tool_name || '');
         if (type === 'partial_transcript') {
-            setLiveTranscript(text);
+            setLiveTranscript(normalizeTranscript(text));
             setVoiceStatus('listening');
         } else if (type === 'final_transcript') {
-            setLiveTranscript(text);
+            const finalText = normalizeTranscript(text);
+            setLiveTranscript(finalText);
             setLastReplyText('');
             streamingReplyRef.current = '';
-            if (text) {
-                const userMessage = { sender: 'user', text, voiceOrigin: true };
+            if (finalText) {
+                const userMessage = { sender: 'user', text: finalText, voiceOrigin: true };
                 setVoiceDisplayMessages((prev) => [...prev, userMessage]);
                 appendMessage(createVoiceChat(), userMessage);
             }
@@ -973,6 +1065,8 @@ export default function AssistantPortal({ isOpen, onClose }) {
             setVoiceTools((prev) => [...prev, { name: event.name || event.tool_name, args: event.args || {}, status: 'running', result: null }]);
             setVoiceStatus('thinking');
         } else if (type === 'tool_result') {
+            const toolImage = getVoiceImagePayload(event.result);
+            if (toolImage) setPinnedChart({ chartData: null, tables: [], imageSrc: toolImage });
             setVoiceTools((prev) => {
                 const next = [...prev];
                 for (let i = next.length - 1; i >= 0; i--) {
@@ -987,7 +1081,9 @@ export default function AssistantPortal({ isOpen, onClose }) {
         } else if (type === 'interrupted') {
             interruptSpeech();
         } else if (type === 'done') {
-            const reply = text || streamingReplyRef.current;
+            const rawReply = text || streamingReplyRef.current;
+            const replyImage = getVoiceImagePayload(rawReply);
+            const reply = removeVoiceImagePayload(rawReply);
             if (reply) {
                 const botMessage = { sender: 'bot', text: reply, voiceOrigin: true };
                 setVoiceDisplayMessages((prev) => [...prev, botMessage]);
@@ -996,7 +1092,9 @@ export default function AssistantPortal({ isOpen, onClose }) {
             setLastReplyText(reply);
             const { cleanText, chartData } = getCleanTextAndChart(reply);
             const tables = extractMarkdownTables(cleanText);
-            if (chartData || tables.length) setPinnedChart({ chartData, tables }); // pop it up — stays until a new chart/table arrives or the user closes it
+            if (replyImage || chartData || tables.length) {
+                setPinnedChart({ imageSrc: replyImage, chartData, tables });
+            } // pop it up — stays until a new visualization arrives or the user closes it
             streamingReplyRef.current = '';
             setVoiceStatus('listening');
         } else if (type === 'error') {
@@ -1026,7 +1124,7 @@ export default function AssistantPortal({ isOpen, onClose }) {
             language: 'en',
             locale: SPEECH_RECOGNITION_LANGUAGE,
         });
-        const socket = new WebSocket(`ws://localhost:8005/ws/voice?${voiceParams.toString()}`);
+        const socket = new WebSocket(`wss://ai.tjdem.online/ws/voice?${voiceParams.toString()}`);
         socket.binaryType = 'arraybuffer';
         voiceSocketRef.current = socket;
         socket.onopen = () => {
@@ -1901,6 +1999,11 @@ export default function AssistantPortal({ isOpen, onClose }) {
                                                 <CloseIcon />
                                             </button>
                                             {pinnedChart.chartData && <ChartBlock chartData={pinnedChart.chartData} />}
+                                            {pinnedChart.imageSrc && (
+                                                <figure style={{ margin: 0 }}>
+                                                    <EmbeddedBase64Image source={pinnedChart.imageSrc} alt="Generated visualization" />
+                                                </figure>
+                                            )}
                                             {(pinnedChart.tables || []).map((tableMd, i) => (
                                                 <div key={i} style={{ marginTop: i === 0 && !pinnedChart.chartData ? 0 : '14px' }}>
                                                     <FormattedMarkdownText text={tableMd} />

@@ -20,7 +20,7 @@ app_include_js = [
 	"desk_icon.bundle.js",
 	# "branding.js", 
 	# "magna_login.js",
-	"list_view.js",
+	"/assets/custom_ui/js/list_view.js",
 ]
 
 web_include_css = [
