@@ -1026,7 +1026,7 @@ export default function AssistantPortal({ isOpen, onClose }) {
             language: 'en',
             locale: SPEECH_RECOGNITION_LANGUAGE,
         });
-        const socket = new WebSocket(`wss://ai.tjdem.online/ws/voice?${voiceParams.toString()}`);
+        const socket = new WebSocket(`ws://localhost:8005/ws/voice?${voiceParams.toString()}`);
         socket.binaryType = 'arraybuffer';
         voiceSocketRef.current = socket;
         socket.onopen = () => {

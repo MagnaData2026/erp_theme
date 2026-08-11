@@ -607,56 +607,6 @@ html[data-theme-mode="sky"] .frappe-control[data-fieldtype="Check"] .label-area 
    AWESOMPLETE / LINK FIELD DROPDOWN FIX (FINAL v2)
 ========================================================== */
 
-/* html[data-theme-mode="sky"] .awesomplete {
-    position: relative;
-    z-index: 99999 !important;
-}
-
-html[data-theme-mode="sky"] .awesomplete > ul,
-html[data-theme-mode="sky"] ul[role="listbox"] {
-
-    background: #FFFFFF !important;
-    opacity: 1 !important;
-
-    border: 1px solid #CFE2FB !important;
-    border-radius: 12px !important;
-
-    box-shadow: 0 12px 30px rgba(47, 95, 184, .20) !important;
-
-    z-index: 999999 !important;
-
-    padding: 4px !important;
-
-    /* Natural width */
-    /* min-width: 300px !important;
-    width: max-content !important;
-    max-width: 400px !important;
-} */
-
-/* Each option */
-html[data-theme-mode="sky"] .awesomplete > ul > [role="option"] {
-    display: block !important;
-    width: 100% !important;
-    box-sizing: border-box !important;
-
-    background: #FFFFFF !important;
-    color: #1E293B !important;
-    opacity: 1 !important;
-
-    padding: 8px 12px !important;
-    margin: 2px 0 !important;
-    border-radius: 8px !important;
-
-    font-weight: 500 !important;
-    white-space: nowrap !important;
-}
-
-html[data-theme-mode="sky"] .awesomplete > ul > [role="option"]:hover,
-html[data-theme-mode="sky"] .awesomplete > ul > [role="option"][aria-selected="true"] {
-    background: #EAF3FC !important;
-    color: #2F5FB8 !important;
-} */
-
 /* ==========================================================
    FIX: FILTER ROW STACKING CONTEXT
 ========================================================== */

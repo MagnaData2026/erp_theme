@@ -15,8 +15,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 // with "Failed to fetch". Use "localhost" if the backend runs on the
 // same machine as the browser, or the server's real IP/hostname if not.
 // ============================================================
-const API_BASE_URL = 'https://ai.tjdem.online';
-// const API_BASE_URL = 'http://192.168.1.50:8005';   // e.g. backend on another machine on your LAN
+// const API_BASE_URL = 'https://ai.tjdem.online';
+const API_BASE_URL = 'http://localhost:8005';   // e.g. backend on another machine on your LAN
 // const API_BASE_URL = 'https://api.yourdomain.com'; // e.g. deployed backend
 
 // Theme-adaptive categorical palette for chart series/slices. The first
@@ -104,8 +104,68 @@ function StopIcon({ size = 14 }) {
     );
 }
 
-function FormattedMarkdownText({ text }) {
+function EmbeddedBase64Image({ source, alt }) {
+    const [objectUrl, setObjectUrl] = useState('');
+    const [loadError, setLoadError] = useState('');
+
+    useEffect(() => {
+        let nextUrl = '';
+        try {
+            const match = String(source).match(/^data:(image\/(?:png|jpe?g|webp|gif));base64,([A-Za-z0-9+/=]+)$/i);
+            if (!match) throw new Error('Unsupported image data');
+
+            // Blob URLs avoid browser URL-length limits on large chart images.
+            const binary = window.atob(match[2]);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+            nextUrl = URL.createObjectURL(new Blob([bytes], { type: match[1].toLowerCase() }));
+            setObjectUrl(nextUrl);
+            setLoadError('');
+        } catch (error) {
+            setObjectUrl('');
+            setLoadError('The generated chart image is invalid. Please generate it again.');
+        }
+
+        return () => {
+            if (nextUrl) URL.revokeObjectURL(nextUrl);
+        };
+    }, [source]);
+
+    if (loadError) {
+        return <div style={{ padding: '10px', fontSize: '12px', color: '#dc2626' }}>{loadError}</div>;
+    }
+    if (!objectUrl) return null;
+
+    return (
+        <img
+            src={objectUrl}
+            alt={alt}
+            onError={() => setLoadError('The generated chart image could not be decoded. Please generate it again.')}
+            style={{ display: 'block', width: '100%', height: 'auto', maxHeight: '480px', objectFit: 'contain', borderRadius: '8px' }}
+        />
+    );
+}
+
+function FormattedMarkdownText({ text, isStreaming = false }) {
     if (!text) return null;
+
+    // Some chart tools put a newline between `![alt]` and `(data:image...)`.
+    // Normalize that valid-enough variant before splitting the response into
+    // line-oriented display blocks.
+    let normalizedText = String(text).replace(
+        /!\[([^\]]*)\]\s*\(\s*(data:image\/(?:png|jpe?g|webp|gif);base64,[A-Za-z0-9+/=]+)\s*\)/gi,
+        '![$1]($2)'
+    );
+
+    // SSE delivers a generated PNG over many token events. Until the closing
+    // `)` arrives it is not a valid image, and exposing those partial Base64
+    // tokens creates a huge horizontal line in the chat bubble.
+    if (isStreaming) {
+        const partialImageAt = normalizedText.search(/!\[[^\]]*\]\s*\(\s*data:image\/(?:png|jpe?g|webp|gif);base64,/i);
+        if (partialImageAt !== -1) {
+            normalizedText = `${normalizedText.slice(0, partialImageAt).trimEnd()}\n\n[[GENERATING_CHART]]`;
+        }
+    }
 
     // Helper to render inline formatting like **bold**
     const renderInline = (str) => {
@@ -124,7 +184,7 @@ function FormattedMarkdownText({ text }) {
     };
 
     // Split text into blocks (tables vs paragraphs/headings/lists)
-    const lines = text.split('\n');
+    const lines = normalizedText.split('\n');
     const blocks = [];
     let currentTable = null;
 
@@ -145,11 +205,24 @@ function FormattedMarkdownText({ text }) {
             currentTable = null;
         }
 
+        // Render chart tools that return a PNG/JPEG/WebP/GIF as a Markdown
+        // data URI instead of exposing the (very long) Base64 payload.
+        const imageMatch = trimmed.match(/^!\[([^\]]*)\]\((data:image\/(?:png|jpe?g|webp|gif);base64,[A-Za-z0-9+/=]+)\)$/i);
+        if (imageMatch) {
+            blocks.push({ type: 'image', alt: imageMatch[1] || 'Generated chart', src: imageMatch[2] });
+            return;
+        }
+
         // Detect Headings
         if (trimmed.startsWith('### ') || trimmed.startsWith('## ') || trimmed.startsWith('# ')) {
             const level = trimmed.startsWith('### ') ? 3 : trimmed.startsWith('## ') ? 2 : 1;
             const headingText = trimmed.replace(/^#+\s*/, '');
             blocks.push({ type: 'heading', level, text: headingText });
+            return;
+        }
+
+        if (trimmed === '[[GENERATING_CHART]]') {
+            blocks.push({ type: 'chart-loading' });
             return;
         }
 
@@ -219,6 +292,21 @@ function FormattedMarkdownText({ text }) {
                         </div>
                     );
                 }
+                if (block.type === 'image') {
+                    return (
+                        <figure key={idx} style={{ margin: '8px 0 2px', width: '100%' }}>
+                            <EmbeddedBase64Image source={block.src} alt={block.alt} />
+                            {block.alt && (
+                                <figcaption style={{ marginTop: '6px', textAlign: 'center', fontSize: '11px', color: 'var(--text-muted, #64748b)' }}>
+                                    {block.alt}
+                                </figcaption>
+                            )}
+                        </figure>
+                    );
+                }
+                if (block.type === 'chart-loading') {
+                    return <LiveThinkingDots key={idx} label="Rendering chart" />;
+                }
                 return (
                     <p key={idx} style={{ margin: '2px 0', fontSize: '13.5px', color: 'var(--text-color, #0f172a)', lineHeight: '1.5' }}>
                         {renderInline(block.text)}
@@ -231,7 +319,16 @@ function FormattedMarkdownText({ text }) {
 
 function StreamingText({ text, speed = 6, onComplete }) {
     const [displayedText, setDisplayedText] = useState('');
+    const containsEmbeddedImage = /data:image\/(?:png|jpe?g|webp|gif);base64,/i.test(String(text || ''));
     useEffect(() => {
+        // Base64 charts can contain tens of thousands of characters. Showing
+        // them through the typewriter effect delays the closing Markdown `)`
+        // for minutes, so render an embedded image response in one pass.
+        if (containsEmbeddedImage) {
+            setDisplayedText(text);
+            if (onComplete) onComplete();
+            return undefined;
+        }
         let index = 0; setDisplayedText('');
         const interval = setInterval(() => {
             if (index < text.length) {
@@ -247,7 +344,7 @@ function StreamingText({ text, speed = 6, onComplete }) {
             }
         }, speed);
         return () => clearInterval(interval);
-    }, [text, speed]);
+    }, [text, speed, containsEmbeddedImage]);
 
     return <FormattedMarkdownText text={displayedText} />;
 }
@@ -301,6 +398,62 @@ function getCleanTextAndChart(text) {
             .trim();
     }
     return { cleanText, chartData };
+}
+
+function getChartImageFromTools(tools = []) {
+    for (let i = tools.length - 1; i >= 0; i--) {
+        const tool = tools[i];
+        if (!/chart|graph|visual/i.test(String(tool?.name || '')) || tool?.result == null) continue;
+
+        const resultText = typeof tool.result === 'string' ? tool.result : JSON.stringify(tool.result);
+        const match = resultText.match(/data:image\/(?:png|jpe?g|webp|gif);base64,[A-Za-z0-9+/=]+/i);
+        if (match) return match[0];
+    }
+    return null;
+}
+
+function getChartDataFromTools(tools = []) {
+    for (let i = tools.length - 1; i >= 0; i--) {
+        const tool = tools[i];
+        const name = String(tool?.name || '').toLowerCase();
+        if (!/chart|graph|visual/.test(name)) continue;
+
+        // Prefer a structured chart block returned by newer backend tools.
+        if (typeof tool.result === 'string') {
+            const parsedResult = getCleanTextAndChart(tool.result);
+            if (parsedResult.chartData) return parsedResult.chartData;
+        }
+
+        // Older tools return a PNG, but their original numeric arguments are
+        // still present on the tool_call event. Render those natively instead.
+        const args = tool.args || {};
+        if (/pie|donut/.test(name) && Array.isArray(args.labels) && Array.isArray(args.values)) {
+            return { type: 'pie', title: args.title, labels: args.labels, values: args.values };
+        }
+
+        const type = /line/.test(name) ? 'line' : /bar/.test(name) ? 'bar' : null;
+        const xAxis = args.x_axis_data || args.xAxis || args.labels;
+        const values = args.series_data || args.values;
+        if (type && Array.isArray(xAxis) && Array.isArray(values)) {
+            return {
+                type,
+                title: args.title,
+                xAxis,
+                series: [{ name: args.series_name || args.seriesName || 'Value', data: values }],
+            };
+        }
+    }
+    return null;
+}
+
+function removeEmbeddedImagePayload(text) {
+    if (!text) return '';
+    // A model may truncate the generated Markdown image before its closing
+    // parenthesis. Once the original tool image is available, discard that
+    // copied payload instead of rendering duplicate/corrupt Base64 prose.
+    return String(text)
+        .replace(/!\[[^\]]*\]\s*\(\s*data:image\/(?:png|jpe?g|webp|gif);base64,[\s\S]*$/i, '')
+        .trim();
 }
 
 // ---------------------------------------------------------------------
@@ -873,7 +1026,12 @@ export default function ChatArea({ messages = [], isThinking }) {
                     {messages.map((msg, index) => {
                         const isUser = msg.sender === 'user';
                         const isLast = index === messages.length - 1;
-                        const { cleanText, chartData } = getCleanTextAndChart(msg.text);
+                        const parsedResponse = getCleanTextAndChart(msg.text);
+                        const chartData = parsedResponse.chartData || getChartDataFromTools(msg.tools);
+                        const toolChartImage = getChartImageFromTools(msg.tools);
+                        const cleanText = toolChartImage || chartData
+                            ? removeEmbeddedImagePayload(parsedResponse.cleanText)
+                            : parsedResponse.cleanText;
 
                         return (
                             <motion.div
@@ -955,7 +1113,7 @@ export default function ChatArea({ messages = [], isThinking }) {
                                         boxShadow: '0 4px 16px -2px rgba(0, 0, 0, 0.05)',
                                         textAlign: 'left',
                                         position: 'relative',
-                                        width: chartData ? '560px' : 'auto',
+                                        width: chartData || toolChartImage ? '560px' : 'auto',
                                         maxWidth: '100%'
                                     }}>
                                         <div style={{
@@ -972,9 +1130,15 @@ export default function ChatArea({ messages = [], isThinking }) {
                                             ) : !isUser && isLast && !msg.streamed ? (
                                                 <StreamingText text={cleanText} />
                                             ) : (
-                                                <FormattedMarkdownText text={cleanText} />
+                                                <FormattedMarkdownText text={cleanText} isStreaming={!!msg.streaming} />
                                             )}
                                         </div>
+
+                                        {toolChartImage && !chartData && !msg.streaming && (
+                                            <figure style={{ margin: '10px 0 2px', width: '100%' }}>
+                                                <EmbeddedBase64Image source={toolChartImage} alt="Generated chart" />
+                                            </figure>
+                                        )}
 
                                         <ChartBlock chartData={chartData} />
                                     </div>

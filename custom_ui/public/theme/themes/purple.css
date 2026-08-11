@@ -881,7 +881,7 @@ html[data-theme-mode="purple"] .awesomplete > ul > [role="option"]:hover,
 html[data-theme-mode="purple"] .awesomplete > ul > [role="option"][aria-selected="true"] {
     background: #F5EAFF !important;
     color: #9A4DF0 !important;
-} */
+}
 /* ==========================================================
    FIX: FILTER ROW STACKING CONTEXT (so dropdown wins over table)
 ========================================================== */
