@@ -15,7 +15,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 // with "Failed to fetch". Use "localhost" if the backend runs on the
 // same machine as the browser, or the server's real IP/hostname if not.
 // ============================================================
-const API_BASE_URL = 'http://localhost:8005';
+const API_BASE_URL = 'https://ai.tjdem.online';
 // const API_BASE_URL = 'http://192.168.1.50:8005';   // e.g. backend on another machine on your LAN
 // const API_BASE_URL = 'https://api.yourdomain.com'; // e.g. deployed backend
 
