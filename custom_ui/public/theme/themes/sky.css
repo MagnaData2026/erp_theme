@@ -607,6 +607,56 @@ html[data-theme-mode="sky"] .frappe-control[data-fieldtype="Check"] .label-area 
    AWESOMPLETE / LINK FIELD DROPDOWN FIX (FINAL v2)
 ========================================================== */
 
+/* html[data-theme-mode="sky"] .awesomplete {
+    position: relative;
+    z-index: 99999 !important;
+}
+
+html[data-theme-mode="sky"] .awesomplete > ul,
+html[data-theme-mode="sky"] ul[role="listbox"] {
+
+    background: #FFFFFF !important;
+    opacity: 1 !important;
+
+    border: 1px solid #CFE2FB !important;
+    border-radius: 12px !important;
+
+    box-shadow: 0 12px 30px rgba(47, 95, 184, .20) !important;
+
+    z-index: 999999 !important;
+
+    padding: 4px !important;
+
+    /* Natural width */
+    /* min-width: 300px !important;
+    width: max-content !important;
+    max-width: 400px !important;
+} */
+
+/* Each option */
+html[data-theme-mode="sky"] .awesomplete > ul > [role="option"] {
+    display: block !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+
+    background: #FFFFFF !important;
+    color: #1E293B !important;
+    opacity: 1 !important;
+
+    padding: 8px 12px !important;
+    margin: 2px 0 !important;
+    border-radius: 8px !important;
+
+    font-weight: 500 !important;
+    white-space: nowrap !important;
+}
+
+html[data-theme-mode="sky"] .awesomplete > ul > [role="option"]:hover,
+html[data-theme-mode="sky"] .awesomplete > ul > [role="option"][aria-selected="true"] {
+    background: #EAF3FC !important;
+    color: #2F5FB8 !important;
+} 
+
 /* ==========================================================
    FIX: FILTER ROW STACKING CONTEXT
 ========================================================== */
@@ -1504,4 +1554,97 @@ html[data-theme-mode="sky"] .form-page .form-group .awesomplete > ul {
     z-index: 2147483647 !important;
 
     background: #ffffff !important;
+}
+/* ==========================================================
+   SKY - FINAL AWESOMEPLETE DROPDOWN STACKING FIX
+   ========================================================== */
+
+html[data-theme-mode="sky"] .form-page .form-section {
+    position: relative !important;
+    z-index: 1 !important;
+}
+
+html[data-theme-mode="sky"]
+.form-page .form-section:has(.awesomplete input:focus) {
+    position: relative !important;
+    z-index: 999999 !important;
+}
+
+html[data-theme-mode="sky"]
+.form-page .form-section:has(.awesomplete input:focus) .section-body {
+    position: relative !important;
+    z-index: 999999 !important;
+}
+
+html[data-theme-mode="sky"]
+.form-page .form-column:has(.awesomplete input:focus) {
+    position: relative !important;
+    z-index: 999999 !important;
+}
+
+html[data-theme-mode="sky"]
+.form-page .frappe-control:has(.awesomplete input:focus) {
+    position: relative !important;
+    z-index: 1000000 !important;
+}
+
+html[data-theme-mode="sky"]
+.form-page .awesomplete {
+    position: relative !important;
+    z-index: 1000000 !important;
+    overflow: visible !important;
+}
+
+html[data-theme-mode="sky"]
+.form-page .awesomplete > ul {
+    position: absolute !important;
+    top: calc(100% + 3px) !important;
+    left: 0 !important;
+
+    width: 100% !important;
+    min-width: 100% !important;
+
+    max-height: 280px !important;
+
+    margin: 0 !important;
+    padding: 4px 0 !important;
+
+    background: #ffffff !important;
+
+    border: 1px solid #b8d4ff !important;
+    border-radius: 8px !important;
+
+    box-shadow: 0 8px 25px rgba(40, 100, 190, 0.22) !important;
+
+    z-index: 2147483647 !important;
+
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+
+    box-sizing: border-box !important;
+}
+
+html[data-theme-mode="sky"]
+.form-page .awesomplete > ul > li {
+    position: relative !important;
+    display: block !important;
+
+    width: 100% !important;
+    min-height: 34px !important;
+
+    padding: 8px 12px !important;
+    margin: 0 !important;
+
+    background: #ffffff !important;
+    border: 0 !important;
+
+    box-sizing: border-box !important;
+}
+
+html[data-theme-mode="sky"]
+.form-page .awesomplete > ul > li:hover,
+html[data-theme-mode="sky"]
+.form-page .awesomplete > ul > li[aria-selected="true"] {
+    background: #edf5ff !important;
+    color: #2868c7 !important;
 }

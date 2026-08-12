@@ -1,23 +1,4 @@
-.list-row-head,
-.list-row{
-    min-height:46px !important;
-    height:46px !important;
-}
 
-.list-row-head{
-    background:#f6f8fce9 !important;
-    border:1px solid #e6ebf3 !important;
-    border-radius:14px;
-    margin-top: 12px !important;
-    margin-bottom: 6px !important; 
-}
-
-.list-row{
-    background:#fff;
-    border:1px solid #edf1f7;
-    border-radius:14px;
-    margin-bottom:4px;
-}
 
 .list-row-head .list-row-col,
 .list-row .list-row-col{
@@ -58,11 +39,11 @@
 }
 /* Remove default header margins completely */
 
-.list-row-head{
+/* .list-row-head{
     margin: 0 !important;
     margin-top: 0 !important;
     margin-bottom: 4px !important;
-}
+} */
 
 /* Remove browser/user-agent margin from header element */
 
@@ -81,27 +62,16 @@ header.list-row-head{
    Table Outer Card
    ========================== */
 
-.result-container{
+/* .result-container{
     background: #fff !important;
     border: 1px solid #e5e7eb !important;
     border-radius: 16px !important;
     padding: 12px !important;
     box-shadow: 0 2px 8px rgba(15,23,42,.04) !important;
     overflow: hidden !important;
-}
+} */
 /* Enable vertical scrolling */
 
-.result.no-list-assign-to{
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-}
-
-/* Keep horizontal scrolling if needed */
-
-.result-container{
-    overflow-x: auto !important;
-    overflow-y: visible !important;
-}
 /* Row should occupy full wrapper width */
 .list-row{
     width: 100% !important;
@@ -348,4 +318,932 @@ html[data-theme="dark"] .page-form .btn{
     background:#303030 !important;
     border:1px solid #454545 !important;
     color:#ffffff !important;
+}
+/* ==========================================================
+   LIST VIEW - FIGMA STYLE
+   LIGHT THEMES
+   ========================================================== */
+
+
+/* ==========================================================
+   1. PAGE HEADER
+   Keep title + actions on one aligned row
+   ========================================================== */
+
+.page-head {
+    position: relative !important;
+    z-index: 1000 !important;
+}
+
+.page-head .page-head-content {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    min-height: 54px !important;
+}
+
+
+/* Title */
+
+.page-head .title-area {
+    display: flex !important;
+    align-items: center !important;
+}
+
+.page-head .title-area .ellipsis {
+    font-weight: 600 !important;
+}
+
+
+/* ==========================================================
+   2. FILTER / SEARCH CARD
+   ========================================================== */
+
+.page-form.flex,
+.list-filters {
+
+    width: 100% !important;
+    box-sizing: border-box !important;
+
+    background: #ffffff !important;
+
+    border: 1px solid #e6eaf0 !important;
+    border-radius: 12px !important;
+
+    padding: 14px !important;
+
+    margin-top: 10px !important;
+    margin-bottom: 14px !important;
+
+    box-shadow:
+        0 2px 8px rgba(15, 23, 42, 0.04) !important;
+}
+
+
+/* Filter inputs */
+
+.page-form.flex input,
+.page-form.flex select,
+.page-form.flex .form-control,
+.list-filters input,
+.list-filters select,
+.list-filters .form-control {
+
+    height: 34px !important;
+
+    background: #ffffff !important;
+
+    border: 1px solid #dfe5ee !important;
+    border-radius: 7px !important;
+
+    box-shadow: none !important;
+
+    font-size: 12px !important;
+}
+
+
+/* Search input */
+
+.page-form.flex .search-bar,
+.list-filters .search-bar {
+
+    border-radius: 8px !important;
+}
+
+
+/* Buttons */
+
+.page-form.flex .btn,
+.list-filters .btn {
+
+    height: 34px !important;
+
+    border-radius: 8px !important;
+
+    box-shadow: none !important;
+}
+
+
+/* ==========================================================
+   3. RESULT OUTER CARD
+   ========================================================== */
+
+.result-container {
+
+    width: 100% !important;
+
+    box-sizing: border-box !important;
+
+    background: #ffffff !important;
+
+    border: 1px solid #dfe5ee !important;
+
+    border-radius: 12px !important;
+
+    padding: 0 !important;
+
+    margin: 0 !important;
+
+    box-shadow:
+        0 2px 8px rgba(15, 23, 42, 0.04) !important;
+
+    overflow: hidden !important;
+}
+
+
+/* ==========================================================
+   4. RESULT AREA
+   ========================================================== */
+
+.result.no-list-assign-to {
+
+    width: 100% !important;
+
+    padding: 0 !important;
+
+    margin: 0 !important;
+
+    overflow-x: auto !important;
+
+    overflow-y: visible !important;
+}
+
+
+/* ==========================================================
+   5. LIST ROW CONTAINER
+   ========================================================== */
+
+.list-row-container {
+
+    width: 100% !important;
+
+    padding: 0 !important;
+    margin: 0 !important;
+
+    box-sizing: border-box !important;
+
+    background: transparent !important;
+
+    border: none !important;
+}
+
+
+/* ==========================================================
+   6. TABLE HEADER
+   ========================================================== */
+
+.list-row-head {
+
+    width: 100% !important;
+
+    min-height: 46px !important;
+    height: 46px !important;
+
+    box-sizing: border-box !important;
+
+    display: flex !important;
+    align-items: center !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+
+    background: #f7f8fb !important;
+
+    border: none !important;
+
+    border-bottom: 1px solid #e4e8ef !important;
+
+    border-radius: 0 !important;
+
+    color: #5c6675 !important;
+
+    box-shadow: none !important;
+}
+
+
+/* Header columns */
+
+.list-row-head .list-row-col {
+
+    height: 46px !important;
+
+    display: flex !important;
+    align-items: center !important;
+
+    box-sizing: border-box !important;
+
+    padding: 0 14px !important;
+
+    font-size: 11px !important;
+
+    font-weight: 600 !important;
+
+    color: #667085 !important;
+
+    letter-spacing: 0.02em !important;
+}
+
+
+/* ==========================================================
+   7. DATA ROW
+   ========================================================== */
+
+.list-row {
+
+    width: 100% !important;
+
+    min-height: 46px !important;
+    height: 46px !important;
+
+    box-sizing: border-box !important;
+
+    display: flex !important;
+    align-items: center !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+
+    background: #ffffff !important;
+
+    border: none !important;
+
+    border-radius: 0 !important;
+
+    border-bottom: 1px solid #edf0f4 !important;
+
+    box-shadow: none !important;
+
+    transition:
+        background-color 0.15s ease,
+        box-shadow 0.15s ease !important;
+}
+
+
+/* Last row */
+
+.list-row:last-child {
+
+    border-bottom: none !important;
+}
+
+
+/* Row columns */
+
+.list-row .list-row-col {
+
+    height: 46px !important;
+
+    display: flex !important;
+    align-items: center !important;
+
+    box-sizing: border-box !important;
+
+    padding: 0 14px !important;
+
+    font-size: 12px !important;
+
+    color: #344054 !important;
+}
+
+
+/* ==========================================================
+   8. ROW HOVER
+   ========================================================== */
+
+.list-row:hover {
+
+    background: #fafbfe !important;
+
+    box-shadow: none !important;
+}
+
+
+/* ==========================================================
+   9. TITLE / LINK
+   ========================================================== */
+
+.list-row .list-row-col a {
+
+    color: #20252d !important;
+
+    font-weight: 500 !important;
+
+    text-decoration: none !important;
+}
+
+
+.list-row .list-row-col a:hover {
+
+    color: #5b3b9e !important;
+}
+
+
+/* Normal text */
+
+.list-row .list-row-col,
+.list-row .list-row-col .ellipsis {
+
+    white-space: nowrap !important;
+}
+
+
+/* ==========================================================
+   10. CHECKBOX ALIGNMENT
+   ========================================================== */
+
+.list-row-head .list-row-col:first-child,
+.list-row .list-row-col:first-child {
+
+    justify-content: flex-start !important;
+
+    padding-left: 12px !important;
+    padding-right: 8px !important;
+}
+
+
+/* Checkbox */
+
+.list-row-head input[type="checkbox"],
+.list-row input[type="checkbox"] {
+
+    width: 14px !important;
+    height: 14px !important;
+
+    margin: 0 !important;
+}
+
+
+/* ==========================================================
+   11. STATUS PILLS
+   Keep pills compact like Figma
+   ========================================================== */
+
+.list-row .indicator-pill {
+
+    min-height: 22px !important;
+
+    height: 22px !important;
+
+    padding: 2px 9px !important;
+
+    border-radius: 20px !important;
+
+    font-size: 10px !important;
+
+    font-weight: 500 !important;
+
+    line-height: 18px !important;
+}
+
+
+/* ==========================================================
+   12. LIST FOOTER / PAGINATION
+   ========================================================== */
+
+.list-paging-area {
+
+    width: 100% !important;
+
+    box-sizing: border-box !important;
+
+    padding: 12px 2px !important;
+
+    margin: 0 !important;
+
+    display: flex !important;
+
+    align-items: center !important;
+
+    justify-content: space-between !important;
+}
+
+
+/* Page size buttons */
+
+.list-paging-area .btn {
+
+    min-width: 32px !important;
+
+    height: 28px !important;
+
+    border-radius: 7px !important;
+}
+
+
+/* ==========================================================
+   13. REMOVE EXTRA SPACING
+   ========================================================== */
+
+.result,
+.result-list,
+.result-rows,
+.list-rows {
+
+    margin: 0 !important;
+
+    padding: 0 !important;
+}
+
+
+/* ==========================================================
+   14. PREVENT DOUBLE BORDERS
+   ========================================================== */
+
+.result-container .list-row,
+.result-container .list-row-head {
+
+    box-shadow: none !important;
+}
+
+
+/* ==========================================================
+   15. LIGHT THEME TEXT
+   ========================================================== */
+
+html[data-theme-mode="sky"] .list-row,
+html[data-theme-mode="purple"] .list-row {
+
+    color: #344054 !important;
+}
+
+
+html[data-theme-mode="sky"] .list-row-head,
+html[data-theme-mode="purple"] .list-row-head {
+
+    color: #667085 !important;
+}
+
+
+/* ==========================================================
+   16. SKY THEME
+   ========================================================== */
+
+html[data-theme-mode="sky"] .result-container {
+
+    background: #ffffff !important;
+
+    border-color: #dce7f5 !important;
+}
+
+
+html[data-theme-mode="sky"] .list-row-head {
+
+    background: #f5f9ff !important;
+
+    border-bottom-color: #dce7f5 !important;
+}
+
+
+html[data-theme-mode="sky"] .list-row {
+
+    background: #ffffff !important;
+
+    border-bottom-color: #e7eef7 !important;
+}
+
+
+html[data-theme-mode="sky"] .list-row:hover {
+
+    background: #f8fbff !important;
+}
+
+
+html[data-theme-mode="sky"] .list-row .list-row-col a {
+
+    color: #26364a !important;
+}
+
+
+/* ==========================================================
+   17. PURPLE THEME
+   ========================================================== */
+
+html[data-theme-mode="purple"] .result-container {
+
+    background: #ffffff !important;
+
+    border-color: #e4dcef !important;
+}
+
+
+html[data-theme-mode="purple"] .list-row-head {
+
+    background: #faf7ff !important;
+
+    border-bottom-color: #e8def5 !important;
+}
+
+
+html[data-theme-mode="purple"] .list-row {
+
+    background: #ffffff !important;
+
+    border-bottom-color: #eee7f5 !important;
+}
+
+
+html[data-theme-mode="purple"] .list-row:hover {
+
+    background: #fcf9ff !important;
+}
+
+
+html[data-theme-mode="purple"] .list-row .list-row-col a {
+
+    color: #2f2f38 !important;
+}
+
+
+/* ==========================================================
+   18. DARK THEME
+   ========================================================== */
+
+html[data-theme-mode="dark"] .result-container,
+html[data-theme="dark"] .result-container {
+
+    background: #151515 !important;
+
+    border-color: #2b2b2b !important;
+}
+
+
+html[data-theme-mode="dark"] .list-row-head,
+html[data-theme="dark"] .list-row-head {
+
+    background: #222222 !important;
+
+    border-bottom-color: #353535 !important;
+
+    color: #cfd6e4 !important;
+}
+
+
+html[data-theme-mode="dark"] .list-row,
+html[data-theme="dark"] .list-row {
+
+    background: #2d2d2d !important;
+
+    border-bottom-color: #3b3b3b !important;
+
+    color: #f3f4f6 !important;
+}
+
+
+html[data-theme-mode="dark"] .list-row:hover,
+html[data-theme="dark"] .list-row:hover {
+
+    background: #373737 !important;
+}
+
+
+html[data-theme-mode="dark"] .list-row *,
+html[data-theme-mode="dark"] .list-row-head *,
+
+html[data-theme="dark"] .list-row *,
+html[data-theme="dark"] .list-row-head * {
+
+    color: #f3f4f6 !important;
+}
+
+
+/* ==========================================================
+   19. OCEAN BLUE / BLUE DARK THEME
+   ========================================================== */
+
+html[data-theme="dark"][data-theme-mode="blue"] .result-container {
+
+    background: #0d1c2d !important;
+
+    border-color: #203a56 !important;
+}
+
+
+html[data-theme="dark"][data-theme-mode="blue"] .list-row-head {
+
+    background: #16304a !important;
+
+    border-bottom-color: #244765 !important;
+}
+
+
+html[data-theme="dark"][data-theme-mode="blue"] .list-row {
+
+    background: #1d3c59 !important;
+
+    border-bottom-color: #2b5578 !important;
+}
+
+
+html[data-theme="dark"][data-theme-mode="blue"] .list-row:hover {
+
+    background: #285070 !important;
+}
+
+
+html[data-theme="dark"][data-theme-mode="blue"] .list-row *,
+html[data-theme="dark"][data-theme-mode="blue"] .list-row-head * {
+
+    color: #eef6ff !important;
+}
+
+/* ==========================================================
+   FINAL LIST VIEW ALIGNMENT
+   Filter Card = List Card
+   Header Fixed
+   Body Horizontal + Vertical Scroll
+   ========================================================== */
+
+
+/* =========================
+   FILTER CARD
+   ========================= */
+
+.page-form.flex,
+.list-filters {
+    width: calc(100% - 30px) !important;
+    max-width: none !important;
+
+    margin-left: 15px !important;
+    margin-right: 15px !important;
+
+    box-sizing: border-box !important;
+}
+
+
+/* =========================
+   LIST OUTER CARD
+   ========================= */
+
+.result-container {
+    width: calc(100% - 30px) !important;
+    max-width: none !important;
+
+    margin-left: 15px !important;
+    margin-right: 15px !important;
+
+    padding: 0 !important;
+
+    box-sizing: border-box !important;
+
+    border-radius: 14px !important;
+
+    overflow: hidden !important;
+
+    background: #ffffff !important;
+}
+
+
+/* =========================
+   SCROLL AREA
+   ========================= */
+
+.result-container > .result {
+    width: 100% !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+
+    box-sizing: border-box !important;
+
+    /*
+       Vertical + horizontal scrolling
+       ONLY list body
+    */
+    overflow-x: auto !important;
+    overflow-y: auto !important;
+
+    max-height: 470px !important;
+}
+
+
+/* =========================
+   LIST CONTAINER
+   ========================= */
+
+.result-container .list-row-container {
+    width: max-content !important;
+    min-width: 100% !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+
+    box-sizing: border-box !important;
+}
+
+
+/* =========================
+   HEADER
+   ========================= */
+
+.result-container .list-row-head {
+    width: max-content !important;
+    min-width: 100% !important;
+
+    height: 46px !important;
+    min-height: 46px !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+
+    box-sizing: border-box !important;
+
+    display: flex !important;
+    align-items: center !important;
+
+    background: #f7f8fb !important;
+
+    border: none !important;
+    border-bottom: 1px solid #e4e8ef !important;
+
+    border-radius: 0 !important;
+
+    /*
+       Header should NOT create its own scroll
+    */
+    overflow: hidden !important;
+}
+
+
+/* =========================
+   DATA ROW
+   ========================= */
+
+.result-container .list-row {
+    width: max-content !important;
+    min-width: 100% !important;
+
+    height: 46px !important;
+    min-height: 46px !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+
+    box-sizing: border-box !important;
+
+    display: flex !important;
+    align-items: center !important;
+
+    background: #ffffff !important;
+
+    border: none !important;
+    border-bottom: 1px solid #edf1f7 !important;
+}
+
+
+/* =========================
+   COLUMNS
+   ========================= */
+
+.result-container .list-row-head .list-row-col,
+.result-container .list-row .list-row-col {
+
+    box-sizing: border-box !important;
+
+    flex-shrink: 0 !important;
+
+    padding-left: 14px !important;
+    padding-right: 14px !important;
+}
+
+
+/* =========================
+   FIRST COLUMN
+   ========================= */
+
+.result-container .list-row-head .list-row-col:first-child,
+.result-container .list-row .list-row-col:first-child {
+
+    padding-left: 12px !important;
+    padding-right: 8px !important;
+}
+
+
+/* =========================
+   CHECKBOX
+   ========================= */
+
+.result-container .list-row-head input[type="checkbox"],
+.result-container .list-row input[type="checkbox"] {
+
+    width: 14px !important;
+    height: 14px !important;
+
+    margin: 0 !important;
+}
+
+
+/* =========================
+   SKY THEME
+   ========================= */
+
+html[data-theme-mode="sky"] .result-container {
+    background: #ffffff !important;
+    border: 1px solid #d8e6f7 !important;
+}
+
+html[data-theme-mode="sky"] .list-row-head {
+    background: #f5f9ff !important;
+    border-bottom: 1px solid #d8e6f7 !important;
+}
+
+html[data-theme-mode="sky"] .list-row {
+    background: #ffffff !important;
+}
+
+
+/* =========================
+   PURPLE THEME
+   ========================= */
+
+html[data-theme-mode="purple"] .result-container {
+    background: #ffffff !important;
+    border: 1px solid #e5d9ef !important;
+}
+
+html[data-theme-mode="purple"] .list-row-head {
+    background: #f8f3fc !important;
+    border-bottom: 1px solid #e5d9ef !important;
+}
+
+html[data-theme-mode="purple"] .list-row {
+    background: #ffffff !important;
+}
+
+
+/* =========================
+   SCROLLBAR
+   ========================= */
+
+.result-container > .result::-webkit-scrollbar {
+    width: 7px !important;
+    height: 7px !important;
+}
+
+.result-container > .result::-webkit-scrollbar-track {
+    background: transparent !important;
+}
+
+.result-container > .result::-webkit-scrollbar-thumb {
+    background: #c8c8c8 !important;
+    border-radius: 10px !important;
+}
+/* ==========================================================
+   FINAL FIX
+   FILTER CARD + LIST CARD EXACT SAME ALIGNMENT
+   ========================================================== */
+
+/* FILTER */
+.page-form.flex,
+.list-filters {
+    width: calc(100% - 30px) !important;
+    margin-left: 15px !important;
+    margin-right: 15px !important;
+
+    box-sizing: border-box !important;
+}
+
+
+/* LIST OUTER BOX */
+.frappe-list .result-container {
+    width: 100% !important;
+    max-width: none !important;
+
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+
+    box-sizing: border-box !important;
+
+    border-radius: 14px !important;
+}
+
+
+/* LIST WRAPPER */
+.frappe-list .result {
+    width: 100% !important;
+    max-width: none !important;
+
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+
+    box-sizing: border-box !important;
+}
+
+
+/* ROW CONTAINER */
+.frappe-list .list-row-container {
+    width: 100% !important;
+
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+
+    box-sizing: border-box !important;
 }
