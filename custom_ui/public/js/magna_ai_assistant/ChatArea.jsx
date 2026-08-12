@@ -15,8 +15,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 // with "Failed to fetch". Use "localhost" if the backend runs on the
 // same machine as the browser, or the server's real IP/hostname if not.
 // ============================================================
-// const API_BASE_URL = 'https://ai.tjdem.online';
-const API_BASE_URL = 'http://localhost:8005';   // e.g. backend on another machine on your LAN
+const API_BASE_URL = 'https://ai.tjdem.online';
+// const API_BASE_URL = 'http://localhost:8005';   // e.g. backend on another machine on your LAN
+// const API_BASE_URL = 'https://mmn2qbq4-8005.inc1.devtunnels.ms';  
 // const API_BASE_URL = 'https://api.yourdomain.com'; // e.g. deployed backend
 
 // Theme-adaptive categorical palette for chart series/slices. The first
@@ -826,7 +827,7 @@ function LiveThinkingDots({ label = 'Magna AI is thinking' }) {
     );
 }
 
-export { ToolIcon, ToolStatusIndicator, ToolCallChip, ToolActivityPanel, LiveThinkingDots, humanizeToolName, FormattedMarkdownText, ChartBlock, getCleanTextAndChart, API_BASE_URL };
+export { ToolIcon, ToolStatusIndicator, ToolCallChip, ToolActivityPanel, LiveThinkingDots, humanizeToolName, FormattedMarkdownText, EmbeddedBase64Image, ChartBlock, getCleanTextAndChart, API_BASE_URL };
 
 // AI Thinking Indicator
 function ThinkingIndicator() {
