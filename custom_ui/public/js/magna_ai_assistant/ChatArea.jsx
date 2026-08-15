@@ -147,7 +147,7 @@ function EmbeddedBase64Image({ source, alt }) {
     );
 }
 
-function FormattedMarkdownText({ text, isStreaming = false }) {
+function FormattedMarkdownText({ text, isStreaming = false, onSuggestionClick }) {
     if (!text) return null;
 
     // Some chart tools put a newline between `![alt]` and `(data:image...)`.
@@ -227,6 +227,20 @@ function FormattedMarkdownText({ text, isStreaming = false }) {
             return;
         }
 
+        // Detect Action Pill — accumulate consecutive pills into one group block
+        let stripped = trimmed.replace(/^[-*]\s+/, '').replace(/^\d+\.\s+/, '');
+        if (stripped.startsWith('[Action:') && stripped.endsWith(']')) {
+            if (currentTable) { blocks.push({ type: 'table', rows: currentTable }); currentTable = null; }
+            const actionText = stripped.slice(8, -1).trim();
+            const last = blocks[blocks.length - 1];
+            if (last && last.type === 'action_pills') {
+                last.pills.push(actionText);
+            } else {
+                blocks.push({ type: 'action_pills', pills: [actionText] });
+            }
+            return;
+        }
+
         // Detect Bullet Points
         if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
             const bulletText = trimmed.substring(2);
@@ -247,6 +261,47 @@ function FormattedMarkdownText({ text, isStreaming = false }) {
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {blocks.map((block, idx) => {
+                if (block.type === 'action_pills') {
+                    return (
+                        <div key={idx} style={{ display: 'flex', flexWrap: 'wrap', gap: '7px', marginTop: '10px', alignItems: 'center' }}>
+                            {block.pills.map((pill, pIdx) => (
+                                <button
+                                    key={pIdx}
+                                    onClick={() => onSuggestionClick && onSuggestionClick(pill)}
+                                    style={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '5px',
+                                        padding: '5px 13px',
+                                        fontSize: '12px',
+                                        fontWeight: '600',
+                                        color: 'var(--primary-color, #6366f1)',
+                                        backgroundColor: 'color-mix(in srgb, var(--primary-color, #6366f1) 10%, transparent)',
+                                        border: '1px solid color-mix(in srgb, var(--primary-color, #6366f1) 28%, transparent)',
+                                        borderRadius: '16px',
+                                        cursor: 'pointer',
+                                        transition: 'background 0.18s ease, border-color 0.18s ease, transform 0.12s ease',
+                                        outline: 'none',
+                                        lineHeight: '1.4'
+                                    }}
+                                    onMouseOver={(e) => {
+                                        e.currentTarget.style.backgroundColor = 'color-mix(in srgb, var(--primary-color, #6366f1) 20%, transparent)';
+                                        e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--primary-color, #6366f1) 50%, transparent)';
+                                        e.currentTarget.style.transform = 'translateY(-1px)';
+                                    }}
+                                    onMouseOut={(e) => {
+                                        e.currentTarget.style.backgroundColor = 'color-mix(in srgb, var(--primary-color, #6366f1) 10%, transparent)';
+                                        e.currentTarget.style.borderColor = 'color-mix(in srgb, var(--primary-color, #6366f1) 28%, transparent)';
+                                        e.currentTarget.style.transform = 'translateY(0)';
+                                    }}
+                                >
+                                    <span style={{ fontSize: '10px', opacity: 0.7 }}>→</span>
+                                    {pill}
+                                </button>
+                            ))}
+                        </div>
+                    );
+                }
                 if (block.type === 'heading') {
                     return (
                         <h4 key={idx} style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-color, #0f172a)', margin: '12px 0 4px 0' }}>
@@ -318,7 +373,7 @@ function FormattedMarkdownText({ text, isStreaming = false }) {
     );
 }
 
-function StreamingText({ text, speed = 6, onComplete }) {
+function StreamingText({ text, speed = 6, onComplete, onSuggestionClick }) {
     const [displayedText, setDisplayedText] = useState('');
     const containsEmbeddedImage = /data:image\/(?:png|jpe?g|webp|gif);base64,/i.test(String(text || ''));
     useEffect(() => {
@@ -347,7 +402,7 @@ function StreamingText({ text, speed = 6, onComplete }) {
         return () => clearInterval(interval);
     }, [text, speed, containsEmbeddedImage]);
 
-    return <FormattedMarkdownText text={displayedText} />;
+    return <FormattedMarkdownText text={displayedText} onSuggestionClick={onSuggestionClick} />;
 }
 
 function getCleanTextAndChart(text) {
@@ -897,7 +952,7 @@ function ThinkingIndicator() {
     );
 }
 
-export default function ChatArea({ messages = [], isThinking }) {
+export default function ChatArea({ messages = [], isThinking, onSuggestionClick }) {
     const scrollBottomRef = useRef(null);
 
     // Auto-detect thinking state: If last message in list was sent by 'user' OR explicitly passed via isThinking
@@ -1129,9 +1184,9 @@ export default function ChatArea({ messages = [], isThinking }) {
                                             {!isUser && msg.streaming && !cleanText && (!msg.tools || msg.tools.length === 0) ? (
                                                 <LiveThinkingDots />
                                             ) : !isUser && isLast && !msg.streamed ? (
-                                                <StreamingText text={cleanText} />
+                                                <StreamingText text={cleanText} onSuggestionClick={onSuggestionClick} />
                                             ) : (
-                                                <FormattedMarkdownText text={cleanText} isStreaming={!!msg.streaming} />
+                                                <FormattedMarkdownText text={cleanText} isStreaming={!!msg.streaming} onSuggestionClick={onSuggestionClick} />
                                             )}
                                         </div>
 

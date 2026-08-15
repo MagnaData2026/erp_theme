@@ -41,8 +41,12 @@ function injectChatbotButton() {
     // Agar button already present hai, toh dobara inject mat karo
     if (document.getElementById('magna-navbar-chat-trigger')) return true;
 
-    // Target the main notifications outer wrapper container
-    const bellContainer = $('.desktop-navbar .desktop-notifications');
+    // Try to find a valid container on the right side of the navbar
+    let bellContainer = $('.desktop-navbar .desktop-notifications'); // Classic Frappe
+    if (!bellContainer.length) bellContainer = $('.navbar-right .dropdown-notifications');
+    if (!bellContainer.length) bellContainer = $('.navbar-nav.navbar-right > li').first();
+    if (!bellContainer.length) bellContainer = $('.navbar-right').children().first();
+    if (!bellContainer.length) bellContainer = $('.widget-group-right').children().first();
 
     if (bellContainer && bellContainer.length > 0) {
         const chatButtonHTML = `
