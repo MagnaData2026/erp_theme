@@ -691,7 +691,7 @@ export default function AssistantPortal({ isOpen, onClose }) {
                 }
             }
 
-            if (completed) await reader.cancel().catch(() => {});
+            if (completed) await reader.cancel().catch(() => { });
             updateLastBotMessage(chatId, (msg) => ({ ...msg, streaming: false }));
         } catch (err) {
             console.error('Streaming Execution Error:', err);
@@ -917,7 +917,7 @@ export default function AssistantPortal({ isOpen, onClose }) {
     // chunk is silenced immediately, not just future ones.
     const interruptSpeech = () => {
         if (playbackCtxRef.current) {
-            playbackCtxRef.current.close().catch(() => {});
+            playbackCtxRef.current.close().catch(() => { });
         }
         playbackCtxRef.current = null;
         playbackCursorRef.current = 0;
@@ -944,7 +944,7 @@ export default function AssistantPortal({ isOpen, onClose }) {
             captureSourceRef.current = null;
         }
         if (audioCtxRef.current) {
-            audioCtxRef.current.close().catch(() => {});
+            audioCtxRef.current.close().catch(() => { });
             audioCtxRef.current = null;
         }
         analyserRef.current = null;
@@ -1114,7 +1114,7 @@ export default function AssistantPortal({ isOpen, onClose }) {
             playbackCtxRef.current = new AudioCtx({ sampleRate: VOICE_SAMPLE_RATE });
             playbackCursorRef.current = 0;
         }
-        playbackCtxRef.current.resume().catch(() => {});
+        playbackCtxRef.current.resume().catch(() => { });
         if (!micStreamRef.current && !(await requestMicrophone())) return;
         const sessionId = voiceSessionIdRef.current || (window.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`);
         voiceSessionIdRef.current = sessionId;
@@ -1144,7 +1144,7 @@ export default function AssistantPortal({ isOpen, onClose }) {
             catch (error) { addVoiceEvent('error', 'Invalid JSON event'); }
         };
         socket.onerror = () => {
-            setVoiceError('Could not connect to the voice service at localhost:8005.');
+            setVoiceError('Could not connect to the voice service at <localhost:8050></localhost:8050>.');
             setVoiceStatus('error');
         };
         socket.onclose = () => {
@@ -1188,7 +1188,7 @@ export default function AssistantPortal({ isOpen, onClose }) {
         setVoiceTools([]);
         setPinnedChart(null);
         disconnectVoice();
-        if (playbackCtxRef.current) playbackCtxRef.current.close().catch(() => {});
+        if (playbackCtxRef.current) playbackCtxRef.current.close().catch(() => { });
         playbackCtxRef.current = null;
         voiceChatIdRef.current = null;
     };
@@ -1394,7 +1394,7 @@ export default function AssistantPortal({ isOpen, onClose }) {
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', lineHeight: 1 }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
                                         <span style={{ fontSize: '13.5px', fontWeight: '750', color: 'var(--text-color, #0f172a)', letterSpacing: '-0.2px' }}>
-                                            Magna Assistant 
+                                            Magna Assistant
                                         </span>
                                         <span style={{
                                             fontSize: '8.5px', fontWeight: '750', letterSpacing: '0.04em',
@@ -1637,7 +1637,7 @@ export default function AssistantPortal({ isOpen, onClose }) {
                                             the waiting state from the last message, and once the streaming
                                             bot placeholder lands (see streamAssistantTurn) that bubble shows
                                             its own live thinking-dots/tool-activity state instead. */}
-                                        <ChatArea messages={activeMessages} />
+                                        <ChatArea messages={activeMessages} onSuggestionClick={handleSend} />
 
                                         {/* Active Chat Input Bar */}
                                         <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border-color, rgba(148, 163, 184, 0.15))' }}>
