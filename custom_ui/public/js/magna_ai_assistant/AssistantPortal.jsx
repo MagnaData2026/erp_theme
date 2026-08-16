@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from './Sidebar';
 import BentoWelcome from './BentoWelcome';
 import ChatArea, { ToolActivityPanel, ChartBlock, FormattedMarkdownText, EmbeddedBase64Image, getCleanTextAndChart, API_BASE_URL } from './ChatArea';
+import { useVoiceSession } from './useVoiceSession';
 
 // API_BASE_URL now lives in ChatArea.jsx (top of the file) — edit it
 // there and it applies here too.
@@ -539,35 +540,32 @@ export default function AssistantPortal({ isOpen, onClose }) {
         resizeMessageInput(messageInputRef.current);
     }, [input, currentChatId]);
 
+    // WebRTC Direct-to-OpenAI voice session hook
+    // Handles: token lifecycle, SDP exchange, tool interception → backend execution
+    const { status: webRtcStatus, transcript: webRtcTranscript, start: startVoice, stop: stopVoice } = useVoiceSession({
+        sessionId: currentChatId || 'default',
+        userId: null,
+        apiBase: API_BASE_URL,
+        onMessage: (text) => {
+            // When AI finishes a voice response, show it in chat
+            if (text && currentChatId) {
+                appendMessage(currentChatId, { sender: 'bot', text, tools: [] });
+            }
+        },
+        onError: (msg, err) => {
+            console.error('[Voice]', msg, err);
+            alert(`Voice error: ${msg}`);
+            setIsListening(false);
+        },
+    });
+
     const handleVoiceInput = () => {
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition) {
-            alert("Voice intelligence is not supported or active in your current browser configuration.");
-            return;
-        }
-
-        const recognition = new SpeechRecognition();
-        recognition.lang = SPEECH_RECOGNITION_LANGUAGE;
-        recognition.interimResults = false;
-        recognition.maxAlternatives = 5;
-
-        if (!isListening) {
+        if (webRtcStatus === 'active' || webRtcStatus === 'connecting' || webRtcStatus === 'tool_calling') {
+            stopVoice();
+            setIsListening(false);
+        } else {
             setIsListening(true);
-            recognition.start();
-
-            recognition.onresult = (event) => {
-                const speechToText = getRecognizedText(event.results[0]);
-                setInput((prev) => prev + (prev ? ' ' : '') + speechToText);
-            };
-
-            recognition.onerror = (err) => {
-                console.error("Speech Recognition Core Error:", err);
-                setIsListening(false);
-            };
-
-            recognition.onend = () => {
-                setIsListening(false);
-            };
+            startVoice();
         }
     };
 
@@ -1124,7 +1122,7 @@ export default function AssistantPortal({ isOpen, onClose }) {
             language: 'en',
             locale: SPEECH_RECOGNITION_LANGUAGE,
         });
-        const socket = new WebSocket(`wss://ai.tjdem.online/ws/voice?${voiceParams.toString()}`);
+        const socket = new WebSocket(`ws://localhost:8050/ws/voice?${voiceParams.toString()}`);
         socket.binaryType = 'arraybuffer';
         voiceSocketRef.current = socket;
         socket.onopen = () => {
