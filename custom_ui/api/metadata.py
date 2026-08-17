@@ -300,7 +300,39 @@ def get_complete_doctype_metadata(doctype: Optional[str] = None) -> Dict[str, An
 #         "roles": frappe.get_roles(frappe.session.user),
 #     }
 
+@frappe.whitelist()
+def get_modules_summary():
+    """Returns a list of all active modules in ERPNext/Frappe."""
+    modules = frappe.get_all("Module Def", fields=["name", "module_name", "app_name"])
+    return modules
 
+@frappe.whitelist()
+def get_module_doctypes(module: str):
+    """Returns all accessible Doctypes within a given module."""
+    doctypes = frappe.get_all(
+        "DocType",
+        filters={"module": module, "istable": 0, "custom": 0},
+        fields=["name", "description"]
+    )
+    # Also fetch custom doctypes in this module
+    custom_doctypes = frappe.get_all(
+        "DocType",
+        filters={"module": module, "istable": 0, "custom": 1},
+        fields=["name", "description"]
+    )
+    
+    return doctypes + custom_doctypes
 
-
-
+@frappe.whitelist()
+def get_link_options(doctype: str, search_text: str = ""):
+    """Dynamically search and return valid options for a Link field."""
+    import frappe.desk.search
+    try:
+        results = frappe.desk.search.search_link(doctype, search_text)
+        return [{"value": r[0], "description": r[1] if len(r) > 1 else ""} for r in results]
+    except Exception:
+        filters = {}
+        if search_text:
+            filters["name"] = ["like", f"%{search_text}%"]
+        results = frappe.get_all(doctype, filters=filters, limit=20, pluck="name")
+        return [{"value": r} for r in results]
