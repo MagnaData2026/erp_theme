@@ -873,7 +873,7 @@ export default function AssistantPortal({ isOpen, onClose }) {
         if (type === 'partial_transcript') {
             setLiveTranscript(text);
             setVoiceStatus('listening');
-            
+
             // Barge-in: STT heard you speak while TTS is playing!
             if (ttsSpeakingRef.current) {
                 console.log('[MAGMA VOICE] Barge-in via STT interim!');
@@ -979,9 +979,9 @@ export default function AssistantPortal({ isOpen, onClose }) {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (SpeechRecognition) {
             if (speechRecognitionRef.current) {
-                try { speechRecognitionRef.current.stop(); } catch(e){}
+                try { speechRecognitionRef.current.stop(); } catch (e) { }
             }
-            
+
             const recognition = new SpeechRecognition();
             recognition.lang = SPEECH_RECOGNITION_LANGUAGE;
             recognition.continuous = true;
@@ -1014,14 +1014,14 @@ export default function AssistantPortal({ isOpen, onClose }) {
                 }
                 if (final) {
                     const cleanText = getRecognizedText([{ transcript: final, confidence: 1 }]);
-                    
+
                     // Final STT Heuristic: Ignore pure punctuation/noise artifacts (breathing/fans)
                     const isNoiseArtifact = !cleanText || cleanText.trim().length <= 1 || /^[^a-zA-Z0-9]+$/.test(cleanText.trim());
                     if (isNoiseArtifact) {
                         console.log('[MAGMA VOICE] Ignored noise/breathing artifact:', final);
                         return;
                     }
-                    
+
                     if (!voiceSocketRef.current || voiceSocketRef.current.readyState !== WebSocket.OPEN) {
                         console.warn('[MAGMA VOICE] Dropping transcript because WebSocket is not open yet.');
                         return;
@@ -1042,7 +1042,7 @@ export default function AssistantPortal({ isOpen, onClose }) {
 
                     // 2. handleVoiceEvent adds the NEW user text + NEW bot placeholder to the UI
                     handleVoiceEvent({ type: 'final_transcript', text: cleanText });
-                    
+
                     // 3. Send the transcript to the server (which cleanly cancels the server's old task automatically)
                     voiceSocketRef.current.send(JSON.stringify({ type: 'user_speech', text: cleanText }));
                 }
@@ -1064,7 +1064,7 @@ export default function AssistantPortal({ isOpen, onClose }) {
 
             recognition.onend = () => {
                 if (voiceModeOpenRef.current && speechRecognitionRef.current) {
-                    try { speechRecognitionRef.current.start(); } catch(e) { console.warn('[MAGMA VOICE] restart failed:', e); }
+                    try { speechRecognitionRef.current.start(); } catch (e) { console.warn('[MAGMA VOICE] restart failed:', e); }
                 }
             };
 
@@ -1072,7 +1072,7 @@ export default function AssistantPortal({ isOpen, onClose }) {
             try {
                 recognition.start();
                 setMicPermission('granted');
-            } catch(e) {
+            } catch (e) {
                 console.warn('[MAGMA VOICE] Synchronous STT start failed:', e);
             }
         } else {
@@ -1085,7 +1085,7 @@ export default function AssistantPortal({ isOpen, onClose }) {
         if (window.speechSynthesis && window.speechSynthesis.getVoices().length === 0) {
             await new Promise(resolve => {
                 window.speechSynthesis.onvoiceschanged = resolve;
-                setTimeout(resolve, 1000); 
+                setTimeout(resolve, 1000);
             });
         }
 
@@ -1094,17 +1094,17 @@ export default function AssistantPortal({ isOpen, onClose }) {
         createVoiceChat();
 
         const voiceParams = new URLSearchParams({ session_id: sessionId });
-        const hostUrl = API_BASE_URL.replace('http://', 'ws://').replace('https://', 'wss://') || `ws://${window.location.host || 'localhost:8050'}`;
+        const hostUrl = API_BASE_URL.replace('http://', 'ws://').replace('https://', 'wss://') || `ws://${window.location.host || 'ai.tjdem.online'}`;
         const socket = new WebSocket(`${hostUrl}/ws/voice?${voiceParams.toString()}`);
         voiceSocketRef.current = socket;
-        
+
         socket.onopen = () => {
             console.log('[MAGMA VOICE] WebSocket OPEN:', socket.url);
             setVoiceConnected(true);
             setVoiceStatus('listening');
             addVoiceEvent('connected', sessionId);
             if (speechRecognitionRef.current) {
-                try { speechRecognitionRef.current.start(); } catch(e) { console.warn('[MAGMA VOICE] SpeechRecognition.start() failed:', e); }
+                try { speechRecognitionRef.current.start(); } catch (e) { console.warn('[MAGMA VOICE] SpeechRecognition.start() failed:', e); }
             }
         };
 
@@ -1141,14 +1141,14 @@ export default function AssistantPortal({ isOpen, onClose }) {
     const disconnectVoice = () => {
         stopMicAnalyser();
         if (speechRecognitionRef.current) {
-            try { speechRecognitionRef.current.stop(); } catch(e){}
+            try { speechRecognitionRef.current.stop(); } catch (e) { }
             speechRecognitionRef.current = null;
         }
         ttsInterruptedRef.current = true;
         ttsQueueRef.current = [];
         ttsSpeakingRef.current = false;
         window.speechSynthesis?.cancel();
-        
+
         // Clean up any hanging thinking state before disconnecting
         if (voiceChatIdRef.current) {
             updateLastBotMessage(voiceChatIdRef.current, (msg) => ({
@@ -1157,14 +1157,14 @@ export default function AssistantPortal({ isOpen, onClose }) {
                 text: msg.text ? msg.text : '[Turn cancelled]'
             }));
         }
-        
+
         const socket = voiceSocketRef.current;
         voiceSocketRef.current = null;
         if (socket && socket.readyState < WebSocket.CLOSING) socket.close(1000, 'User disconnected');
         setVoiceConnected(false);
         setVoiceStatus('idle');
     };
-const openVoiceMode = () => {
+    const openVoiceMode = () => {
         if (voiceModeOpenRef.current) return;
         voiceModeOpenRef.current = true;
         setIsVoiceModeOpen(true);
