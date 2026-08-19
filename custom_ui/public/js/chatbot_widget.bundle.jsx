@@ -177,12 +177,25 @@ $(document).on('app_ready', function() {
         <MagnaAICopilotApp registerOpenHandler={(fn) => { openPortalFn = fn; }} />
     );
 
-    // 6. Global event delegate
-    $(document).on('click', '#magna-navbar-chat-trigger', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        if (typeof openPortalFn === 'function') {
-            openPortalFn();
+    // Global override to attach click handler directly to the element 
+    // instead of relying on document delegation, avoiding Frappe's 
+    // aggressive event capturing/routing on the first click.
+    const attachDirectListener = () => {
+        const btn = document.getElementById('magna-navbar-chat-trigger');
+        if (btn && !btn.hasAttribute('data-magna-bound')) {
+            btn.setAttribute('data-magna-bound', 'true');
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (typeof openPortalFn === 'function') {
+                    openPortalFn();
+                }
+            }, { capture: true }); // Use capture to trigger before Frappe
         }
-    });
+    };
+
+    // Attach initially and after any DOM mutations
+    attachDirectListener();
+    const clickObserver = new MutationObserver(() => attachDirectListener());
+    clickObserver.observe(document.body, { childList: true, subtree: true });
 });
