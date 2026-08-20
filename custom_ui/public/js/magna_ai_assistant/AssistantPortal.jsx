@@ -1095,6 +1095,7 @@ export default function AssistantPortal({ isOpen, onClose }) {
 
         const voiceParams = new URLSearchParams({ session_id: sessionId });
         const hostUrl = API_BASE_URL.replace('http://', 'ws://').replace('https://', 'wss://') || `ws://${window.location.host || 'localhost:8050'}`;
+        //const hostUrl = API_BASE_URL.replace('http://', 'ws://').replace('https://', 'wss://') || `ws://${window.location.host || 'ai.tjdem.online'}`;
         const socket = new WebSocket(`${hostUrl}/ws/voice?${voiceParams.toString()}`);
         voiceSocketRef.current = socket;
 

@@ -15,6 +15,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 // with "Failed to fetch". Use "localhost" if the backend runs on the
 // same machine as the browser, or the server's real IP/hostname if not.
 // ============================================================
+//const API_BASE_URL = 'https://ai.tjdem.online';
 const API_BASE_URL = 'http://localhost:8050';
 // const API_BASE_URL = 'http://localhost:8005';   // e.g. backend on another machine on your LAN
 // const API_BASE_URL = 'https://mmn2qbq4-8005.inc1.devtunnels.ms';  
@@ -106,13 +107,13 @@ async function streamSpeechAudio(text, onReady, onEnded, onError, cancelRef) {
                 if (cancelRef && cancelRef.cancelled) { reader.cancel(); ms.endOfStream(); return; }
                 const { done, value } = await reader.read();
                 if (done) { if (!sb.updating) ms.endOfStream(); return; }
-                await new Promise(res => { if (sb.updating) sb.addEventListener('updateend', res, {once:true}); else res(); });
+                await new Promise(res => { if (sb.updating) sb.addEventListener('updateend', res, { once: true }); else res(); });
                 sb.appendBuffer(value);
-                if (firstChunk) { firstChunk = false; onReady(audio); audio.play().catch(()=>{}); }
-                await new Promise(res => sb.addEventListener('updateend', res, {once:true}));
+                if (firstChunk) { firstChunk = false; onReady(audio); audio.play().catch(() => { }); }
+                await new Promise(res => sb.addEventListener('updateend', res, { once: true }));
             }
         };
-        pump().catch(() => { try { ms.endOfStream(); } catch {} });
+        pump().catch(() => { try { ms.endOfStream(); } catch { } });
     });
 
     return audio;
@@ -1193,7 +1194,7 @@ export default function ChatArea({ messages = [], isThinking, onSuggestionClick 
                                                 title={
                                                     speakingIndex === index ? 'Stop reading'
                                                         : loadingSpeechIndex === index ? 'Loading audio…'
-                                                        : 'Read this reply aloud'
+                                                            : 'Read this reply aloud'
                                                 }
                                                 style={{
                                                     display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
