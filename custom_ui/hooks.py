@@ -12,9 +12,9 @@ app_include_css = [
 app_include_js = [
 	"custom_ui.bundle.js",
 	"desk_custom.bundle.js",
-	"sidebar_custom.bundle.js",
+	# "sidebar_custom.bundle.js",
 	"chatbot_widget.bundle.jsx",
-	"iot_dashboard.bundle.js",
+	# "iot_dashboard.bundle.js",
 	# "manufacturing_dashboard_injector.bundle.js",
 	# "desktop_theme_modifier.bundle.js"
 	"desk_icon.bundle.js",
