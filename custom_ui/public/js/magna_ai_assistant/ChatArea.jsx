@@ -16,7 +16,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 // same machine as the browser, or the server's real IP/hostname if not.
 // ============================================================
 const API_BASE_URL = 'https://ai.tjdem.online';
-// const API_BASE_URL = 'http://localhost:8050';
+// const API_BASE_URL = 'http://localhost:8005';
 // const API_BASE_URL = 'https://magnaerp.tjdem.online';
 // const API_BASE_URL = 'http://localhost:8005';   // e.g. backend on another machine on your LAN
 // const API_BASE_URL = 'https://mmn2qbq4-8005.inc1.devtunnels.ms';  
