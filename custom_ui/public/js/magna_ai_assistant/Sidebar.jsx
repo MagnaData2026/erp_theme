@@ -1,6 +1,6 @@
-// magna_ai_assistant/Sidebar.jsx
-import React from 'react';
-import { motion } from 'framer-motion';
+
+import React, { useEffect, useRef, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 // Premium Lucide-Style SVG Icons (Strictly Pure SVGs, No Emojis)
 const ChevronLeftIcon = () => (
@@ -11,15 +11,79 @@ const ChevronRightIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
 );
 
-const PlusIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+const ComposeIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4Z"/></svg>
 );
 
-const MessageIcon = ({ color = "currentColor" }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+// Tilted pushpin, like ChatGPT's pin icon.
+const PinIcon = ({ color = "currentColor", filled = false }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill={filled ? color : "none"} stroke={color} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: 'rotate(45deg)' }}><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></svg>
 );
 
-export default function Sidebar({ chatHistory, currentChatId, onSelectChat, onNewChat, isCollapsed, setIsCollapsed }) {
+const TrashIcon = ({ color = "currentColor" }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+);
+
+// Slides the title left on hover to reveal what's clipped, instead of an ellipsis.
+const MarqueeText = ({ text, isHovered }) => {
+    const outerRef = useRef(null);
+    const innerRef = useRef(null);
+    const [offset, setOffset] = useState(0);
+    const [animate, setAnimate] = useState(false);
+    const pauseTimerRef = useRef(null);
+
+    const startReveal = () => {
+        if (!outerRef.current || !innerRef.current) return;
+        const over = innerRef.current.scrollWidth - outerRef.current.clientWidth;
+        if (over > 0) {
+            setAnimate(true);
+            setOffset(over);
+        }
+    };
+
+    useEffect(() => {
+        if (isHovered) {
+            startReveal();
+        } else {
+            clearTimeout(pauseTimerRef.current);
+            setAnimate(false);
+            setOffset(0);
+        }
+        return () => clearTimeout(pauseTimerRef.current);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isHovered, text]);
+
+    // Reveal finished -- snap back to the start, pause, then loop while still hovered.
+    const handleRevealEnd = () => {
+        if (!isHovered) return;
+        setAnimate(false);
+        setOffset(0);
+        clearTimeout(pauseTimerRef.current);
+        pauseTimerRef.current = setTimeout(() => { if (isHovered) startReveal(); }, 500);
+    };
+
+    return (
+        <span ref={outerRef} style={{ overflow: 'hidden', whiteSpace: 'nowrap', flex: 1, minWidth: 0 }}>
+            <span
+                ref={innerRef}
+                onTransitionEnd={handleRevealEnd}
+                style={{
+                    display: 'inline-block',
+                    transform: `translateX(-${offset}px)`,
+                    transition: animate ? `transform ${Math.max(offset / 20, 1.2)}s linear` : 'none',
+                }}
+            >
+                {text}
+            </span>
+        </span>
+    );
+};
+
+export default function Sidebar({ chatHistory, currentChatId, onSelectChat, onNewChat, onPinChat, onDeleteChat, isCollapsed, setIsCollapsed }) {
+    const [hoveredId, setHoveredId] = useState(null);
+    const [newChatHovered, setNewChatHovered] = useState(false);
+    const pinnedChats = chatHistory.filter((c) => c.pinned);
+    const unpinnedChats = chatHistory.filter((c) => !c.pinned);
     return (
         <motion.div 
             animate={{ width: isCollapsed ? '78px' : '280px' }}
@@ -86,103 +150,59 @@ export default function Sidebar({ chatHistory, currentChatId, onSelectChat, onNe
                     </motion.button>
                 </div>
 
-                {/* New Project Session Button */}
-                <motion.button 
-                    whileHover={{ 
-                        scale: 1.015, 
-                        boxShadow: '0 8px 20px -6px rgba(0, 0, 0, 0.15)'
-                    }}
-                    whileTap={{ scale: 0.985 }}
+                {/* New Chat Button */}
+                <button
                     onClick={onNewChat}
-                    className="magna-input-box"
                     style={{
-                        width: '100%', height: '40px', 
+                        width: '100%', height: '40px',
                         borderRadius: '12px',
                         display: 'flex', alignItems: 'center', justifyContent: isCollapsed ? 'center' : 'flex-start',
                         padding: isCollapsed ? '0' : '0 14px', gap: '10px', cursor: 'pointer',
-                        fontWeight: '600', fontSize: '12.5px', color: 'var(--text-color, #0f172a)', 
-                        border: '1px solid var(--border-color, rgba(148, 163, 184, 0.2))',
-                        transition: 'all 0.15s ease'
+                        fontWeight: '600', fontSize: '12.5px', color: 'var(--text-color, #0f172a)',
+                        border: 'none', background: newChatHovered ? 'color-mix(in srgb, var(--text-color, #0f172a) 7%, transparent)' : 'transparent',
+                        transition: 'background-color 0.15s ease', flexShrink: 0
                     }}
+                    onMouseEnter={() => setNewChatHovered(true)}
+                    onMouseLeave={() => setNewChatHovered(false)}
                 >
-                    <PlusIcon />
-                    {!isCollapsed && <span>New Project Session</span>}
-                </motion.button>
+                    <ComposeIcon />
+                    {!isCollapsed && <span>New chat</span>}
+                </button>
 
-                {/* Active History Group Label */}
-                {!isCollapsed && (
-                    <motion.div 
-                        initial={{ opacity: 0 }} 
-                        animate={{ opacity: 1 }}
-                        style={{ fontSize: '10px', fontWeight: '700', color: 'var(--text-muted, #64748b)', textTransform: 'uppercase', letterSpacing: '0.8px', marginTop: '28px', marginBottom: '10px', paddingLeft: '6px' }}
-                    >
-                        Active History
-                    </motion.div>
-                )}
-                
                 {/* Thread Navigation List */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', flex: 1, overflowY: 'auto', marginTop: isCollapsed ? '16px' : '0' }}>
-                    {chatHistory.map((chat) => {
-                        const isActive = currentChatId === chat.id;
-                        return (
-                            <motion.div
-                                key={chat.id}
-                                whileHover={{ x: isActive ? 0 : 3 }}
-                                onClick={() => onSelectChat(chat.id)}
-                                style={{
-                                    display: 'flex', alignItems: 'center', padding: '10px 12px', borderRadius: '10px',
-                                    cursor: 'pointer', fontSize: '13px', fontWeight: isActive ? '600' : '500',
-                                    color: isActive ? 'var(--text-color, #0f172a)' : 'var(--text-muted, #64748b)',
-                                    backgroundColor: isActive ? 'var(--bg-color, rgba(255, 255, 255, 0.8))' : 'transparent',
-                                    border: '1px solid', 
-                                    borderColor: isActive ? 'var(--border-color, rgba(148, 163, 184, 0.25))' : 'transparent',
-                                    boxShadow: isActive ? '0 6px 16px -6px rgba(0, 0, 0, 0.08)' : 'none',
-                                    whiteSpace: 'nowrap', justifyContent: isCollapsed ? 'center' : 'flex-start',
-                                    position: 'relative',
-                                    transition: 'background-color 0.25s, border-color 0.25s, color 0.25s'
-                                }}
-                            >
-                                {/* Left Glow Indicator Line for Active Thread */}
-                                {isActive && !isCollapsed && (
-                                    <motion.div 
-                                        layoutId="activeIndicator"
-                                        style={{
-                                            position: 'absolute', left: '-2px', top: '25%', bottom: '25%', width: '3px',
-                                            borderRadius: '4px', background: 'linear-gradient(to bottom, #2563eb, #3b82f6)'
-                                        }}
-                                    />
-                                )}
+                <div className="magna-sidebar-scroll" style={{ display: 'flex', flexDirection: 'column', gap: '5px', flex: 1, minHeight: 0, overflowY: 'auto', marginTop: isCollapsed ? '16px' : '0' }}>
+                    {pinnedChats.length > 0 && !isCollapsed && (
+                        <div style={{ fontSize: '10px', fontWeight: '700', color: 'var(--text-muted, #64748b)', textTransform: 'uppercase', letterSpacing: '0.8px', marginTop: '28px', marginBottom: '4px', paddingLeft: '6px' }}>
+                            Pinned
+                        </div>
+                    )}
+                    {pinnedChats.map((chat) => renderRow(chat))}
 
-                                <div style={{ display: 'flex', alignItems: 'center', marginRight: isCollapsed ? '0' : '10px', flexShrink: 0 }}>
-                                    <MessageIcon color={isActive ? '#3b82f6' : 'var(--text-muted, #64748b)'} />
-                                </div>
-                                {!isCollapsed && (
-                                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                        {chat.title}
-                                    </span>
-                                )}
-                            </motion.div>
-                        );
-                    })}
+                    {!isCollapsed && (
+                        <div style={{ fontSize: '10px', fontWeight: '700', color: 'var(--text-muted, #64748b)', textTransform: 'uppercase', letterSpacing: '0.8px', marginTop: pinnedChats.length > 0 ? '18px' : '28px', marginBottom: '10px', paddingLeft: '6px' }}>
+                            Active History
+                        </div>
+                    )}
+                    {unpinnedChats.map((chat) => renderRow(chat))}
                 </div>
             </div>
 
             {/* Operator Profiler Card */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', paddingTop: '16px', borderTop: '1px solid var(--border-color, rgba(148, 163, 184, 0.15))', flexShrink: 0 }}>
-                <motion.div 
+                <motion.div
                     whileHover={{ scale: 1.05 }}
-                    style={{ 
-                        width: '32px', height: '32px', borderRadius: '50%', 
-                        backgroundColor: '#3b82f6', color: '#ffffff', 
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                    style={{
+                        width: '32px', height: '32px', borderRadius: '50%',
+                        backgroundColor: '#3b82f6', color: '#ffffff',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
                         fontSize: '11px', fontWeight: 'bold', boxShadow: '0 4px 10px rgba(59, 130, 246, 0.3)'
                     }}
                 >
                     OP
                 </motion.div>
                 {!isCollapsed && (
-                    <motion.div 
-                        initial={{ opacity: 0, x: -4 }} 
+                    <motion.div
+                        initial={{ opacity: 0, x: -4 }}
                         animate={{ opacity: 1, x: 0 }}
                         style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
                     >
@@ -194,4 +214,48 @@ export default function Sidebar({ chatHistory, currentChatId, onSelectChat, onNe
 
         </motion.div>
     );
+
+    function renderRow(chat) {
+        const isActive = currentChatId === chat.id;
+        const isHovered = hoveredId === chat.id;
+        return (
+                            <div
+                                key={chat.id}
+                                onClick={() => onSelectChat(chat.id)}
+                                onMouseEnter={() => setHoveredId(chat.id)}
+                                onMouseLeave={() => setHoveredId(null)}
+                                style={{
+                                    display: 'flex', alignItems: 'center', height: '38px', padding: '0 12px', borderRadius: '10px',
+                                    cursor: 'pointer', fontSize: '13px', fontWeight: isActive ? '600' : '500',
+                                    color: 'var(--text-color, #0f172a)',
+                                    backgroundColor: isActive || isHovered ? 'color-mix(in srgb, var(--text-color, #0f172a) 7%, transparent)' : 'transparent',
+                                    whiteSpace: 'nowrap', justifyContent: isCollapsed ? 'center' : 'flex-start',
+                                    position: 'relative',
+                                    transition: 'background-color 0.15s ease'
+                                }}
+                            >
+                                {!isCollapsed && <MarqueeText text={chat.title} isHovered={isHovered} />}
+                                {!isCollapsed && (isHovered || chat.pinned) && (
+                                    <div style={{ display: 'flex', gap: '2px', flexShrink: 0, marginLeft: '6px' }}>
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); onPinChat(chat.id, !chat.pinned); }}
+                                            title={chat.pinned ? 'Unpin' : 'Pin'}
+                                            style={{ border: 'none', background: 'none', cursor: 'pointer', padding: '4px', borderRadius: '6px', display: 'flex', color: chat.pinned ? '#3b82f6' : 'var(--text-muted, #64748b)' }}
+                                        >
+                                            <PinIcon filled={chat.pinned} />
+                                        </button>
+                                        {isHovered && (
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); onDeleteChat(chat.id); }}
+                                                title="Delete"
+                                                style={{ border: 'none', background: 'none', cursor: 'pointer', padding: '4px', borderRadius: '6px', display: 'flex', color: 'var(--text-muted, #64748b)' }}
+                                            >
+                                                <TrashIcon />
+                                            </button>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+        );
+    }
 }

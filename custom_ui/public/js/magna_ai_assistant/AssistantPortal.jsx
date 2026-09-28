@@ -650,6 +650,10 @@ const FileTypeIcon = ({ fileName }) => {
 // restyles this entire shell automatically — nothing is hardcoded to one
 // palette, and nothing here uses backdrop-filter / translucent panels.
 const MAGNA_PREMIUM_STYLES = `
+.magna-sidebar-scroll::-webkit-scrollbar { width: 5px; }
+.magna-sidebar-scroll::-webkit-scrollbar-track { background: transparent; }
+.magna-sidebar-scroll::-webkit-scrollbar-thumb { background: var(--border-color, rgba(148, 163, 184, 0.4)); border-radius: 10px; }
+.magna-sidebar-scroll { scrollbar-width: thin; scrollbar-color: var(--border-color, rgba(148, 163, 184, 0.4)) transparent; }
 .magna-shell input::placeholder,
 .magna-shell textarea::placeholder { color: var(--text-muted, #94a3b8); opacity: 0.85; }
 .magna-shell .magna-input-shell { transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease; }
@@ -1081,20 +1085,13 @@ const LiveVoiceWidget = ({
 
 export default function AssistantPortal({ isOpen, onClose }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [chatHistory, setChatHistory] = useState([
-    {
-      id: "1",
-      title: "Database Cluster Optimization",
-      messages: [
-        { sender: "user", text: "Analyze the query performance metrics." },
-        {
-          sender: "bot",
-          text: "Telemetry streams connected. Database index configuration optimized successfully.",
-        },
-      ],
-    },
-  ]);
+  const [chatHistory, setChatHistory] = useState([]);
   const [currentChatId, setCurrentChatId] = useState(null);
+  const [isLoadingChatList, setIsLoadingChatList] = useState(false);
+  // Session ids whose full message history has already been fetched from
+  // /api/chat/sessions/{id}/messages -- avoids re-fetching on every click,
+  // and lets a freshly-listed-but-unopened chat safely start as messages: [].
+  const loadedHistoryIdsRef = useRef(new Set());
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [isListening, setIsListening] = useState(false);
@@ -1179,8 +1176,119 @@ export default function AssistantPortal({ isOpen, onClose }) {
   }, [input, currentChatId]);
 
   useEffect(() => {
-    resolveFrappeSessionContext();
+    (async () => {
+      const { user: frappeUser } = await resolveFrappeSessionContext();
+      setIsLoadingChatList(true);
+      try {
+        const res = await fetch(
+          `${API_BASE_URL}/api/chat/sessions?user_id=${encodeURIComponent(frappeUser || "")}`,
+        );
+        if (!res.ok) return;
+        const data = await res.json();
+        setChatHistory(
+          (data.sessions || []).map((s) => ({
+            id: s.session_id,
+            title: s.title || "New chat",
+            pinned: !!s.pinned,
+            messages: [],
+          })),
+        );
+      } catch (e) {
+        console.warn("[MAGMA] Could not load past chats:", e);
+      } finally {
+        setIsLoadingChatList(false);
+      }
+    })();
   }, []);
+
+  // Lazily resumes a past chat: fetches its full message history the first
+  // time it's opened (not on every click), then switches to it.
+  const handleSelectChat = async (chatId) => {
+    if (loadedHistoryIdsRef.current.has(chatId)) {
+      setCurrentChatId(chatId);
+      return;
+    }
+    try {
+      const res = await fetch(
+        `${API_BASE_URL}/api/chat/sessions/${encodeURIComponent(chatId)}/messages`,
+      );
+      if (res.ok) {
+        const data = await res.json();
+        // streamed: true on every bot reply -- a resumed chat isn't "live", so it
+        // should render as already-typed text instantly, not replay the typewriter
+        // effect ChatArea.jsx only uses for the currently-in-progress last message.
+        const replayed = (data.messages || []).map((m) =>
+          m.sender === "bot" ? { ...m, streamed: true, tools: [] } : m,
+        );
+        setChatHistory((prev) =>
+          prev.map((c) => (c.id === chatId ? { ...c, messages: replayed } : c)),
+        );
+      }
+    } catch (e) {
+      console.warn("[MAGMA] Could not load chat history for", chatId, e);
+    } finally {
+      loadedHistoryIdsRef.current.add(chatId);
+      setCurrentChatId(chatId);
+    }
+  };
+
+  // Re-reads the real list from the server -- pinning can auto-unpin a different chat.
+  const resyncChatList = async () => {
+    const { user: frappeUser } = await resolveFrappeSessionContext();
+    try {
+      const res = await fetch(
+        `${API_BASE_URL}/api/chat/sessions?user_id=${encodeURIComponent(frappeUser || "")}`,
+      );
+      if (!res.ok) return;
+      const data = await res.json();
+      setChatHistory((prev) => {
+        const byId = new Map(prev.map((c) => [c.id, c]));
+        return (data.sessions || []).map((s) => ({
+          id: s.session_id,
+          title: s.title || "New chat",
+          pinned: !!s.pinned,
+          messages: byId.get(s.session_id)?.messages || [],
+        }));
+      });
+    } catch (e) {
+      console.warn("[MAGMA] Could not resync chat list:", e);
+    }
+  };
+
+  const handlePinChat = async (chatId, pinned) => {
+    const { user: frappeUser } = await resolveFrappeSessionContext();
+    try {
+      await fetch(
+        `${API_BASE_URL}/api/chat/sessions/${encodeURIComponent(chatId)}/pin?pinned=${pinned}&user_id=${encodeURIComponent(frappeUser || "")}`,
+        { method: "POST" },
+      );
+    } catch (e) {
+      console.warn("[MAGMA] Could not update pin for", chatId, e);
+    }
+    await resyncChatList();
+  };
+
+  const [chatPendingDelete, setChatPendingDelete] = useState(null);
+
+  const handleDeleteChat = (chatId) => setChatPendingDelete(chatId);
+
+  const confirmDeleteChat = async () => {
+    const chatId = chatPendingDelete;
+    setChatPendingDelete(null);
+    if (!chatId) return;
+    setChatHistory((prev) => prev.filter((c) => c.id !== chatId));
+    if (currentChatId === chatId) {
+      setCurrentChatId(null);
+      setMessages([]);
+    }
+    try {
+      await fetch(`${API_BASE_URL}/api/chat/sessions/${encodeURIComponent(chatId)}`, {
+        method: "DELETE",
+      });
+    } catch (e) {
+      console.warn("[MAGMA] Could not delete chat", chatId, e);
+    }
+  };
 
   // WebSpeech API implementation for reliable inline dictation
   const dictationRef = useRef(null);
@@ -1843,6 +1951,13 @@ export default function AssistantPortal({ isOpen, onClose }) {
     } else if (type === "final_transcript") {
       if (text) {
         const chatId = createVoiceChat();
+        setChatHistory((prev) =>
+          prev.map((c) =>
+            c.id === chatId && c.title === "Live voice session"
+              ? { ...c, title: text.substring(0, 30) + (text.length > 30 ? "..." : "") }
+              : c,
+          ),
+        );
         if (voiceDraftMessageRef.current) {
           updateLastUserMessage(chatId, (msg) => ({ ...msg, text, streaming: false }));
         } else {
@@ -2108,7 +2223,8 @@ export default function AssistantPortal({ isOpen, onClose }) {
     const chatSessionId = currentChatId || `voice-${Date.now()}`;
     const sessionId = chatSessionId;
     voiceSessionIdRef.current = sessionId;
-    createVoiceChat(sessionId);
+    // Avoids empty "Live voice session" ghosts in the sidebar.
+    voiceChatIdRef.current = sessionId;
 
     const voiceParams = new URLSearchParams({ session_id: sessionId });
     const {
@@ -2302,12 +2418,18 @@ export default function AssistantPortal({ isOpen, onClose }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
-  // Switching chats (new chat, picking a different session) should never
-  // leave the assistant talking over the thread you just left.
+  // Switching chats (new chat, picking a different session) should never leave
+  // voice mode connected to the thread you just left -- close it fully rather than
+  // just pausing speech, so the new chat starts clean and voice must be reopened
+  // for it explicitly instead of silently carrying over as "already active".
+  // Guarded against voice mode's OWN first assignment of currentChatId (opening
+  // voice from the home screen, before any chat exists, sets currentChatId to the
+  // new voice session's id via createVoiceChat) -- that's not a switch AWAY from
+  // anything, so it must not immediately close the voice mode that just opened.
   useEffect(() => {
-    if (voiceModeOpenRef.current) {
-      interruptSpeech();
+    if (voiceModeOpenRef.current && currentChatId !== voiceChatIdRef.current) {
       addVoiceEvent("interrupted", "switched chat");
+      closeVoiceMode();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentChatId]);
@@ -2466,6 +2588,82 @@ export default function AssistantPortal({ isOpen, onClose }) {
       >
         <style>{MAGNA_PREMIUM_STYLES}</style>
 
+        <AnimatePresence>
+          {chatPendingDelete && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setChatPendingDelete(null)}
+              style={{
+                position: "fixed",
+                inset: 0,
+                zIndex: 100,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                background: "rgba(15, 23, 42, 0.45)",
+              }}
+            >
+              <motion.div
+                initial={{ opacity: 0, scale: 0.96, y: 8 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.96, y: 8 }}
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                  width: "320px",
+                  borderRadius: "16px",
+                  padding: "20px",
+                  background: "var(--card-bg, #ffffff)",
+                  border: "1px solid var(--border-color, rgba(148, 163, 184, 0.25))",
+                  boxShadow: "0 24px 60px -20px rgba(0, 0, 0, 0.35)",
+                }}
+              >
+                <div style={{ fontSize: "14px", fontWeight: "650", color: "var(--text-color, #0f172a)", marginBottom: "6px" }}>
+                  Delete this chat?
+                </div>
+                <div style={{ fontSize: "12.5px", color: "var(--text-muted, #64748b)", marginBottom: "18px" }}>
+                  This can't be undone.
+                </div>
+                <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px" }}>
+                  <motion.button
+                    whileTap={{ scale: 0.96 }}
+                    onClick={() => setChatPendingDelete(null)}
+                    style={{
+                      border: "1px solid var(--border-color, rgba(148, 163, 184, 0.3))",
+                      background: "transparent",
+                      color: "var(--text-color, #0f172a)",
+                      padding: "8px 14px",
+                      borderRadius: "10px",
+                      fontSize: "12.5px",
+                      fontWeight: "600",
+                      cursor: "pointer",
+                    }}
+                  >
+                    Cancel
+                  </motion.button>
+                  <motion.button
+                    whileTap={{ scale: 0.96 }}
+                    onClick={confirmDeleteChat}
+                    style={{
+                      border: "none",
+                      background: "#ef4444",
+                      color: "#ffffff",
+                      padding: "8px 14px",
+                      borderRadius: "10px",
+                      fontSize: "12.5px",
+                      fontWeight: "600",
+                      cursor: "pointer",
+                    }}
+                  >
+                    Delete
+                  </motion.button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Decorative dot-grid on the scrim — solid, sharp, no blur */}
         <div
           className="magna-scrim-dotgrid"
@@ -2514,7 +2712,9 @@ export default function AssistantPortal({ isOpen, onClose }) {
           <Sidebar
             chatHistory={chatHistory}
             currentChatId={currentChatId}
-            onSelectChat={setCurrentChatId}
+            onSelectChat={handleSelectChat}
+            onPinChat={handlePinChat}
+            onDeleteChat={handleDeleteChat}
             onNewChat={() => {
               setCurrentChatId(null);
               setMessages([]);
