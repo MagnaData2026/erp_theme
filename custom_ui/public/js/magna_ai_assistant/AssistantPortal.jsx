@@ -1862,18 +1862,18 @@ export default function AssistantPortal({ isOpen, onClose }) {
   };
 
   const createVoiceChat = (targetSessionId) => {
-    if (!targetSessionId && voiceChatIdRef.current) return voiceChatIdRef.current;
-    if (!currentChatId) {
-      setChatHistory((prev) => [
-        { id: targetSessionId, title: "Live voice session", messages: [] },
-        ...prev,
-      ]);
-      setCurrentChatId(targetSessionId);
-    }
-    voiceChatIdRef.current = targetSessionId;
-    return targetSessionId;
+    const id = targetSessionId || voiceChatIdRef.current;
+    if (!id) return null;
+    // Creates the chat on the first real speech; safe to call on every event.
+    setChatHistory((prev) =>
+      prev.some((c) => c.id === id)
+        ? prev
+        : [{ id, title: "Live voice session", messages: [] }, ...prev],
+    );
+    if (!currentChatId) setCurrentChatId(id);
+    voiceChatIdRef.current = id;
+    return id;
   };
-
   // Stops whatever the assistant is currently saying — used on manual tap,
   // a server-sent 'interrupted' event, client-side barge-in detection, and
   // every "this session is going away" exit path below (closing the
@@ -1889,7 +1889,7 @@ export default function AssistantPortal({ isOpen, onClose }) {
     streamingReplyRef.current = "";
     if (
       voiceModeOpenRef.current &&
-      voiceSocketRef.current?.readyState === WebSocket.OPEN
+      voiceSocketRef.current?.readyStated === WebSocket.OPEN
     ) {
       setVoiceStatus("listening");
     }
