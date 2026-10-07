@@ -57,6 +57,7 @@ function stripMarkdownForSpeech(text) {
         .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')          // links -> link text
         .replace(/\[Action[^\]]*\]/g, '')                  // action pills like [Action: Run Report]
         .replace(/^\s*[|+].*\n?/gm, '')                     // ALL table rows and borders (pipes and pluses)
+        .replace(/^\s*(?:[-*•]|\d+[.)])\s+\*\*(?:[^*\n]{1,60}:\*\*|[^*\n]{1,60}\*\*\s*:).*\n?/gm, '') // record fields like "- **Status:** Open"
         .replace(/^\s*#{1,6}\s*/gm, '')                   // headings
         .replace(/^\s*[-*]\s+/gm, '')                     // bullet markers
         .replace(/\*\*(.*?)\*\*/g, '$1')                  // bold
